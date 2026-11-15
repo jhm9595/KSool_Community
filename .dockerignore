@@ -1,0 +1,9 @@
+node_modules
+.git
+.data
+.wrangler
+.worker-build
+dist
+previews/*.png
+.env
+.dev.vars
