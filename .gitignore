@@ -1,0 +1,9 @@
+.data/
+.wrangler/
+node_modules/
+dist/
+.env
+.dev.vars
+previews/*.png
+
+.worker-build/

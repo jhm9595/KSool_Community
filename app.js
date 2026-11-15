@@ -1,0 +1,544 @@
+(() => {
+  'use strict';
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const uiIcon = (type,size=18) => {
+    const paths={refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5 8a8 8 0 0 1 13-3l2 2M4 17l2 2a8 8 0 0 0 13-3"/>',up:'<path d="M7 10v11H3V10zm0 1 5-8c3 0 2 4 1 6h6c2 0 2 2 1 5l-2 7H7"/>',down:'<path d="M7 14V3H3v11zm0-1 5 8c3 0 2-4 1-6h6c2 0 2-2 1-5l-2-7H7"/>',comment:'<path d="M3 4h18v13H9l-6 4z"/>',flag:'<path d="M5 22V3m0 0c5-4 9 4 15 0v11c-6 4-10-4-15 0"/>',bookmark:'<path d="M6 3h12v18l-6-4-6 4z"/>',search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',arrowUpRight:'<path d="M6 18 18 6M6 6h12v12"/>',arrowDown:'<path d="M12 4v16m-7-7 7 7 7-7"/>',plus:'<path d="M12 4v16M4 12h16"/>',share:'<path d="M12 15V3m-5 5 5-5 5 5M5 12v8h14v-8"/>',heart:'<path d="M20.5 5.5c-3-3-6-1-8.5 1.5-2.5-2.5-5.5-4.5-8.5-1.5C-1 10 7 17 12 21c5-4 13-11 8.5-15.5z"/>',check:'<path d="m5 12 4 4L20 5"/>',flask:'<path d="M9 3h6m-5 0v7L4 20h16l-6-10V3M8 14h8"/>',close:'<path d="m5 5 14 14M5 19 19 5"/>',trash:'<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',sparkles:'<path d="m12 3 3 6 6 3-6 3-3 6-3-6-6-3 6-3z"/>'};
+    return `<svg class="ui-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[type]||paths.plus}</svg>`;
+  };
+  const data = window.GAME_DATA;
+  const gameI18n = window.GAME_I18N || {};
+  const gameLinks = window.GAME_LINKS || { partners: {}, items: {}, stories: {} };
+  const ingredients = new Map(data.ingredients_base.map(i => [i.ingredient_id, i]));
+  const details = new Map(data.ingredients_detail.map(i => [i.detail_id, i]));
+  const recipes = data.recipes.map(r => ({...r, items:data.recipe_ingredients.filter(i => i.recipe_id === r.recipe_id).sort((a,b) => a.slot_order - b.slot_order)}));
+  const byId = new Map(recipes.map(r => [r.recipe_id,r]));
+  const icon = (item, size=40) => window.KSool.pixelIcon(item,size,'',{theme:'hd'});
+  const SUPPORTED_LANGS = ['ko', 'en', 'ja', 'zh-CN', 'zh-TW'];
+  function detectInitialLang() {
+    try {
+      const saved = localStorage.getItem('ksool_lang_v1');
+      if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
+    } catch (_) {}
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      if (tz === 'Asia/Seoul' || tz === 'Asia/Pyongyang') return 'ko';
+      if (tz === 'Asia/Tokyo') return 'ja';
+      if (tz === 'Asia/Taipei' || tz === 'Asia/Hong_Kong' || tz === 'Asia/Macau') return 'zh-TW';
+      if (tz === 'Asia/Shanghai') return 'zh-CN';
+    } catch (_) {}
+    const nav = (navigator.language || '').toLowerCase();
+    if (nav.startsWith('ko')) return 'ko';
+    if (nav.startsWith('ja')) return 'ja';
+    if (nav.startsWith('zh-hant') || nav === 'zh-tw' || nav === 'zh-hk') return 'zh-TW';
+    if (nav.startsWith('zh')) return 'zh-CN';
+    return 'en';
+  }
+  let portalLang = detectInitialLang();
+  const PORTAL_UI = {
+    ko: { recipes:'조합', tips:'커뮤니티', suggestions:'추천', rankings:'랭킹', updates:'업데이트', blog:'블로그 ↗', heroTitle:'조합, 한눈에.', search:'조합 · 재료 검색', write:'글쓰기', storyBtn:'🎬 유래 · 레시피 영상 보기', rankTitle:'🏆 인기 조합 & 추천 랭킹', updateTitle:'📢 K-술 업데이트 소식' },
+    en: { recipes:'Recipes', tips:'Community', suggestions:'Combos', rankings:'Rankings', updates:'Updates', blog:'Blog ↗', heroTitle:'K-Drinks at a Glance.', search:'Search recipes or ingredients', write:'Post', storyBtn:'🎬 Story, Origin & Video Guide', rankTitle:'🏆 Top Combos & Rankings', updateTitle:'📢 K-Sool Updates & Patch Notes' },
+    ja: { recipes:'レシピ', tips:'コミュニティ', suggestions:'おすすめ', rankings:'ランキング', updates:'お知らせ', blog:'ブログ ↗', heroTitle:'韓国お酒レシピ一覧', search:'レシピ・材料を検索', write:'投稿', storyBtn:'🎬 由来・作り方動画を見る', rankTitle:'🏆 人気レシピ＆ランキング', updateTitle:'📢 K-酒 アップデート情報' },
+    'zh-CN': { recipes:'配方', tips:'社区', suggestions:'推荐', rankings:'排行榜', updates:'更新公告', blog:'博客 ↗', heroTitle:'韩国调酒配方一览', search:'搜索配方或材料', write:'发帖', storyBtn:'🎬 查看由来与视频教程', rankTitle:'🏆 人气配方排行榜', updateTitle:'📢 K-酒 更新公告' },
+    'zh-TW': { recipes:'配方', tips:'社群', suggestions:'推薦', rankings:'排行榜', updates:'更新公告', blog:'部落格 ↗', heroTitle:'韓國調酒配方一覽', search:'搜尋配方或材料', write:'發文', storyBtn:'🎬 查看由來與影片教學', rankTitle:'🏆 人氣配方排行榜', updateTitle:'📢 K-酒 更新公告' }
+  };
+  const pt = k => (PORTAL_UI[portalLang] && PORTAL_UI[portalLang][k]) || PORTAL_UI.en[k] || k;
+  const name = i => {
+    const koFallback = i?.display_name || i?.name || 'Unknown';
+    if (!i || portalLang === 'ko') return koFallback;
+    const entities = gameI18n[portalLang]?.entities || {};
+    const enEntities = gameI18n.en?.entities || {};
+    const key = i.detail_id != null ? `det:${i.detail_id}` : i.recipe_id != null ? `rec:${i.recipe_id}` : i.ingredient_id != null ? `ing:${i.ingredient_id}` : null;
+    return (key && (entities[key] || enEntities[key])) || koFallback;
+  };
+  const ingredientFor = item => details.get(item.detail_id || item.detail_ingredient_id) || ingredients.get(item.ingredient_id);
+  const colors = ['#d5f88a','#ffdb69','#bce8f0','#f5b9d1','#d3bffc','#ffb78b','#aeddc1','#c5d5fc','#f1e58a'];
+  const storageKey = 'ksool-external-community-draft-v1';
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; } catch (_) {}
+  let posts = [];
+  let suggestions = [], serverConnected=false, refreshQueue=Promise.resolve();
+  const api = async (path, options={}) => {
+    const response=await fetch('/api'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...options.headers}});
+    const result=await response.json();if(!response.ok)throw new Error(result.error||'연결 실패');return result;
+  };
+  function syncCommunity(){const next=refreshQueue.then(loadCommunity);refreshQueue=next.catch(()=>{});return next;}
+  async function loadCommunity(){
+    try{const [feed,combos]=await Promise.all([api('/posts'),api('/suggestions')]);posts=feed.posts;suggestions=combos.suggestions.map(s=>({...s,myVote:combos.userVotes[s.suggestion_key]||null}));let before=feed.nextBefore;while(before){const page=await api('/posts?before='+encodeURIComponent(before));posts.push(...page.posts);before=page.nextBefore;}before=combos.nextBefore;while(before){const page=await api('/suggestions?before='+encodeURIComponent(before));suggestions.push(...page.suggestions.map(s=>({...s,myVote:page.userVotes[s.suggestion_key]||null})));before=page.nextBefore;}serverConnected=true;$('#connection-status').textContent='● 커뮤니티 연결됨';render();}
+    catch(error){serverConnected=false;$('#connection-status').textContent='○ 서버 연결 실패';toast('커뮤니티 연결 실패 · 새로고침해 주세요');}
+  }
+  const bookmarks = new Set(Array.isArray(stored.bookmarks) ? stored.bookmarks.filter(i => typeof i === 'string') : []);
+  const helpful = new Set(Array.isArray(stored.helpful) ? stored.helpful.filter(i => typeof i === 'string') : []);
+  const progressStorageKey = 'ksool-community-progress-v1';
+  const normalizeRecIds = (arr) => (Array.isArray(arr) ? arr.map(v => Number(String(v).replace(/^rec:/, ''))).filter(n => Number.isInteger(n) && n > 0) : []);
+  function decodeSyncInput(rawInput) {
+    const text = String(rawInput || '').trim();
+    if (!text) return null;
+    let token = text;
+    if (/^https?:\/\//i.test(text) || text.includes('sync=')) {
+      try {
+        const u = new URL(text.startsWith('http') ? text : `https://ksool.minibig.pw/${text.replace(/^[/?#]+/, '')}`);
+        token = u.searchParams.get('sync') || token;
+      } catch (_) {
+        const m = text.match(/[?&#]sync=([^&#\s]+)/);
+        if (m) token = decodeURIComponent(m[1]);
+      }
+    }
+    if (token.startsWith('KSOOL_SYNC_V1:')) token = token.slice('KSOOL_SYNC_V1:'.length).trim();
+    try {
+      const norm = token.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = norm.length % 4 ? '='.repeat(4 - (norm.length % 4)) : '';
+      const bin = atob(norm + pad);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const payload = JSON.parse(new TextDecoder().decode(bytes));
+      if (!payload || payload.v !== 1) return null;
+      return {
+        tycoon: normalizeRecIds(payload.tycoon?.unlockedRecipeIds),
+        quiz: normalizeRecIds(payload.quiz?.unlockedRecipeIds),
+        ts: payload.ts || Date.now()
+      };
+    } catch (_) { return null; }
+  }
+  let syncedProgress = (() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(progressStorageKey) || 'null');
+      if (raw && typeof raw === 'object') return { mode: raw.mode === 'tycoon' ? 'tycoon' : 'quiz', tycoon: normalizeRecIds(raw.tycoon), quiz: normalizeRecIds(raw.quiz) };
+    } catch (_) {}
+    return { mode: 'quiz', tycoon: [], quiz: [] };
+  })();
+  const saveSyncedProgress = () => { try { localStorage.setItem(progressStorageKey, JSON.stringify(syncedProgress)); } catch (_) {} };
+  const SUPABASE_URL = 'https://jyjxvwxlwkoedxwkkysj.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5anh2d3hsd2tvZWR4d2treXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzY5NDUsImV4cCI6MjEwOTA1Mjk0NX0.wfaRfya2PV4Ykawd6md4fXrO91_TWnyGyusSRa-2fJ8';
+  const sbClient = typeof window !== 'undefined' && window.supabase?.createClient
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
+    : null;
+  let sbUser = null;
+  async function syncFromSupabaseUser() {
+    if (!sbClient) return;
+    try {
+      const { data } = await sbClient.auth.getSession();
+      sbUser = data?.session?.user || null;
+      if (!sbUser) return;
+      const { data: row } = await sbClient.from('ksool_user_progress').select('tycoon_unlocked,quiz_unlocked').eq('user_id', sbUser.id).maybeSingle();
+      if (row) {
+        syncedProgress.tycoon = Array.from(new Set([...syncedProgress.tycoon, ...normalizeRecIds(row.tycoon_unlocked)]));
+        syncedProgress.quiz = Array.from(new Set([...syncedProgress.quiz, ...normalizeRecIds(row.quiz_unlocked)]));
+        saveSyncedProgress();
+        render();
+      }
+    } catch (_) {}
+  }
+  const isRecipeUnlocked = (recipeId) => {
+    const list = syncedProgress.mode === 'tycoon' ? syncedProgress.tycoon : syncedProgress.quiz;
+    return list.includes(Number(recipeId));
+  };
+  (() => {
+    try {
+      const sp = new URLSearchParams(location.search);
+      const syncToken = sp.get('sync');
+      if (syncToken) {
+        const parsed = decodeSyncInput(syncToken);
+        if (parsed) {
+          syncedProgress.tycoon = parsed.tycoon;
+          syncedProgress.quiz = parsed.quiz;
+          if (!parsed.quiz.length && parsed.tycoon.length) syncedProgress.mode = 'tycoon';
+          saveSyncedProgress();
+          sp.delete('sync');
+          const next = location.pathname + (sp.toString() ? `?${sp.toString()}` : '') + location.hash;
+          history.replaceState(null, '', next);
+        }
+      }
+    } catch (_) {}
+  })();
+  const examples = [
+    {id:'starter',kind:'tip',title:'비율은 숫자 그대로',body:'×2는 두 개. 카드에 적힌 개수대로 넣으세요.',author:'조합소 안내',recipeId:1,example:true},
+    {id:'detail',kind:'tip',title:'안 되면 상세 재료 확인',body:'브랜드·지역 재료가 필요한 조합도 있어요. 재료 이름을 확인하세요.',author:'조합소 안내',recipeId:null,example:true},
+    {id:'spoiler',kind:'tip',title:'다시 볼 조합은 책갈피',body:'카드 오른쪽 위 책갈피를 누르면 한곳에 모아볼 수 있어요.',author:'조합소 안내',recipeId:null,example:true}
+  ];
+  let sharedPost = null;
+  let activeTab = 'recipes', activeCategory = '전체', query = '', sort = 'recommended', limit = 1000, showAnswers = true;
+  let toastTimer;
+  function validatePost(p) {
+    if (!p || typeof p !== 'object' || !['tip','experiment'].includes(p.kind) || typeof p.id !== 'string' || p.id.length > 80 || typeof p.title !== 'string' || !p.title.trim() || p.title.length > 70 || typeof p.body !== 'string' || !p.body.trim() || p.body.length > 1500 || typeof p.author !== 'string' || !p.author.trim() || p.author.length > 16) return false;
+    if (p.recipeId != null && !data.recipes.some(r => r.recipe_id === p.recipeId)) return false;
+    if (p.kind === 'experiment') {
+      if (!Array.isArray(p.items) || p.items.length < 2 || p.items.length > 6) return false;
+      const keys = new Set();
+      for (const i of p.items) {
+        if (!i || !data.ingredients_base.some(b => b.ingredient_id === i.ingredient_id) || !Number.isInteger(i.ratio) || i.ratio < 1 || i.ratio > 10 || keys.has(`${i.ingredient_id}:${i.detail_id||0}`)) return false;
+        keys.add(`${i.ingredient_id}:${i.detail_id||0}`);
+      }
+    }
+    return true;
+  }
+  function persist() {
+    try { localStorage.setItem(storageKey,JSON.stringify({bookmarks:[...bookmarks]})); return true; }
+    catch (_) { toast('저장 공간이 부족해요. 이번 변경은 새로고침하면 사라질 수 있어요.'); return false; }
+  }
+  function toast(message) {
+    $('#toast').textContent = message;
+    $('#toast').classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('#toast').classList.remove('visible'),4000);
+  }
+  function allPosts() {
+    const combined = [...posts,...examples];
+    if (sharedPost && !combined.some(p => p.id === sharedPost.id)) combined.unshift(sharedPost);
+    return combined;
+  }
+  function formula(items,withIcons=false) {
+    return items.map(i => `${withIcons ? icon(ingredientFor(i),28) : ''}${esc(name(ingredientFor(i)))} <b>×${i.ratio}</b>`).join(' <span class="formula-plus">＋</span> ');
+  }
+  function filterRecipes() {
+    let result = recipes.filter(r => {
+      if (activeTab === 'saved' && !bookmarks.has(`r:${r.recipe_id}`)) return false;
+      const category = r.category || '';
+      if (activeCategory === '기초 재료' && category !== '기초합성') return false;
+      if (activeCategory === '막걸리' && !category.includes('막걸리')) return false;
+      if (activeCategory === '소맥·폭탄주' && !category.includes('폭탄주')) return false;
+      if (activeCategory === '과일·편의점' && !category.includes('편의점')) return false;
+      if (activeCategory === '특산 명주' && category !== '특산명주') return false;
+      return `${name(r)} ${category} ${r.items.map(i => name(ingredientFor(i))).join(' ')}`.toLowerCase().includes(query.toLowerCase());
+    });
+    if (sort === 'number') result.sort((a,b) => a.recipe_number - b.recipe_number);
+    else if (sort === 'simple') result.sort((a,b) => a.items.length - b.items.length || a.recipe_number - b.recipe_number);
+    else {
+      const featured = [1,2,51,38,80,31,9,27,83]; // Stable recipe IDs survive display-name changes.
+      const priority = r => {const i=featured.indexOf(r.recipe_id);return i < 0 ? 100 + r.recipe_number : i;};
+      result.sort((a,b) => priority(a)-priority(b));
+    }
+    return result;
+  }
+  function recipeCard(r,index) {
+    const saved = bookmarks.has(`r:${r.recipe_id}`);
+    if (!isRecipeUnlocked(r.recipe_id)) {
+      return `<article class="recipe-card is-locked" style="--card-color:#f4f4f5; opacity:0.88;"><div class="compact-card-head"><span class="compact-recipe-icon" style="display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:#e4e4e7;font-size:1.2rem;">🔒</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula" style="justify-content:center; padding:12px 8px; color:#52525b; font-size:0.82rem; font-weight:700;">🔒 ${syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈'} 모드에서 해금 시 레시피 공개</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span><button data-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 안내">${uiIcon('flask',14)}</button></div></article>`;
+    }
+    return `<article class="recipe-card" style="--card-color:${colors[index%colors.length]}"><div class="compact-card-head"><span class="compact-recipe-icon">${icon(r,40)}</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula">${r.items.map((i,n)=>`<span class="formula-item">${r.requires_order?`<span class="ingredient-order">${n+1}</span>`:''}<span class="formula-image">${icon(ingredientFor(i),30)}<b>×${i.ratio}</b></span><span class="ingredient-name">${esc(name(ingredientFor(i)))}</span></span>`).join('<span class="formula-plus">+</span>')}</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span>${r.requires_order?'<span class="order-badge">순서대로</span>':''}<button data-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 힌트">${uiIcon('flask',14)}</button><button data-share-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 공유">${uiIcon('share',15)}</button></div></article>`;
+  }
+  function voteControls(p){
+    const target=p.suggestion_key?`s:${p.suggestion_key}`:`p:${p.id}`;
+    return `<span class="vote-controls">${['UP','DOWN'].map(type=>`<button data-vote-target="${esc(target)}" data-vote-type="${type}" aria-label="${type==='UP'?'좋아요':'싫어요'}" aria-pressed="${p.myVote===type}">${uiIcon(type==='UP'?'up':'down',15)}<span>${type==='UP'?(p.upvotes||0):(p.downvotes||0)}</span></button>`).join('')}</span>`;
+  }
+  function suggestionCard(s,index){return `<article class="suggestion-card" style="--card-color:${colors[index%colors.length]}"><div class="suggestion-badge">조합 추천</div><div class="card-formula">${formula(s.items,true)}</div><div class="suggestion-actions">${voteControls(s)}<button data-copy-combo="${esc(s.suggestion_key)}" aria-label="조합 링크 공유">${uiIcon('share',16)}</button></div></article>`;}
+  function postCard(p) {
+    const saved = bookmarks.has(`t:${p.id}`);
+    return `<article class="tip-card"><div class="tip-card-top"><span class="tip-kind">${p.kind === 'experiment' ? '새 조합 제안' : '플레이 팁'}</span><span>${p.example ? '예시' : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span></div><h3>${esc(p.title)}</h3><p>${esc(p.body)}</p>${p.kind === 'experiment' ? `<div class="card-formula">${formula(p.items,true)}</div><p class="detail-note">실험 · 정답 미확인</p>` : ''}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':voteControls(p)}<button data-bookmark="t:${esc(p.id)}" aria-label="팁 저장" aria-pressed="${saved}">${uiIcon('bookmark',17)}</button><button data-share-post="${esc(p.id)}" aria-label="팁 공유">${uiIcon('share',17)}</button>${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}${p.example?'':`<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
+  }
+  function applyPortalLangUi() {
+    document.documentElement.lang = portalLang;
+    const sel = $('#portal-lang-select');
+    if (sel) sel.value = portalLang;
+    $$('[data-nav]').forEach(b => {
+      const k = b.dataset.nav;
+      if (k !== 'saved' && PORTAL_UI[portalLang]?.[k]) b.textContent = pt(k);
+    });
+    const blogLink = $('.nav-blog-link');
+    if (blogLink) blogLink.textContent = pt('blog');
+    const h1 = $('.compact-banner h1');
+    if (h1) h1.textContent = pt('heroTitle');
+    const searchInput = $('#search');
+    if (searchInput) searchInput.placeholder = pt('search');
+    const composeBtn = $('[data-compose]');
+    if (composeBtn) composeBtn.innerHTML = `${uiIcon('plus')} ${esc(pt('write'))}`;
+  }
+  const UPDATE_LOGS = [
+    { version: 'v2.4', date: '2026-11-14', title: { ko: '글로벌 다국어 & 문화 가이드 확장', en: 'Global Languages & Korean Drinking Game Guides', ja: '多言語対応＆飲み会ゲーム文化ガイド追加', 'zh-CN': '多语言支持与韩国酒桌游戏文化指南', 'zh-TW': '多語言支援與韓國酒桌遊戲文化指南' }, body: { ko: '영어·일본어·중국어(간체/번체) 지원, 미니게임 우측 상단 문화/도구 설명(i), 레시피별 스토리·제휴 링크 구조가 추가되었습니다.', en: 'Added English, Japanese, Simplified & Traditional Chinese support, top-right info guides for all 10 party mini-games, and recipe story/video links.' } },
+    { version: 'v2.3', date: '2026-11-14', title: { ko: '조합 퀴즈 전용 문제 선택 팝업 개편', en: 'Dedicated Mix Quiz Stage Selector', ja: '調合クイズ専用のステージ選択ポップアップ', 'zh-CN': '调酒问答专属关卡选择弹窗', 'zh-TW': '調酒問答專屬關卡選擇彈窗' }, body: { ko: '84개 퀴즈 진행도 바, 도전 가능/완료 필터, 다음 미해결 원클릭 점프를 지원합니다.', en: 'Track your 84-recipe quiz progress with filter pills and one-tap jump to the next unsolved puzzle.' } },
+    { version: 'v2.2', date: '2026-11-12', title: { ko: '친구 SOS 풀이 독립 페이지 출시', en: 'Friend SOS Standalone Solver', ja: 'フレンドSOS独立ページ公開', 'zh-CN': '好友求助独立解题页面上线', 'zh-TW': '好友求助獨立解題頁面上線' }, body: { ko: '링크만으로 친구의 막힌 술 조합 퀴즈를 도와줄 수 있는 초경량 SOS 풀이 화면이 추가되었습니다.', en: 'Share a compact link so friends can help solve tricky drink ratios without spoilers.' } }
+  ];
+  function rankingsMarkup() {
+    const topSuggestions = [...suggestions].sort((a,b) => ((b.upvotes||0)-(b.downvotes||0)) - ((a.upvotes||0)-(a.downvotes||0))).slice(0, 10);
+    const topPosts = [...posts].sort((a,b) => ((b.upvotes||0)-(b.downvotes||0)) - ((a.upvotes||0)-(a.downvotes||0))).slice(0, 6);
+    const topRecipes = [1, 7, 19, 51, 74, 2, 80, 31].map(id => byId.get(id)).filter(Boolean);
+    return `
+      <div class="rankings-board" style="grid-column:1/-1; display:flex; flex-direction:column; gap:18px;">
+        <section style="background:#fff; border:2px solid #18181b; border-radius:14px; padding:16px; box-shadow:4px 4px 0 #18181b;">
+          <h3 style="margin:0 0 12px; font-size:1.05rem;">${esc(pt('rankTitle'))}</h3>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;">
+            ${topRecipes.map((r, idx) => `<button type="button" data-recipe="${r.recipe_id}" style="display:flex; align-items:center; gap:10px; padding:10px; border:2px solid #18181b; border-radius:10px; background:${colors[idx%colors.length]}; cursor:pointer; text-align:left;"><strong style="font-size:1.1rem;">#${idx+1}</strong>${icon(r,34)}<div><div style="font-weight:800; font-size:0.9rem;">${esc(name(r))}</div><small style="opacity:0.8;">${esc(r.formatted_number)}</small></div></button>`).join('')}
+          </div>
+        </section>
+        <section style="background:#fff; border:2px solid #18181b; border-radius:14px; padding:16px; box-shadow:4px 4px 0 #18181b;">
+          <h3 style="margin:0 0 12px; font-size:1rem;">🔥 Top Community Combos</h3>
+          ${topSuggestions.length ? topSuggestions.map((s,i) => suggestionCard(s,i)).join('') : '<p style="margin:0; opacity:0.7;">아직 투표된 유저 추천 조합이 없습니다. 추천 탭에서 첫 조합에 투표해보세요!</p>'}
+        </section>
+        ${topPosts.length ? `<section style="background:#fff; border:2px solid #18181b; border-radius:14px; padding:16px; box-shadow:4px 4px 0 #18181b;"><h3 style="margin:0 0 12px; font-size:1rem;">💬 Top Community Tips</h3>${topPosts.map(postCard).join('')}</section>` : ''}
+      </div>
+    `;
+  }
+  function updatesMarkup() {
+    return `
+      <div class="updates-board" style="grid-column:1/-1; display:flex; flex-direction:column; gap:14px;">
+        <div style="background:#fff; border:2px solid #18181b; border-radius:14px; padding:16px; box-shadow:4px 4px 0 #18181b; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h3 style="margin:0 0 4px; font-size:1.05rem;">${esc(pt('updateTitle'))}</h3>
+            <p style="margin:0; font-size:0.85rem; opacity:0.8;">K-Sool Official Blog &amp; Video Guides</p>
+          </div>
+          <a href="https://ksool.blogspot.com/" target="_blank" rel="noopener" class="button coral" style="text-decoration:none;">📖 ksool.blogspot.com ↗</a>
+        </div>
+        ${UPDATE_LOGS.map(u => {
+          const title = u.title[portalLang] || u.title.en || u.title.ko;
+          const body = u.body[portalLang] || u.body.en || u.body.ko;
+          return `<article style="background:#fff; border:2px solid #18181b; border-radius:14px; padding:16px; box-shadow:4px 4px 0 #18181b;"><div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><span style="background:#18181b; color:#fff; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:800;">${esc(u.version)}</span><small style="opacity:0.7;">${esc(u.date)}</small></div><h4 style="margin:0 0 6px; font-size:1rem;">${esc(title)}</h4><p style="margin:0; font-size:0.88rem; line-height:1.5;">${esc(body)}</p></article>`;
+        }).join('')}
+      </div>
+    `;
+  }
+  function renderProgressSyncBar() {
+    const bar = $('#progress-sync-bar');
+    if (!bar) return;
+    const showBar = ['recipes', 'saved', 'rankings'].includes(activeTab);
+    bar.hidden = !showBar;
+    if (!showBar) return;
+    const isQuiz = syncedProgress.mode !== 'tycoon';
+    const hasAny = syncedProgress.quiz.length > 0 || syncedProgress.tycoon.length > 0;
+    bar.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <strong style="font-size:0.86rem;">🔐 진행도 기준 공개:</strong>
+          <button type="button" data-progress-mode="quiz" style="padding:5px 10px; border:2px solid #18181b; border-radius:8px; font-weight:800; font-size:0.8rem; cursor:pointer; background:${isQuiz ? '#18181b' : '#fff'}; color:${isQuiz ? '#fff' : '#18181b'};">🎯 퀴즈 (${syncedProgress.quiz.length}/${recipes.length})</button>
+          <button type="button" data-progress-mode="tycoon" style="padding:5px 10px; border:2px solid #18181b; border-radius:8px; font-weight:800; font-size:0.8rem; cursor:pointer; background:${!isQuiz ? '#18181b' : '#fff'}; color:${!isQuiz ? '#fff' : '#18181b'};">🏪 타이쿤 (${syncedProgress.tycoon.length}/${recipes.length})</button>
+        </div>
+        ${sbClient ? (sbUser
+          ? `<button type="button" id="community-google-logout-btn" style="padding:4px 9px; border:1px solid #18181b; border-radius:6px; background:#fff; font-size:0.76rem; cursor:pointer;">☁️ ${esc(sbUser.email || 'Google')} (로그아웃)</button>`
+          : `<button type="button" id="community-google-login-btn" style="padding:5px 10px; border:2px solid #18181b; border-radius:8px; background:#2563eb; color:#fff; font-weight:800; font-size:0.78rem; cursor:pointer;">G Google 연동</button>`) : ''}
+        ${hasAny ? `<button type="button" id="community-sync-clear-btn" style="padding:4px 9px; border:1px solid #71717a; border-radius:6px; background:#fff; font-size:0.76rem; cursor:pointer;">기록 초기화</button>` : ''}
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+        <input id="community-sync-input" type="text" placeholder="게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드 붙여넣기" style="flex:1; min-width:220px; padding:7px 10px; border:2px solid #18181b; border-radius:8px; font-size:0.82rem; background:#fff;">
+        <button type="button" id="community-sync-import-btn" class="button coral" style="padding:7px 12px; font-size:0.82rem;">📥 내 기록 가져오기</button>
+      </div>
+    `;
+    $$('[data-progress-mode]', bar).forEach(b => b.onclick = () => {
+      syncedProgress.mode = b.dataset.progressMode === 'tycoon' ? 'tycoon' : 'quiz';
+      saveSyncedProgress();
+      render();
+    });
+    const importBtn = $('#community-sync-import-btn', bar);
+    const importInput = $('#community-sync-input', bar);
+    if (importBtn && importInput) {
+      importBtn.onclick = () => {
+        const parsed = decodeSyncInput(importInput.value);
+        if (!parsed) { toast('올바른 공유 링크 또는 KSOOL_SYNC_V1 코드를 입력해 주세요.'); return; }
+        syncedProgress.tycoon = parsed.tycoon;
+        syncedProgress.quiz = parsed.quiz;
+        if (!parsed.quiz.length && parsed.tycoon.length) syncedProgress.mode = 'tycoon';
+        saveSyncedProgress();
+        toast(`✅ 내 기록을 가져왔습니다! (퀴즈 ${parsed.quiz.length}개 · 타이쿤 ${parsed.tycoon.length}개)`);
+        render();
+      };
+    }
+    const clearBtn = $('#community-sync-clear-btn', bar);
+    if (clearBtn) {
+      clearBtn.onclick = () => {
+        syncedProgress = { mode: 'quiz', tycoon: [], quiz: [] };
+        saveSyncedProgress();
+        toast('연동된 진행 기록을 초기화했습니다.');
+        render();
+      };
+    }
+    const gLoginBtn = $('#community-google-login-btn', bar);
+    if (gLoginBtn && sbClient) {
+      gLoginBtn.onclick = async () => {
+        const { error } = await sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+        if (error) toast(`Google 연동 준비 중입니다 (${error.message}). 공유 링크로도 바로 가져올 수 있어요!`);
+      };
+    }
+    const gLogoutBtn = $('#community-google-logout-btn', bar);
+    if (gLogoutBtn && sbClient) {
+      gLogoutBtn.onclick = async () => {
+        await sbClient.auth.signOut();
+        sbUser = null;
+        toast('로그아웃되었습니다.');
+        render();
+      };
+    }
+  }
+  function render() {
+    applyPortalLangUi();
+    renderProgressSyncBar();
+    $('#recipe-grid').classList.toggle('community-view',activeTab==='tips');
+    $('#recipe-grid').classList.toggle('suggestions-view',activeTab==='suggestions');
+    $$('[data-tab]').forEach(b => b.classList.toggle('selected', b.dataset.tab === activeTab));
+    $$('[data-nav]').forEach(b => b.classList.toggle('nav-active', b.dataset.nav === activeTab));
+    $('#saved-count').textContent = bookmarks.size;
+    if($('#tip-count'))$('#tip-count').textContent = allPosts().length;
+    $('#category-filters').innerHTML = (['suggestions','rankings','updates'].includes(activeTab) ? ['전체'] : activeTab === 'tips' ? ['전체','플레이 팁','새 조합 제안'] : ['전체','소맥·폭탄주','막걸리','과일·편의점','기초 재료','특산 명주']).map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('');
+    $('.sort-control').hidden = ['tips','suggestions','rankings','updates'].includes(activeTab);
+    if($('.spoiler-toggle'))$('.spoiler-toggle').hidden = activeTab === 'tips';
+    if (activeTab === 'rankings') {
+      $('#result-count').innerHTML = `<b>TOP</b> RANKINGS`;
+      $('#recipe-grid').innerHTML = rankingsMarkup();
+      bindCardActions($('#recipe-grid'));
+      return;
+    }
+    if (activeTab === 'updates') {
+      $('#result-count').innerHTML = `<b>${UPDATE_LOGS.length}</b> UPDATES`;
+      $('#recipe-grid').innerHTML = updatesMarkup();
+      return;
+    }
+    const matches = ['tips','suggestions'].includes(activeTab) ? [] : filterRecipes();
+    const matchingPosts = ['recipes','suggestions'].includes(activeTab) ? [] : allPosts().filter(p => (activeTab !== 'saved' || bookmarks.has(`t:${p.id}`)) && (activeTab !== 'tips' || activeCategory === '전체' || (activeCategory === '플레이 팁' ? p.kind === 'tip' : p.kind === 'experiment')) && `${p.title} ${p.body} ${p.author}`.toLowerCase().includes(query.toLowerCase()));
+    const matchingSuggestions=activeTab==='suggestions'?suggestions.filter(s=>s.items.map(i=>name(ingredientFor(i))).join(' ').includes(query)).sort((a,b)=>(b.upvotes-b.downvotes)-(a.upvotes-a.downvotes)):[];
+    $('#result-count').innerHTML = `<b>${matches.length + matchingPosts.length + matchingSuggestions.length}</b> ${activeTab==='tips'?'TIPS':'RECIPES'}`;
+    $('#recipe-grid').innerHTML = matches.slice(0,limit).map(recipeCard).join('') + matchingPosts.slice(0,limit).map(postCard).join('') + matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 카테고리로 찾아보세요.'}</p></div>`;
+    $('#load-more').hidden = true;
+    if(!$('#post-recipe').dataset.ready){$('#post-recipe').innerHTML = '<option value="">선택하지 않음</option>' + recipes.map(r => `<option value="${r.recipe_id}">${esc(r.formatted_number)} · ${esc(name(r))}</option>`).join('');$('#post-recipe').dataset.ready='1';}
+    bindCardActions($('#recipe-grid'));
+    $$('[data-category]').forEach(b => b.onclick = () => {activeCategory=b.dataset.category;limit=1000;render();});
+  }
+  function bindCardActions(root) {
+    bindRemoteActions(root);
+    $$('[data-share-recipe]',root).forEach(b=>b.onclick=()=>{const r=byId.get(Number(b.dataset.shareRecipe));shareLink(new URL(`#recipe=${r.recipe_id}`,location.href).href,`${name(r)} · 조합소`);});
+    $$('[data-recipe]',root).forEach(b => b.onclick = () => navigateRecipe(Number(b.dataset.recipe)));
+    $$('[data-bookmark]',root).forEach(b => b.onclick = () => {
+      const key=b.dataset.bookmark, saved=bookmarks.has(key);
+      saved ? bookmarks.delete(key) : bookmarks.add(key);
+      const ok=persist();render();
+      b.classList.toggle('is-saved',!saved);b.setAttribute('aria-pressed',String(!saved));
+      if(root.id==='recipe-detail' && key.startsWith('r:'))b.classList.toggle('is-saved',!saved);
+      if (ok) toast(saved ? '저장 취소' : '저장 완료');
+    });
+    $$('[data-share-post]',root).forEach(b => b.onclick = () => sharePost(b.dataset.sharePost));
+  }
+  function bindRemoteActions(root){
+    $$('[data-vote-target]',root).forEach(b=>b.onclick=async()=>{b.disabled=true;try{const target=b.dataset.voteTarget;const body=target.startsWith('s:')?{suggestion_key:target.slice(2),type:b.dataset.voteType}:{post_id:target.slice(2),type:b.dataset.voteType};await api('/votes',{method:'PUT',body:JSON.stringify(body)});await syncCommunity();$$('[data-vote-target]',document).filter(el=>el.dataset.voteTarget===target).forEach(el=>{const s=target.startsWith('s:')?suggestions.find(s=>s.suggestion_key===target.slice(2)):posts.find(p=>p.id===target.slice(2));if(s){el.setAttribute('aria-pressed',String(s.myVote===el.dataset.voteType));$('span',el).textContent=el.dataset.voteType==='UP'?s.upvotes:s.downvotes;}});}catch(e){toast(e.message);}finally{b.disabled=false;}});
+    $$('[data-delete-post]',root).forEach(b=>b.onclick=async()=>{try{await api('/posts/'+encodeURIComponent(b.dataset.deletePost),{method:'DELETE'});if(root.id==='recipe-detail')$('#recipe-dialog').close();await syncCommunity();}catch(e){toast(e.message);}});
+    $$('[data-comments]',root).forEach(b=>b.onclick=()=>openPost(b.dataset.comments).catch(e=>toast(e.message)));
+    $$('[data-report]',root).forEach(b=>b.onclick=async()=>{try{await api('/reports',{method:'POST',body:JSON.stringify({post_id:b.dataset.report,reason:'커뮤니티 검토 요청'})});toast('신고 접수');}catch(e){toast(e.message);}});
+    $$('[data-copy-combo]',root).forEach(b=>b.onclick=()=>{const url=new URL(location.href);url.hash=new URLSearchParams({suggestion:b.dataset.copyCombo}).toString();shareLink(url.href,'조합 추천 · 조합소');});
+  }
+  function switchTab(tab,scroll=true) {activeTab=tab;if(tab==='tips')history.replaceState(null,'','#community');else if(tab==='suggestions')history.replaceState(null,'','#recommendations');else if(tab==='rankings')history.replaceState(null,'','#rankings');else if(tab==='updates')history.replaceState(null,'','#updates');else history.replaceState(null,'',location.pathname+location.search);if(['tips','suggestions','rankings'].includes(tab))syncCommunity();activeCategory='전체';limit=1000;render();if(scroll)$('#browse').scrollIntoView({behavior:'smooth',block:'start'});}
+  function openDialog(dialog) {
+    $$('dialog[open]').forEach(d => {if(d!==dialog)d.close();});
+    if(!dialog.open)dialog.showModal();
+  }
+  function navigateRecipe(id) {
+    if(location.hash === `#recipe=${id}`)openRecipe(id);else location.hash=`recipe=${id}`;
+  }
+  function openRecipe(id) {
+    const r=byId.get(id);if(!r)return;
+    const related=allPosts().filter(p=>p.recipeId===id);
+    const storyMap = gameLinks.stories?.[`rec:${id}`] || {};
+    const storyUrl = String(storyMap[portalLang] || storyMap.en || storyMap.ko || '').trim();
+    const storyHtml = /^https?:\/\//i.test(storyUrl)
+      ? `<a class="button coral" href="${esc(storyUrl)}" target="_blank" rel="noopener" style="width:100%; justify-content:center; margin-top:8px; text-decoration:none;">${esc(pt('storyBtn'))} ↗</a>`
+      : '';
+    if (!isRecipeUnlocked(id)) {
+      const modeName = syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈';
+      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:70px;height:70px;border-radius:16px;background:#e4e4e7;font-size:2rem;">🔒</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div style="padding:14px; border:2px solid #18181b; border-radius:12px; background:#fefce8; margin:12px 0; font-size:0.9rem; line-height:1.5;"><b>🔒 미해금 레시피입니다.</b><br>현재 선택한 <b>${modeName}</b> 모드에서 아직 해금하지 않아 재료·비율이 비공개 처리되었습니다.<br>게임(<b>play.ksool.minibig.pw</b>)에서 먼저 조합에 성공한 뒤, <b>⚙️ 설정 → 진행도 내보내기</b> 링크로 기록을 가져와 보세요!</div>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener">🎮 게임하러 가기 ${uiIcon('arrowUpRight',16)}</a></div>`;
+      bindCardActions($('#recipe-detail'));
+      openDialog($('#recipe-dialog'));
+      return;
+    }
+    $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon">${icon(r,70)}</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="detail-formula">${r.items.map((i,index)=>`<span class="detail-ingredient">${r.requires_order?`${index+1}. `:''}${icon(ingredientFor(i),30)} ${esc(name(ingredientFor(i)))} <b>×${i.ratio}</b></span>`).join('<span>＋</span>')}</div>${r.requires_order?'<p class="detail-note">표시된 순서대로.</p>':''}<details class="hint-details"><summary>힌트</summary><p>${esc(r.unlock_hint || r.description)}</p></details>${storyHtml}<div class="detail-actions"><a class="button dark" href="${window.location.hostname === 'ksool.minibig.pw' ? 'https://play.ksool.minibig.pw/' : 'https://ksool.minibig.pw/'}" target="_blank" rel="noopener">K-술 ${uiIcon('arrowUpRight',16)}</a><button data-bookmark="r:${id}" aria-label="공략 저장" aria-pressed="${bookmarks.has(`r:${id}`)}">${uiIcon('bookmark',18)}</button><button id="share-recipe" aria-label="공략 링크 공유">${uiIcon('share',18)}</button><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${esc(p.body)}</p></div>`).join('')}`:''}`;
+    bindCardActions($('#recipe-detail'));
+    $('#share-recipe').onclick=()=>shareLink(new URL(`#recipe=${id}`,location.href).href,`${name(r)} 조합 공략 · 조합소`);
+    $('#write-related').onclick=()=>openCompose(id);
+    openDialog($('#recipe-dialog'));
+  }
+  async function openPost(id) {
+    const post=allPosts().find(p=>p.id===id);if(!post)return;
+    $('#recipe-detail').innerHTML=`<h2 style="font-size:25px;margin:23px 0;line-height:1.5">${esc(post.title)}</h2>${postCard(post)}`;
+    if(!post.example){
+      const data=await api(`/posts/${encodeURIComponent(id)}/comments`);
+      $('#recipe-detail').innerHTML+=`<div class="comments-list">${data.comments.map(c=>`<div><b>${esc(c.author)}</b><p>${esc(c.body)}</p></div>`).join('')}</div><form id="comment-form" class="comment-form"><input name="author" maxlength="16" placeholder="닉네임" aria-label="댓글 닉네임" value="${esc(localStorage.getItem('community-nickname')||'')}" required><input name="body" maxlength="500" placeholder="댓글" aria-label="댓글 내용" required><button class="button coral" aria-label="댓글 등록">${uiIcon('plus',16)}</button></form>`;
+      $('#comment-form').onsubmit=async event=>{event.preventDefault();const f=new FormData(event.target);try{await api(`/posts/${id}/comments`,{method:'POST',body:JSON.stringify({author:f.get('author').trim(),body:f.get('body').trim()})});await syncCommunity();await openPost(id);}catch(e){toast(e.message);}};
+    }
+    bindCardActions($('#recipe-detail'));openDialog($('#recipe-dialog'));
+  }
+  async function shareLink(url,title) {
+    try {
+      if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);toast('링크 복사 완료');}
+      else window.prompt('이 링크를 복사해 공유하세요.',url);
+    }catch(e){if(e.name!=='AbortError')window.prompt('이 링크를 복사해 공유하세요.',url);}
+  }
+  function sharePost(id) {
+    const p=allPosts().find(p=>p.id===id);if(!p)return;
+    const url=new URL(location.href);url.hash=new URLSearchParams(p.example?{note:id}:{thread:id}).toString();
+    shareLink(url.href,`${p.title} · 조합소`);
+  }
+  function openCompose(recipeId=null) {
+    $('#compose-error').textContent='';
+    if(recipeId)$('#post-recipe').value=String(recipeId);
+    openDialog($('#compose-dialog'));
+  }
+  function addCompositionRow() {
+    if($$('.composition-row').length>=6){toast('재료는 최대 6종류까지 넣을 수 있어요.');return;}
+    const row=document.createElement('div');row.className='composition-row';
+    row.innerHTML=`<select class="base-select" aria-label="조합 재료" required><option value="">재료 선택</option>${data.ingredients_base.map(i=>`<option value="${i.ingredient_id}">${esc(name(i))}</option>`).join('')}</select><select class="detail-select" aria-label="상세 재료"><option value="">기본</option></select><input type="number" aria-label="재료 개수" min="1" max="10" value="1" required><button type="button" aria-label="이 재료 삭제">×</button>`;
+    $('.base-select',row).onchange=()=>{const id=Number($('.base-select',row).value);$('.detail-select',row).innerHTML='<option value="">기본</option>'+data.ingredients_detail.filter(d=>d.base_ingredient_id===id).map(d=>`<option value="${d.detail_id}">${esc(name(d))}</option>`).join('');};
+    $('button',row).onclick=()=>row.remove();$('#composition-rows').append(row);
+  }
+  async function parseLink() {
+    if(location.hash.length>20000){toast('공유 링크가 너무 길어요.');return;}
+    if(location.hash==='#community'){activeTab='tips';render();return;}
+    if(location.hash==='#recommendations'){activeTab='suggestions';render();return;}
+    const params=new URLSearchParams(location.hash.slice(1));
+    if(params.has('suggestion')){activeTab='suggestions';query='';$('#search').value='';render();const target=[...document.querySelectorAll('[data-copy-combo]')].find(el=>el.dataset.copyCombo===params.get('suggestion'));if(target){target.closest('article').classList.add('shared-highlight');target.closest('article').scrollIntoView({block:'center'});}}else if(params.has('recipe')){
+      const id=Number(params.get('recipe'));
+      if(byId.has(id))openRecipe(id);else toast('이 조합을 찾지 못했어요.');
+    }else if(params.has('thread')){try{const {post}=await api('/posts/'+encodeURIComponent(params.get('thread')));if(!posts.some(p=>p.id===post.id))posts.unshift(post);activeTab='tips';render();await openPost(post.id);}catch(e){toast(e.message);}}else if(params.has('note'))openPost(params.get('note'));
+    else if(params.has('post')){
+      try{
+        const p=JSON.parse(params.get('post'));
+        if(!validatePost(p))throw new Error('invalid');
+        sharedPost={id:p.id,kind:p.kind,title:p.title,body:p.body,author:p.author,recipeId:p.recipeId,...(p.kind==='experiment'?{items:p.items}:{})};
+        activeTab='tips';activeCategory='전체';query='';$('#search').value='';render();openPost(p.id);
+      }catch(_){toast('올바른 공유 글을 찾지 못했어요.');}
+    }
+  }
+  $('#recipe-total').textContent=recipes.length;
+  syncFromSupabaseUser();
+  $('#hero-recipe-icon').innerHTML=icon(byId.get(1),48);
+  $$('[data-art]').forEach(el=>el.innerHTML=icon(ingredients.get(Number(el.dataset.art)),34));
+  $$('[data-ui-icon]').forEach(el=>el.innerHTML=uiIcon(el.dataset.uiIcon));
+  $$('[data-nav]').forEach(b=>b.onclick=()=>switchTab(b.dataset.nav));
+  $$('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab,false));
+  $$('[data-open-tip]').forEach(b=>b.onclick=()=>openPost(b.dataset.openTip));
+  $$('[data-compose]').forEach(b=>b.onclick=()=>openCompose());
+  $$('.dialog-close').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+  $$('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
+  $('#search').oninput=e=>{query=e.target.value;limit=1000;render();};
+  $('#sort').onchange=e=>{sort=e.target.value;limit=1000;render();};
+  $('#spoiler').onchange=e=>{showAnswers=e.target.checked;render();};
+  $('#load-more').onclick=()=>{limit+=9;render();};
+  $('#post-kind').onchange=e=>{$('#experiment-fields').hidden=e.target.value!=='experiment';if(e.target.value==='experiment'&&!$$('.composition-row').length){addCompositionRow();addCompositionRow();}$$('#composition-rows select, #composition-rows input').forEach(field=>field.disabled=e.target.value!=='experiment');};
+  $('#add-composition-row').onclick=addCompositionRow;
+  $('#compose-form').onsubmit=async e=>{
+    e.preventDefault();
+    const form=e.target;
+    const f=new FormData(form);
+    const entry={id:crypto.randomUUID ? crypto.randomUUID() : `post-${Date.now()}`,kind:f.get('kind'),title:f.get('title').trim(),body:f.get('body').trim(),author:f.get('author').trim(),recipeId:f.get('recipe')?Number(f.get('recipe')):null};
+    if(entry.kind==='experiment')entry.items=$$('.composition-row').map(row=>({ingredient_id:Number($('.base-select',row).value),detail_id:$('.detail-select',row).value?Number($('.detail-select',row).value):null,ratio:Number($('input',row).value)}));
+    if(!validatePost(entry)){$('#compose-error').textContent=entry.kind==='experiment'?'제목과 내용을 입력하고, 중복되지 않는 재료를 2종류 이상 골라 개수(1~10)를 확인해주세요.':'공백만 입력할 수 없어요. 제목·닉네임·내용을 확인해주세요.';return;}
+    const submit=$('[type=submit]',form);submit.disabled=true;
+    try{const result=await api('/posts',{method:'POST',body:JSON.stringify(entry)});try{localStorage.setItem('community-nickname',entry.author);}catch(_){}await syncCommunity();}
+    catch(error){$('#compose-error').textContent=error.message;submit.disabled=false;return;}
+    submit.disabled=false;
+    form.reset();$('#experiment-fields').hidden=true;$('#composition-rows').innerHTML='';
+    $('#compose-dialog').close();activeTab='tips';query='';$('#search').value='';switchTab('tips');
+    toast('공유 완료');
+  };
+  document.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&!$('dialog[open]')){e.preventDefault();$('#search').focus();$('#browse').scrollIntoView({behavior:'smooth'});}});
+  window.addEventListener('hashchange',()=>{if(location.hash==='#home'){window.scrollTo({top:0,behavior:'smooth'});return;}parseLink();});
+  render();
+  api('/session').then(()=>syncCommunity()).then(()=>parseLink()).catch(()=>{serverConnected=false;$('#connection-status').textContent='○ 서버 연결 실패';});
+  $('#refresh-community').onclick=()=>syncCommunity();
+  const langSelect = $('#portal-lang-select');
+  if (langSelect) {
+    langSelect.value = portalLang;
+    langSelect.onchange = e => {
+      const next = e.target.value;
+      if (SUPPORTED_LANGS.includes(next)) {
+        portalLang = next;
+        try { localStorage.setItem('ksool_lang_v1', next); } catch (_) {}
+        render();
+      }
+    };
+  }
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&['tips','suggestions'].includes(activeTab)&&!$('dialog[open]'))syncCommunity();});
+})();
