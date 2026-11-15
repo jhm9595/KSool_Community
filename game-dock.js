@@ -4,9 +4,7 @@
   const close=document.getElementById('close-game-dock');
   const frame=document.getElementById('game-frame');
   const extLink=document.getElementById('game-external-link');
-  const gameUrl=(window.location.hostname==='ksool.minibig.pw')
-    ? 'https://play.ksool.minibig.pw/'
-    : 'https://ksool.minibig.pw/';
+  const gameUrl='https://play.ksool.minibig.pw/';
   if(frame && frame.src!==gameUrl) frame.src=gameUrl;
   if(extLink) extLink.href=gameUrl;
   const wide=window.matchMedia('(min-width: 1100px)');
