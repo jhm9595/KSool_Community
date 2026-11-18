@@ -1,3 +1,25 @@
+# 운영 배포
+
+현재 운영은 Google Cloud Run입니다. 아래 Cloudflare 안내는 이전 배포 대안이며 실제 운영 설정이 아닙니다.
+
+- GCP 프로젝트: `ksool-web-game`
+- 리전: `us-central1`
+- 커뮤니티 서비스: `ksool-community`
+- 커뮤니티 주소: https://ksool.minibig.pw/
+- 게임 주소: https://play.ksool.minibig.pw/ (별도 서비스, 이 저장소로 배포하지 않음)
+
+```sh
+npm test
+npm run build
+gcloud run deploy ksool-community --source . --project ksool-web-game --region us-central1 --quiet
+```
+
+GitHub Release만으로 운영 배포가 실행되지는 않습니다. 현재 자동 배포 workflow가 없으므로 Cloud Run 배포 및 운영 URL의 산출물 확인이 별도로 필요합니다. `.gcloudignore`는 로컬 DB·환경 파일·Git 정보를 업로드에서 제외합니다.
+
+현재 Dockerfile의 SQLite 위치는 `/tmp`이며 Cloud Run 인스턴스 로컬 임시 저장소입니다. 재배포·재시작·다중 인스턴스 간 게시글 영속성을 보장하지 않습니다. 이번 변경은 저장소를 이전하지 않습니다. 장기 운영에는 외부 영구 DB로 이전이 필요합니다.
+
+## 이전 Cloudflare 배포 대안
+
 # 배포와 비용
 
 검증 기준: 2026-11-01. Cloudflare Workers + D1 Free 플랜을 기본으로 사용합니다. 유료 플랜으로 전환하거나 결제 수단을 등록하는 작업은 하지 않았습니다.

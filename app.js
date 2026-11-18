@@ -72,7 +72,7 @@
   const helpful = new Set(Array.isArray(stored.helpful) ? stored.helpful.filter(i => typeof i === 'string') : []);
   const progressStorageKey = 'ksool-community-progress-v1';
   const FREE_STARTER_INGREDIENTS = [202, 206, 205, 701, 301]; // 물, 눈, 공기, 설탕, 레몬
-  const normalizeRecIds = (arr) => (Array.isArray(arr) ? arr.map(v => Number(String(v).replace(/^rec:/, ''))).filter(n => Number.isInteger(n) && n > 0) : []);
+  const normalizeRecIds = (arr) => (Array.isArray(arr) ? [...new Set(arr.map(v => Number(String(v).replace(/^rec:/, ''))).filter(n => byId.has(n)))] : []);
   const normalizeIngIds = (arr) => (Array.isArray(arr) ? arr.map(v => Number(String(v).replace(/^ing:/, ''))).filter(n => Number.isInteger(n) && n > 0) : []);
   function decodeSyncInput(rawInput) {
     const text = String(rawInput || '').trim();
@@ -133,40 +133,63 @@
 
   function mergeProgressRow(row) {
     if (!row) return;
-    const tycoonStateRec = normalizeRecIds(row.tycoon_state?.unlockedRecipeIds);
-    const quizStateRec = normalizeRecIds(row.quiz_state?.unlockedRecipeIds);
-    syncedProgress.tycoon = Array.from(new Set([...syncedProgress.tycoon, ...normalizeRecIds(row.tycoon_unlocked), ...tycoonStateRec]));
-    syncedProgress.quiz = Array.from(new Set([...syncedProgress.quiz, ...normalizeRecIds(row.quiz_unlocked), ...quizStateRec]));
-    const tycoonStateIng = normalizeIngIds([...(row.tycoon_state?.unlockedIngredientIds || []), ...(row.tycoon_state?.purchasedIngredientIds || [])]);
-    const quizStateIng = normalizeIngIds([...(row.quiz_state?.unlockedIngredientIds || []), ...(row.quiz_state?.purchasedIngredientIds || [])]);
-    syncedProgress.tycoonIngredients = Array.from(new Set([...syncedProgress.tycoonIngredients, ...tycoonStateIng]));
-    syncedProgress.quizIngredients = Array.from(new Set([...syncedProgress.quizIngredients, ...quizStateIng]));
-    if (!syncedProgress.quiz.length && syncedProgress.tycoon.length) syncedProgress.mode = 'tycoon';
+    // A cloud row is a snapshot, not a delta. Do not retain another account's records.
+    syncedProgress.tycoon = normalizeRecIds(row.tycoon_state?.unlockedRecipeIds ?? row.tycoon_unlocked);
+    syncedProgress.quiz = normalizeRecIds(row.quiz_state?.unlockedRecipeIds ?? row.quiz_unlocked);
+    syncedProgress.tycoonIngredients = normalizeIngIds([...(row.tycoon_state?.unlockedIngredientIds || []), ...(row.tycoon_state?.purchasedIngredientIds || [])]);
+    syncedProgress.quizIngredients = normalizeIngIds([...(row.quiz_state?.unlockedIngredientIds || []), ...(row.quiz_state?.purchasedIngredientIds || [])]);
     saveSyncedProgress();
   }
 
+  let progressRequest = false;
+  let progressSyncStarted = false;
+  let lastGameMessageAt = 0;
+  let followGameMode = true;
+  let currentGameMode = null;
+  let progressEpoch = 0;
+  const gameOrigin = 'https://play.ksool.minibig.pw';
+  let progressRequestId = crypto.randomUUID();
+  let progressReceiver = window.KSoolProgressProtocol.createReceiver(progressRequestId);
+  const hasLiveGame = () => lastGameMessageAt > 0 && Date.now() - lastGameMessageAt < 15000;
+  let progressStatus = '저장된 기록 · 실시간 게임 연결 대기';
+  async function refreshCloudProgress() {
+    if (!sbClient || !sbUser || progressRequest || document.hidden || hasLiveGame()) return;
+    progressRequest = true;
+    const userId = sbUser.id;
+    const requestEpoch = progressEpoch;
+    try {
+      const { data: row, error } = await sbClient.from('ksool_user_progress')
+        .select('tycoon_state,quiz_state,tycoon_unlocked,quiz_unlocked').eq('user_id', userId).maybeSingle();
+      if (userId !== sbUser?.id || hasLiveGame() || requestEpoch !== progressEpoch) return;
+      if (error) throw error;
+      if (row) mergeProgressRow(row);
+      progressStatus = row ? '클라우드 저장 기록 · 5초마다 확인 (게임 저장 후 반영)' : '클라우드 기록 없음 · 게임에서 같은 계정으로 저장해 주세요';
+    } catch (_) { progressStatus = '클라우드 갱신 실패 · 기존 기록 표시 중'; }
+    finally { progressRequest = false; render(); }
+  }
   async function syncFromSupabaseUser() {
     if (!sbClient) return;
-    try {
-      const { data: sessionData } = await sbClient.auth.getSession();
-      sbUser = sessionData?.session?.user || null;
-      if (sbUser) {
-        const { data: row } = await sbClient.from('ksool_user_progress').select('tycoon_state,quiz_state,tycoon_unlocked,quiz_unlocked').eq('user_id', sbUser.id).maybeSingle();
-        if (row) mergeProgressRow(row);
+    if (progressSyncStarted) return refreshCloudProgress();
+    progressSyncStarted = true;
+    const { data } = await sbClient.auth.getSession();
+    sbUser = data?.session?.user || null;
+    await refreshCloudProgress();
+    sbClient.auth.onAuthStateChange((_event, session) => {
+      const nextUser = session?.user || null;
+      const changed = nextUser?.id !== sbUser?.id;
+      sbUser = nextUser;
+      if (changed && !hasLiveGame()) {
+        progressEpoch++;
+        syncedProgress = { mode: syncedProgress.mode, tycoon: [], quiz: [], tycoonIngredients: [], quizIngredients: [] };
+        saveSyncedProgress();
+        progressStatus = '계정 변경 · 기록 확인 중';
+        // Run outside the auth callback to avoid locking the auth client.
+        setTimeout(() => { refreshCloudProgress(); render(); }, 0);
       }
-      render();
-      sbClient.auth.onAuthStateChange(async (_event, session) => {
-        const nextUser = session?.user || null;
-        const changed = (nextUser?.id || null) !== (sbUser?.id || null);
-        sbUser = nextUser;
-        if (sbUser && changed) {
-          const { data: row } = await sbClient.from('ksool_user_progress').select('tycoon_state,quiz_state,tycoon_unlocked,quiz_unlocked').eq('user_id', sbUser.id).maybeSingle();
-          if (row) mergeProgressRow(row);
-          toast(`✅ Google 계정 연동 완료 (${sbUser.email || '로그인됨'})`);
-        }
-        render();
-      });
-    } catch (_) {}
+    });
+    setInterval(refreshCloudProgress, 5000);
+    window.addEventListener('focus', refreshCloudProgress);
+    document.addEventListener('visibilitychange', refreshCloudProgress);
   }
 
   async function loadRemoteGameData() {
@@ -222,27 +245,48 @@
     return '';
   };
 
-  window.addEventListener('message', (event) => {
-    if (event.origin !== 'https://play.ksool.minibig.pw') return;
+  function requestGameProgress() {
+    $('#game-frame')?.contentWindow?.postMessage({type: 'KSOOL_PROGRESS_REQUEST', version: 1, requestId: progressRequestId}, gameOrigin);
+  }
+  $('#game-frame')?.addEventListener('load', () => {
+    progressRequestId = crypto.randomUUID();
+    progressReceiver = window.KSoolProgressProtocol.createReceiver(progressRequestId);
+    lastGameMessageAt = 0;
+    progressEpoch++;
+    progressStatus = '게임창 연결 대기 · 마지막 수신 기록 표시';
+    requestGameProgress();
+    render();
+  });
+  window.addEventListener('message', event => {
+    if (event.origin !== gameOrigin || event.source !== $('#game-frame')?.contentWindow) return;
     const msg = event.data;
-    if (!msg || typeof msg !== 'object') return;
-    if (msg.type === 'KSOOL_SYNC_V1' || msg.type === 'KSOOL_PROGRESS') {
-      const parsed = msg.token ? decodeSyncInput(msg.token) : {
-        tycoon: normalizeRecIds(msg.tycoon?.unlockedRecipeIds || msg.tycoon_unlocked),
-        quiz: normalizeRecIds(msg.quiz?.unlockedRecipeIds || msg.quiz_unlocked),
-        tycoonIngredients: normalizeIngIds([...(msg.tycoon?.unlockedIngredientIds || []), ...(msg.tycoon?.purchasedIngredientIds || [])]),
-        quizIngredients: normalizeIngIds([...(msg.quiz?.unlockedIngredientIds || []), ...(msg.quiz?.purchasedIngredientIds || [])])
-      };
-      if (parsed) {
-        syncedProgress.tycoon = Array.from(new Set([...syncedProgress.tycoon, ...parsed.tycoon]));
-        syncedProgress.quiz = Array.from(new Set([...syncedProgress.quiz, ...parsed.quiz]));
-        syncedProgress.tycoonIngredients = Array.from(new Set([...syncedProgress.tycoonIngredients, ...(parsed.tycoonIngredients || [])]));
-        syncedProgress.quizIngredients = Array.from(new Set([...syncedProgress.quizIngredients, ...(parsed.quizIngredients || [])]));
-        saveSyncedProgress();
+    if (!progressReceiver.accept(msg)) return;
+    const next = {
+      mode: followGameMode ? msg.mode : syncedProgress.mode,
+      tycoon: normalizeRecIds(msg.tycoon.unlockedRecipeIds),
+      quiz: normalizeRecIds(msg.quiz.unlockedRecipeIds),
+      tycoonIngredients: normalizeIngIds([...msg.tycoon.unlockedIngredientIds, ...msg.tycoon.purchasedIngredientIds]),
+      quizIngredients: normalizeIngIds([...msg.quiz.unlockedIngredientIds, ...msg.quiz.purchasedIngredientIds])
+    };
+    const changed = JSON.stringify(next) !== JSON.stringify(syncedProgress) || !hasLiveGame();
+    syncedProgress = next;
+    currentGameMode = msg.mode;
+    lastGameMessageAt = Date.now();
+    progressEpoch++;
+    progressStatus = '게임창 연결됨 · 현재 플레이 기록';
+    event.source.postMessage({type:'KSOOL_PROGRESS_ACK', version:1, requestId:progressRequestId, sequence:msg.sequence}, gameOrigin);
+    if (changed) { saveSyncedProgress(); render(); }
+  });
+  setInterval(() => {
+    if (!hasLiveGame()) {
+      if (lastGameMessageAt) {
+        lastGameMessageAt = 0;
+        progressStatus = '게임창 연결 끊김 · 마지막 수신 기록 표시';
         render();
       }
+      requestGameProgress();
     }
-  });
+  }, 5000);
   (() => {
     try {
       const sp = new URLSearchParams(location.search);
@@ -250,6 +294,7 @@
       if (syncToken) {
         const parsed = decodeSyncInput(syncToken);
         if (parsed) {
+          progressEpoch++;
           syncedProgress.tycoon = parsed.tycoon;
           syncedProgress.quiz = parsed.quiz;
           syncedProgress.tycoonIngredients = parsed.tycoonIngredients || [];
@@ -363,6 +408,10 @@
   function suggestionCard(s,index){
     const badge = s.fromGame ? '🎮 게임 추천' : '조합 추천';
     return `<article class="suggestion-card" style="--card-color:${colors[index%colors.length]}"><div class="suggestion-badge">${badge}</div><div class="card-formula">${formula(s.items,true)}</div><div class="suggestion-actions">${voteControls(s)}<button data-copy-combo="${esc(s.suggestion_key)}" aria-label="조합 링크 공유">${uiIcon('share',16)}</button></div></article>`;
+  }
+  function boardMarkup(rows) {
+    if (!rows.length) return '';
+    return `<div class="community-board"><div class="board-head"><span>분류</span><span>제목</span><span>작성자</span><span>추천</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind">${p.kind === 'experiment' ? '새 조합' : '플레이 팁'}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ' · 예시' : ''}</small></button><span class="board-author">${esc(p.author)}</span><span class="board-votes">${p.upvotes || 0}</span></article>`).join('')}</div>`;
   }
   function postCard(p) {
     const saved = bookmarks.has(`t:${p.id}`);
@@ -499,6 +548,7 @@
     bar.innerHTML = `
       <div class="sync-bar-top">
         <div class="sync-mode-group">
+          <label class="sync-follow"><input id="follow-game-mode" type="checkbox" ${followGameMode ? 'checked' : ''}> 게임 모드 따라가기</label>
           <strong style="font-size:12px;">🔐 진행도 기준 스포일러 방지:</strong>
           <button type="button" data-progress-mode="quiz" class="sync-mode-btn ${isQuiz ? 'is-active' : ''}">🎯 퀴즈 (${syncedProgress.quiz.length}/${recipes.length})</button>
           <button type="button" data-progress-mode="tycoon" class="sync-mode-btn ${!isQuiz ? 'is-active' : ''}">🏪 타이쿤 (${syncedProgress.tycoon.length}/${recipes.length})</button>
@@ -510,7 +560,7 @@
           ${hasAny ? `<button type="button" id="community-sync-clear-btn" class="sync-secondary-btn">기록 초기화</button>` : ''}
         </div>
       </div>
-      <div class="sync-meter-wrap">
+      <p class="sync-status" role="status">${esc(progressStatus)}${!followGameMode && currentGameMode && currentGameMode !== syncedProgress.mode ? ' · 게임과 다른 모드를 보는 중' : ''}</p><div class="sync-meter-wrap">
         <div class="sync-meter" aria-label="해금 진행률"><div class="sync-meter-fill" style="width:${pct}%"></div></div>
         <span class="sync-meter-label">${unlockedCount}/${recipes.length} (${pct}%) 해금됨 · 사용 가능 재료 ${getAvailableIngredients().size}종</span>
       </div>
@@ -522,7 +572,13 @@
         </div>
       </details>
     `;
+    $('#follow-game-mode', bar).onchange = event => {
+      followGameMode = event.target.checked;
+      if (followGameMode && currentGameMode && hasLiveGame()) syncedProgress.mode = currentGameMode;
+      saveSyncedProgress(); render();
+    };
     $$('[data-progress-mode]', bar).forEach(b => b.onclick = () => {
+      followGameMode = false;
       syncedProgress.mode = b.dataset.progressMode === 'tycoon' ? 'tycoon' : 'quiz';
       saveSyncedProgress();
       render();
@@ -533,6 +589,7 @@
       importBtn.onclick = () => {
         const parsed = decodeSyncInput(importInput.value);
         if (!parsed) { toast('올바른 공유 링크 또는 KSOOL_SYNC_V1 코드를 입력해 주세요.'); return; }
+        progressEpoch++;
         syncedProgress.tycoon = parsed.tycoon;
         syncedProgress.quiz = parsed.quiz;
         syncedProgress.tycoonIngredients = parsed.tycoonIngredients || [];
@@ -603,7 +660,7 @@
     applyPortalLangUi();
     renderHeaderAuthButton();
     renderProgressSyncBar();
-    renderHubOverview();
+    $('#hub-overview').hidden = true;
     $('#recipe-grid').classList.toggle('community-view',activeTab==='tips');
     $('#recipe-grid').classList.toggle('suggestions-view',activeTab==='suggestions');
     $$('[data-tab]').forEach(b => b.classList.toggle('selected', b.dataset.tab === activeTab));
@@ -655,19 +712,12 @@
       : [];
     const totalCount = matches.length + matchingPosts.length + matchingSuggestions.length;
     $('#result-count').innerHTML = `<b>${totalCount}</b> ${activeTab==='tips'?'TIPS':activeTab==='suggestions'?'COMBOS':'RECIPES'}`;
-    const effLimit = query.trim() ? 1000 : limit;
+    const effLimit = Infinity;
     const spoilerBanner = activeTab === 'suggestions' && hiddenSugCount > 0
       ? `<div class="spoiler-shield" style="grid-column:1/-1;"><span>🔒 아직 해금하지 않은 재료가 포함된 추천 조합 <b>${hiddenSugCount}개</b>는 스포일러 방지를 위해 숨겨져 있습니다.</span><a href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener" style="font-weight:850;color:var(--ink);">게임에서 재료 해금하기 ↗</a></div>`
       : '';
-    $('#recipe-grid').innerHTML = spoilerBanner + (matches.slice(0,effLimit).map(recipeCard).join('') + matchingPosts.slice(0,effLimit).map(postCard).join('') + matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 필터로 찾아보세요.'}</p></div>`);
-    const loadMoreBtn = $('#load-more');
-    const visibleItemsCount = activeTab === 'tips' ? matchingPosts.length : activeTab === 'suggestions' ? 0 : matches.length;
-    if (!query.trim() && visibleItemsCount > effLimit) {
-      loadMoreBtn.hidden = false;
-      loadMoreBtn.textContent = `더 보기 (${effLimit} / ${visibleItemsCount})`;
-    } else {
-      loadMoreBtn.hidden = true;
-    }
+    $('#recipe-grid').innerHTML = spoilerBanner + (matches.slice(0,effLimit).map(recipeCard).join('') + (activeTab === 'tips' ? boardMarkup(matchingPosts) : matchingPosts.map(postCard).join('')) + matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 필터로 찾아보세요.'}</p></div>`);
+    $('#load-more').hidden = true;
     if(!$('#post-recipe').dataset.ready){$('#post-recipe').innerHTML = '<option value="">선택하지 않음</option>' + recipes.map(r => `<option value="${r.recipe_id}">${esc(r.formatted_number)} · ${esc(name(r))}</option>`).join('');$('#post-recipe').dataset.ready='1';}
     bindCardActions($('#recipe-grid'));
     $$('[data-category]').forEach(b => b.onclick = () => {activeCategory=b.dataset.category;limit=16;render();});
@@ -816,7 +866,7 @@
   window.addEventListener('hashchange',()=>{if(location.hash==='#home'){window.scrollTo({top:0,behavior:'smooth'});return;}parseLink();});
   render();
   api('/session').then(()=>syncCommunity()).then(()=>parseLink()).catch(()=>{serverConnected=false;$('#connection-status').textContent='○ 서버 연결 실패';});
-  $('#refresh-community').onclick=()=>{syncCommunity();loadRemoteGameData();};
+  $('#refresh-community').onclick=()=>{syncCommunity();loadRemoteGameData();refreshCloudProgress();};
   const langSelect = $('#portal-lang-select');
   if (langSelect) {
     langSelect.value = portalLang;

@@ -68,3 +68,7 @@ const snapshot = client.exportGameSnapshot();
 출처는 `wrangler.jsonc`의 `GAME_ORIGINS`에 정확히 지정합니다. 다른 출처에서 요청할 때 `credentials: 'include'`가 필요합니다. `game.example.com` / `community.example.com`처럼 같은 사이트의 하위 도메인을 권장합니다. 서로 다른 사이트 간 익명 쿠키 공유는 브라우저의 제3자 쿠키 제한으로 보장되지 않으므로 실제 운영 도메인과 인증 방식을 연결 시 확정해야 합니다.
 
 `is_applied`는 기존 게임 스키마와 호환되지만 관리자 도감 편입은 현재 외부 API에 노출하지 않습니다.
+
+## 2026-11-17 진행도 연동 명세
+
+게임 개발자 전달은 [GAME_DEVELOPER_HANDOFF.md](GAME_DEVELOPER_HANDOFF.md)를 기준으로 합니다. 이 문서가 이전 1초 저장소 폴링 초안을 대체합니다. `game-progress-bridge.js`는 REQUEST/PROGRESS/ACK v1 송신 참고 코드이며, 게임 개발자가 초기화와 변경 완료 지점에서 publish를 호출해야 합니다. 커뮤니티에는 수신 로직만 설치했습니다. 운영 배포 및 실제 게임 연결 검증은 미완료입니다.

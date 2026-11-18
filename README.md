@@ -56,3 +56,5 @@ npx wrangler deploy --dry-run --outdir .worker-build
 ## 배포 및 비용
 
 [배포·비용 안내](DEPLOYMENT.md). 지금은 로컬 실행과 배포 빌드만 검증했고, Cloudflare 계정에 배포하지 않았습니다. `wrangler.jsonc`의 0으로 된 DB ID는 실제 생성한 ID로 교체해야 합니다. 게임 이동 및 우측 모바일 패널은 https://jhm9595.github.io/KSool_Gemini/ 를 사용합니다.
+
+2026-11-17 점검: 원격 저장소 연결을 복구하고 커뮤니티 게시판, 전체 목록 표시, 진행도 정규화 및 클라우드 주기 갱신을 수정했습니다. 게스트 게임창의 즉시 반영에는 실제 게임 배포 소스에 `integration/game-progress-bridge.js` 설치가 필요합니다. 자세한 내용은 integration/README.md를 확인하세요.
