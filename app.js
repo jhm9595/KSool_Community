@@ -1130,7 +1130,7 @@
     }
 
     // Default: 'recipes' or 'saved'
-    const cats = ['전체', '기초 재료', '소맥·폭탄주', '막걸리', '과일·편의점', '특산 명주'];
+    const cats = ['전체', '기초 재료', '과일·편의점', '소맥·폭탄주', '막걸리', '특산 명주'];
     root.innerHTML = `
       ${searchToolbarMarkup(pt('search'), false)}
       <div class="catalog-shell">
