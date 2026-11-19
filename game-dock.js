@@ -8,13 +8,20 @@
   if(frame && frame.src!==gameUrl) frame.src=gameUrl;
   if(extLink) extLink.href=gameUrl;
   const wide=window.matchMedia('(min-width: 1100px)');
+  const header=document.querySelector('.header');
   let chosen=false;
+  function syncHeaderOffset(){
+    if(header)document.documentElement.style.setProperty('--header-height',`${header.getBoundingClientRect().height}px`);
+  }
   function setOpen(open,restoreFocus=false){
+    syncHeaderOffset();
     dock.hidden=!open;
     document.body.classList.toggle('game-dock-open',open);
     toggle.setAttribute('aria-expanded',String(open));
     if(restoreFocus)toggle.focus();
   }
+  window.addEventListener('resize',syncHeaderOffset);
+  syncHeaderOffset();
   toggle.addEventListener('click',()=>{chosen=true;setOpen(dock.hidden);});
   close.addEventListener('click',()=>{chosen=true;setOpen(false,true);});
   wide.addEventListener('change',event=>{if(!chosen)setOpen(event.matches);});

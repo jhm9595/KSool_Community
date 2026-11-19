@@ -72,11 +72,8 @@ body{--game-dock-width:400px}
 .phone-home:after{content:'';position:absolute;width:85px;height:3px;left:50%;bottom:5px;transform:translateX(-50%);background:#758096;border-radius:4px}
 @media(min-width:1100px){body.game-dock-open .page{max-width:1120px;margin-left:auto;margin-right:auto;padding-right:calc(var(--game-dock-width) + 35px)}body.game-dock-open .compact-banner{min-height:80px;padding:12px 17px}body.game-dock-open .banner-icons{gap:10px}body.game-dock-open .banner-icons>span{width:40px;height:40px}body.game-dock-open .banner-icons>span svg{max-width:34px;max-height:34px}body.game-dock-open .banner-count b{font-size:27px}body.game-dock-open .recipe-grid{grid-template-columns:repeat(auto-fill,minmax(225px,1fr))}body.game-dock-open .recipe-grid.community-view{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}body.game-dock-open .recipe-grid.suggestions-view{display:flex}}
 @media(min-width:1600px){body{--game-dock-width:410px}.game-dock{right:21px}body.game-dock-open .page{max-width:1420px;padding-right:calc(var(--game-dock-width) + 41px)}body.game-dock-open .recipe-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}}
-@media(max-width:1099px){.game-dock{top:76px;bottom:14px;right:50%;transform:translateX(50%);width:min(400px,calc(100vw - 28px));box-shadow:5px 5px 0 #191919}body.game-dock-open .page{visibility:hidden;pointer-events:none}body.game-dock-open{overflow:hidden}.game-dock .game-phone{border-width:4px}}
-@media(max-width:650px){.game-dock{top:72px;bottom:10px;width:min(390px,calc(100vw - 20px))}.game-link{gap:4px}.game-link>.ui-icon{width:13px}}
-.game-dock{height:min(880px,calc(100dvh - 99px));bottom:auto}
-@media(max-width:1099px){.game-dock{height:calc(100dvh - 90px);bottom:14px}}
-@media(max-width:650px){.game-dock{height:calc(100dvh - 82px);bottom:10px}}
+@media(max-width:1099px){.game-dock{top:calc(var(--header-height, 74px) + 10px);bottom:auto;height:calc(100dvh - var(--header-height, 74px) - 22px);right:50%;transform:translateX(50%);width:min(400px,calc(100vw - 24px));box-shadow:5px 5px 0 #191919}body.game-dock-open .page{visibility:hidden;pointer-events:none}body.game-dock-open{overflow:hidden}.game-dock .game-phone{border-width:4px}}
+@media(max-width:650px){.game-dock{top:calc(var(--header-height, 108px) + 8px);bottom:auto;height:calc(100dvh - var(--header-height, 108px) - 18px);width:min(390px,calc(100vw - 20px))}.game-link{gap:4px}.game-link>.ui-icon{width:13px}}
 
 /* Neo-brutalist portal enhancements */
 .header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
@@ -175,7 +172,7 @@ body.game-dock-open .recipe-grid.community-view { display:block; }
   .board-head, .board-row { grid-template-columns:64px minmax(0,1fr) 42px; gap:8px; padding:9px; }
   .board-head > :nth-child(3), .board-author { display:none; }
 }
-@media(max-width:820px){
+@media(max-width:960px){
   html,body{max-width:100%;overflow-x:hidden}
   .header-inner{flex-wrap:wrap!important;padding:10px 12px!important;gap:8px!important;min-height:0!important}
   .brand{margin-right:auto}
