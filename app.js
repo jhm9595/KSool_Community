@@ -314,6 +314,18 @@
     {id:'spoiler',kind:'tip',title:'다시 볼 조합은 책갈피',body:'카드 오른쪽 위 책갈피를 누르면 한곳에 모아볼 수 있어요.',author:'조합소 안내',recipeId:null,example:true}
   ];
   let sharedPost = null;
+  const STAGE_META = {
+    1: { code: 'STAGE 1', title: '길거리 무알콜 노점' },
+    2: { code: 'STAGE 2', title: '이모네 포장마차' },
+    3: { code: 'STAGE 3', title: '골목 전통 주점' },
+    4: { code: 'STAGE 4', title: '크래프트 비어 펍' },
+    5: { code: 'STAGE 5', title: '스카이라인 라운지 바' },
+    6: { code: 'STAGE 6', title: '사이버펑크 미래도시 바' }
+  };
+  let activeViewMode = (() => {
+    try { return localStorage.getItem('ksool-recipe-view-mode') === 'stage' ? 'stage' : 'grouped'; } catch (_) { return 'grouped'; }
+  })();
+  let showManualCodeInput = false;
   let activeTab = 'recipes', activeCategory = '전체', activeUnlockFilter = 'all', query = '', sort = 'recommended', limit = 16, showAnswers = true;
   const revealedSpoilers = new Set();
   let toastTimer;
@@ -544,33 +556,25 @@
     const isQuiz = syncedProgress.mode !== 'tycoon';
     const unlockedCount = isQuiz ? syncedProgress.quiz.length : syncedProgress.tycoon.length;
     const pct = Math.round((unlockedCount / Math.max(1, recipes.length)) * 100);
-    const hasAny = syncedProgress.quiz.length > 0 || syncedProgress.tycoon.length > 0;
     bar.innerHTML = `
-      <div class="sync-bar-top">
+      <div class="sync-inline-row">
         <div class="sync-mode-group">
-          <label class="sync-follow"><input id="follow-game-mode" type="checkbox" ${followGameMode ? 'checked' : ''}> 게임 모드 따라가기</label>
-          <strong style="font-size:12px;">🔐 진행도 기준 스포일러 방지:</strong>
-          <button type="button" data-progress-mode="quiz" class="sync-mode-btn ${isQuiz ? 'is-active' : ''}">🎯 퀴즈 (${syncedProgress.quiz.length}/${recipes.length})</button>
-          <button type="button" data-progress-mode="tycoon" class="sync-mode-btn ${!isQuiz ? 'is-active' : ''}">🏪 타이쿤 (${syncedProgress.tycoon.length}/${recipes.length})</button>
+          <button type="button" data-progress-mode="quiz" class="sync-mode-btn ${isQuiz ? 'is-active' : ''}">🎯 퀴즈 ${syncedProgress.quiz.length}/${recipes.length}</button>
+          <button type="button" data-progress-mode="tycoon" class="sync-mode-btn ${!isQuiz ? 'is-active' : ''}">🏪 타이쿤 ${syncedProgress.tycoon.length}/${recipes.length}</button>
+          <label class="sync-follow" style="font-size:11px;display:inline-flex;align-items:center;gap:4px;margin-left:4px;"><input id="follow-game-mode" type="checkbox" ${followGameMode ? 'checked' : ''}> 게임 연동</label>
         </div>
-        <div class="sync-user-group">
-          ${sbClient ? (sbUser
-            ? `<button type="button" id="community-google-logout-btn" class="sync-secondary-btn">☁️ ${esc(sbUser.email || 'Google')} · 로그아웃</button>`
-            : `<button type="button" id="community-google-login-btn" class="sync-google-btn">G Google 계정으로 게임 데이터 연동</button>`) : ''}
-          ${hasAny ? `<button type="button" id="community-sync-clear-btn" class="sync-secondary-btn">기록 초기화</button>` : ''}
+        <div class="sync-meter-wrap">
+          <div class="sync-meter" aria-label="해금 진행률"><div class="sync-meter-fill" style="width:${pct}%"></div></div>
+          <span class="sync-meter-label">${pct}% (${getAvailableIngredients().size}종)</span>
         </div>
+        <button type="button" id="toggle-manual-code-btn" class="sync-code-toggle" aria-expanded="${showManualCodeInput}">코드 입력</button>
       </div>
-      <p class="sync-status" role="status">${esc(progressStatus)}${!followGameMode && currentGameMode && currentGameMode !== syncedProgress.mode ? ' · 게임과 다른 모드를 보는 중' : ''}</p><div class="sync-meter-wrap">
-        <div class="sync-meter" aria-label="해금 진행률"><div class="sync-meter-fill" style="width:${pct}%"></div></div>
-        <span class="sync-meter-label">${unlockedCount}/${recipes.length} (${pct}%) 해금됨 · 사용 가능 재료 ${getAvailableIngredients().size}종</span>
-      </div>
-      <details class="sync-manual-details">
-        <summary>게임(play.ksool.minibig.pw)에서 Google 로그인 없이 수동 코드로 가져오기 ▾</summary>
+      ${showManualCodeInput ? `
         <div class="sync-manual-form">
           <input id="community-sync-input" type="text" placeholder="게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드 붙여넣기">
-          <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:34px;padding:6px 12px;">📥 가져오기</button>
+          <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:32px;padding:5px 12px;">📥 가져오기</button>
         </div>
-      </details>
+      ` : ''}
     `;
     $('#follow-game-mode', bar).onchange = event => {
       followGameMode = event.target.checked;
@@ -583,6 +587,10 @@
       saveSyncedProgress();
       render();
     });
+    const toggleCodeBtn = $('#toggle-manual-code-btn', bar);
+    if (toggleCodeBtn) {
+      toggleCodeBtn.onclick = () => { showManualCodeInput = !showManualCodeInput; render(); };
+    }
     const importBtn = $('#community-sync-import-btn', bar);
     const importInput = $('#community-sync-input', bar);
     if (importBtn && importInput) {
@@ -595,79 +603,97 @@
         syncedProgress.tycoonIngredients = parsed.tycoonIngredients || [];
         syncedProgress.quizIngredients = parsed.quizIngredients || [];
         if (!parsed.quiz.length && parsed.tycoon.length) syncedProgress.mode = 'tycoon';
+        showManualCodeInput = false;
         saveSyncedProgress();
         toast(`✅ 내 기록을 가져왔습니다! (퀴즈 ${parsed.quiz.length}개 · 타이쿤 ${parsed.tycoon.length}개)`);
         render();
       };
     }
-    const clearBtn = $('#community-sync-clear-btn', bar);
-    if (clearBtn) {
-      clearBtn.onclick = () => {
-        syncedProgress = { mode: 'quiz', tycoon: [], quiz: [], tycoonIngredients: [], quizIngredients: [] };
-        saveSyncedProgress();
-        toast('연동된 진행 기록을 초기화했습니다.');
-        render();
-      };
-    }
-    const gLoginBtn = $('#community-google-login-btn', bar);
-    if (gLoginBtn && sbClient) {
-      gLoginBtn.onclick = async () => {
-        const { error } = await sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
-        if (error) toast(`Google 연동 오류: ${error.message}`);
-      };
-    }
-    const gLogoutBtn = $('#community-google-logout-btn', bar);
-    if (gLogoutBtn && sbClient) {
-      gLogoutBtn.onclick = async () => {
-        await sbClient.auth.signOut();
-        sbUser = null;
-        toast('로그아웃되었습니다.');
-        render();
-      };
-    }
   }
-  function renderHubOverview() {
-    const hub = $('#hub-overview');
-    if (!hub) return;
-    const showHub = activeTab === 'recipes' && !query.trim();
-    hub.hidden = !showHub;
-    if (!showHub) return;
-    const topRanker = tycoonRankings.TIME_ATTACK[0];
-    const avail = getAvailableIngredients();
-    const safeCombos = mergedSuggestions().filter(s => isItemsUnlocked(s.items, avail));
-    const topCombo = safeCombos[0];
-    const latestPost = allPosts()[0];
-    hub.innerHTML = `
-      <article class="hub-card is-rank">
-        <div class="hub-card-head"><span class="hub-card-tag">🏆 타이쿤 1위</span><button type="button" class="hub-card-more" data-jump-tab="rankings">전체 랭킹 →</button></div>
-        <h3 class="hub-card-title">${topRanker ? `${esc(topRanker.badge_emoji || '👑')} ${esc(topRanker.player_name)}` : '집계 중...'}</h3>
-        <p class="hub-card-sub">${topRanker ? `서빙 ${topRanker.served_count}잔 · ${Number(topRanker.total_earnings || 0).toLocaleString()}냥 (최대 ${topRanker.max_combo || 0}콤보)` : 'play.ksool.minibig.pw 주점 타이쿤 실시간 랭킹을 확인해보세요.'}</p>
-      </article>
-      <article class="hub-card is-combo">
-        <div class="hub-card-head"><span class="hub-card-tag">🧪 내 재료 추천 (${safeCombos.length})</span><button type="button" class="hub-card-more" data-jump-tab="suggestions">추천 보기 →</button></div>
-        <h3 class="hub-card-title">${topCombo ? topCombo.items.map(i => `${esc(name(ingredientFor(i)))} ×${i.ratio}`).join(' + ') : '해금 재료 기반 추천'}</h3>
-        <p class="hub-card-sub">${topCombo ? `👍 ${topCombo.upvotes || 0} 추천 · 스포일러 없이 내 재료로 바로 도전 가능!` : '게임을 진행해 재료를 해금하면 맞춤 조합이 열립니다.'}</p>
-      </article>
-      <article class="hub-card is-tip">
-        <div class="hub-card-head"><span class="hub-card-tag">💬 커뮤니티 (${allPosts().length})</span><button type="button" class="hub-card-more" data-jump-tab="tips">게시판 →</button></div>
-        <h3 class="hub-card-title">${latestPost ? esc(latestPost.title) : '나만의 꿀팁을 공유해보세요'}</h3>
-        <p class="hub-card-sub">${latestPost ? `${esc(latestPost.author)} · ${esc(latestPost.body)}` : '다른 유저들과 공략 팁과 댓글을 나눌 수 있습니다.'}</p>
-      </article>
-    `;
-    $$('[data-jump-tab]', hub).forEach(b => b.onclick = () => switchTab(b.dataset.jumpTab));
+  function lockedCompactRow(r) {
+    return `<button type="button" class="locked-compact-row" data-recipe="${r.recipe_id}"><span class="locked-compact-num">${esc(r.formatted_number)}</span><span class="locked-compact-name">🔒 ${esc(name(r))}</span><span class="locked-compact-hint">힌트</span></button>`;
+  }
+  function renderGroupedRecipes(matches) {
+    const unlocked = matches.filter(r => isRecipeUnlocked(r.recipe_id));
+    const locked = matches.filter(r => !isRecipeUnlocked(r.recipe_id));
+    let html = '';
+    if (activeUnlockFilter !== 'locked') {
+      html += `<section class="recipe-section">
+        <div class="recipe-section-head"><h3>🔓 해금한 조합</h3><span class="recipe-section-count">${unlocked.length}</span></div>
+        ${unlocked.length
+          ? `<div class="recipe-section-grid">${unlocked.map((r, i) => recipeCard(r, i)).join('')}</div>`
+          : `<p style="margin:0;font-size:12px;color:var(--muted);">아직 해금된 조합이 없습니다. 게임에서 조합에 성공하거나 상단 <b>Google 연동</b>을 눌러 진행도를 불러오세요.</p>`}
+      </section>`;
+    }
+    if (activeUnlockFilter !== 'unlocked' && locked.length) {
+      const openByDefault = unlocked.length === 0 || activeUnlockFilter === 'locked' || Boolean(query.trim());
+      html += `<details class="stage-accordion" ${openByDefault ? 'open' : ''}>
+        <summary><span class="stage-code">LOCKED</span><span class="stage-title">🔒 아직 해금하지 않은 조합</span><span class="stage-progress">${locked.length}개</span></summary>
+        <div class="stage-body"><div class="locked-compact-grid">${locked.map(lockedCompactRow).join('')}</div></div>
+      </details>`;
+    }
+    return html;
+  }
+  function renderStageRecipes(matches) {
+    const groups = new Map();
+    for (let s = 1; s <= 6; s++) groups.set(s, []);
+    for (const r of matches) {
+      const step = Math.min(6, Math.max(1, Number(r.step_id) || 1));
+      groups.get(step).push(r);
+    }
+    const sections = [];
+    for (const [step, list] of groups.entries()) {
+      if (!list.length) continue;
+      const meta = STAGE_META[step] || { code: `STAGE ${step}`, title: `단계 ${step}` };
+      const unlocked = list.filter(r => isRecipeUnlocked(r.recipe_id));
+      const locked = list.filter(r => !isRecipeUnlocked(r.recipe_id));
+      const openByDefault = Boolean(query.trim()) || (unlocked.length > 0 && unlocked.length < list.length) || (step === 1 && unlocked.length === 0);
+      sections.push(`
+        <details class="stage-accordion" ${openByDefault ? 'open' : ''}>
+          <summary>
+            <span class="stage-code">${esc(meta.code)}</span>
+            <span class="stage-title">${esc(meta.title)}</span>
+            <span class="stage-progress">${unlocked.length} / ${list.length} 해금</span>
+          </summary>
+          <div class="stage-body">
+            ${unlocked.length ? `<div class="recipe-section-grid">${unlocked.map((r, i) => recipeCard(r, i)).join('')}</div>` : ''}
+            ${locked.length ? `<div class="locked-compact-grid">${locked.map(lockedCompactRow).join('')}</div>` : ''}
+          </div>
+        </details>
+      `);
+    }
+    return sections.join('');
   }
   function render() {
     applyPortalLangUi();
     renderHeaderAuthButton();
     renderProgressSyncBar();
-    $('#hub-overview').hidden = true;
     $('#recipe-grid').classList.toggle('community-view',activeTab==='tips');
     $('#recipe-grid').classList.toggle('suggestions-view',activeTab==='suggestions');
+    $('#recipe-grid').classList.toggle('is-sectioned',activeTab==='recipes');
     $$('[data-tab]').forEach(b => b.classList.toggle('selected', b.dataset.tab === activeTab));
     $$('[data-nav]').forEach(b => b.classList.toggle('nav-active', b.dataset.nav === activeTab));
     $('#saved-count').textContent = bookmarks.size;
     if($('#tip-count'))$('#tip-count').textContent = allPosts().length;
     $('#category-filters').innerHTML = (['suggestions','rankings','updates'].includes(activeTab) ? ['전체'] : activeTab === 'tips' ? ['전체','플레이 팁','새 조합 제안'] : ['전체','소맥·폭탄주','막걸리','과일·편의점','기초 재료','특산 명주']).map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('');
+    const viewToggleEl = $('#recipe-view-toggle');
+    if (viewToggleEl) {
+      if (activeTab === 'recipes') {
+        viewToggleEl.hidden = false;
+        viewToggleEl.innerHTML = `
+          <button type="button" data-view-mode="grouped" class="${activeViewMode==='grouped'?'is-active':''}">🔓 해금/미해금</button>
+          <button type="button" data-view-mode="stage" class="${activeViewMode==='stage'?'is-active':''}">🗺️ 스테이지별</button>
+        `;
+        $$('[data-view-mode]', viewToggleEl).forEach(b => b.onclick = () => {
+          activeViewMode = b.dataset.viewMode === 'stage' ? 'stage' : 'grouped';
+          try { localStorage.setItem('ksool-recipe-view-mode', activeViewMode); } catch (_) {}
+          render();
+        });
+      } else {
+        viewToggleEl.hidden = true;
+        viewToggleEl.innerHTML = '';
+      }
+    }
     const unlockFiltersEl = $('#unlock-filters');
     if (unlockFiltersEl) {
       if (activeTab === 'recipes') {
@@ -712,11 +738,13 @@
       : [];
     const totalCount = matches.length + matchingPosts.length + matchingSuggestions.length;
     $('#result-count').innerHTML = `<b>${totalCount}</b> ${activeTab==='tips'?'TIPS':activeTab==='suggestions'?'COMBOS':'RECIPES'}`;
-    const effLimit = Infinity;
     const spoilerBanner = activeTab === 'suggestions' && hiddenSugCount > 0
       ? `<div class="spoiler-shield" style="grid-column:1/-1;"><span>🔒 아직 해금하지 않은 재료가 포함된 추천 조합 <b>${hiddenSugCount}개</b>는 스포일러 방지를 위해 숨겨져 있습니다.</span><a href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener" style="font-weight:850;color:var(--ink);">게임에서 재료 해금하기 ↗</a></div>`
       : '';
-    $('#recipe-grid').innerHTML = spoilerBanner + (matches.slice(0,effLimit).map(recipeCard).join('') + (activeTab === 'tips' ? boardMarkup(matchingPosts) : matchingPosts.map(postCard).join('')) + matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 필터로 찾아보세요.'}</p></div>`);
+    const recipeMarkup = activeTab === 'recipes'
+      ? (matches.length ? (activeViewMode === 'stage' ? renderStageRecipes(matches) : renderGroupedRecipes(matches)) : '')
+      : matches.map(recipeCard).join('');
+    $('#recipe-grid').innerHTML = spoilerBanner + (recipeMarkup + (activeTab === 'tips' ? boardMarkup(matchingPosts) : matchingPosts.map(postCard).join('')) + matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 필터로 찾아보세요.'}</p></div>`);
     $('#load-more').hidden = true;
     if(!$('#post-recipe').dataset.ready){$('#post-recipe').innerHTML = '<option value="">선택하지 않음</option>' + recipes.map(r => `<option value="${r.recipe_id}">${esc(r.formatted_number)} · ${esc(name(r))}</option>`).join('');$('#post-recipe').dataset.ready='1';}
     bindCardActions($('#recipe-grid'));
