@@ -141,10 +141,20 @@
 
   const canAdmin = (perm) => isSuperAdmin || adminPermissions.includes(perm);
   const adminApi = async (path, options = {}) => {
+    if (!adminAccessToken && sbClient) {
+      const { data } = await sbClient.auth.getSession();
+      adminAccessToken = data?.session?.access_token || null;
+    }
     if (!adminAccessToken) throw new Error('관리자 인증 토큰이 없습니다.');
     return api(path, { ...options, headers: { ...(options.headers || {}), Authorization: `Bearer ${adminAccessToken}` } });
   };
   async function checkAdminStatus(token) {
+    if (!token && sbClient) {
+      try {
+        const { data } = await sbClient.auth.getSession();
+        token = data?.session?.access_token || null;
+      } catch (_) {}
+    }
     adminAccessToken = token || null;
     if (!adminAccessToken) { isAdminUser = false; isSuperAdmin = false; adminPermissions = []; const btn = $('#admin-nav-btn'); if (btn) btn.hidden = true; return; }
     try {
@@ -158,6 +168,8 @@
     } catch (_) { isAdminUser = false; isSuperAdmin = false; adminPermissions = []; }
     const btn = $('#admin-nav-btn');
     if (btn) btn.hidden = !isAdminUser;
+    if (isAdminUser && activeTab === 'admin') loadAdminData();
+    else render();
   }
   async function loadAdminData() {
     if (!isAdminUser || !adminAccessToken) return;
@@ -224,7 +236,7 @@
       const nextUser = session?.user || null;
       const changed = nextUser?.id !== sbUser?.id;
       sbUser = nextUser;
-      checkAdminStatus(session?.access_token);
+      setTimeout(() => checkAdminStatus(session?.access_token), 0);
       if (changed && !hasLiveGame()) {
         progressEpoch++;
         syncedProgress = { mode: syncedProgress.mode, tycoon: [], quiz: [], tycoonIngredients: [], quizIngredients: [] };
