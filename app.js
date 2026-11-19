@@ -501,7 +501,7 @@
     if (!isRecipeUnlocked(r.recipe_id)) {
       return `<article class="recipe-card is-locked" style="--card-color:#ece8dc;"><div class="compact-card-head"><span class="compact-recipe-icon" style="display:grid;place-items:center;width:28px;height:28px;border:1.5px solid var(--ink);background:#fffdf5;font-size:14px;">🔒</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula" style="justify-content:center; padding:8px; color:var(--muted); font-size:11px; font-weight:750; text-align:center;">🔒 ${syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈'} 모드 해금 시 공개</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span></div></article>`;
     }
-    return `<article class="recipe-card" style="--card-color:${colors[index%colors.length]}"><div class="compact-card-head"><span class="compact-recipe-icon">${icon(r,40)}</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula">${r.items.map((i,n)=>`<span class="formula-item">${r.requires_order?`<span class="ingredient-order">${n+1}</span>`:''}<span class="formula-image">${icon(ingredientFor(i),30)}<b>×${i.ratio}</b></span><span class="ingredient-name">${esc(name(ingredientFor(i)))}</span></span>`).join('<span class="formula-plus">+</span>')}</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span>${r.requires_order?'<span class="order-badge">순서대로</span>':''}<button data-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 힌트">${uiIcon('flask',14)}</button><button data-share-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 공유">${uiIcon('share',15)}</button></div></article>`;
+    return `<article class="recipe-card" data-recipe="${r.recipe_id}" style="--card-color:${colors[index%colors.length]};cursor:pointer;"><div class="compact-card-head"><span class="compact-recipe-icon">${icon(r,40)}</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula">${r.items.map((i,n)=>`<span class="formula-item">${r.requires_order?`<span class="ingredient-order">${n+1}</span>`:''}<span class="formula-image">${icon(ingredientFor(i),30)}<b>×${i.ratio}</b></span><span class="ingredient-name">${esc(name(ingredientFor(i)))}</span></span>`).join('<span class="formula-plus">+</span>')}</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span>${r.requires_order?'<span class="order-badge">순서대로</span>':''}<button data-share-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 공유">${uiIcon('share',15)}</button></div></article>`;
   }
   function voteControls(p){
     const target=p.suggestion_key?`s:${p.suggestion_key}`:`p:${p.id}`;
@@ -1039,9 +1039,13 @@
     const postsMatches = activeTab === 'saved'
       ? allPosts().filter(p => bookmarks.has(`t:${p.id}`) && `${p.title} ${p.body} ${p.author}`.toLowerCase().includes(query.toLowerCase()))
       : [];
+    const savedHtml = [
+      matches.length ? `<section class="recipe-section-clean"><div class="recipe-section-head"><h3>🔖 저장한 조합</h3><span class="recipe-section-count">${matches.length}</span></div><div class="recipe-section-grid">${matches.map((r, i) => recipeCard(r, i)).join('')}</div></section>` : '',
+      postsMatches.length ? `<section class="recipe-section-clean" style="margin-top:16px;"><div class="recipe-section-head"><h3>💬 저장한 글</h3><span class="recipe-section-count">${postsMatches.length}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">${postsMatches.map(postCard).join('')}</div></section>` : ''
+    ].filter(Boolean).join('');
     const markup = activeTab === 'recipes'
       ? (matches.length ? (activeViewMode === 'stage' ? renderStageRecipes(matches) : renderGroupedRecipes(matches)) : '')
-      : (matches.map(recipeCard).join('') + postsMatches.map(postCard).join(''));
+      : savedHtml;
     grid.innerHTML = markup || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 필터로 찾아보세요.'}</p></div>`;
     bindCardActions(grid);
     $$('details[data-section-id]', grid).forEach(d => {
@@ -1158,7 +1162,7 @@
         </div>
         <div class="catalog-body">
           ${progressSyncMarkup()}
-          <div id="recipe-grid" class="recipe-grid ${activeTab==='recipes'?'is-sectioned':''}"></div>
+          <div id="recipe-grid" class="recipe-grid ${['recipes','saved'].includes(activeTab)?'is-sectioned':''}"></div>
         </div>
       </div>
     `;
@@ -1177,9 +1181,14 @@
   function bindCardActions(root) {
     bindRemoteActions(root);
     $$('[data-reveal-spoiler]',root).forEach(b=>b.onclick=()=>{revealedSpoilers.add(b.dataset.revealSpoiler);render();});
-    $$('[data-share-recipe]',root).forEach(b=>b.onclick=()=>{const r=byId.get(Number(b.dataset.shareRecipe));shareLink(new URL(`#recipe=${r.recipe_id}`,location.href).href,`${name(r)} · 조합소`);});
-    $$('[data-recipe]',root).forEach(b => b.onclick = () => navigateRecipe(Number(b.dataset.recipe)));
-    $$('[data-bookmark]',root).forEach(b => b.onclick = () => {
+    $$('[data-share-recipe]',root).forEach(b=>b.onclick=(e)=>{e.stopPropagation();const r=byId.get(Number(b.dataset.shareRecipe));shareLink(new URL(`#recipe=${r.recipe_id}`,location.href).href,`${name(r)} · 조합소`);});
+    $$('[data-recipe]',root).forEach(b => b.onclick = (e) => {
+      const innerBtn = e.target.closest('button');
+      if (innerBtn && innerBtn !== b) return;
+      navigateRecipe(Number(b.dataset.recipe));
+    });
+    $$('[data-bookmark]',root).forEach(b => b.onclick = (e) => {
+      e.stopPropagation();
       const key=b.dataset.bookmark, saved=bookmarks.has(key);
       saved ? bookmarks.delete(key) : bookmarks.add(key);
       const ok=persist();render();
