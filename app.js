@@ -1080,8 +1080,7 @@
       return;
     }
     if (activeTab === 'rankings') {
-      root.innerHTML = `${progressSyncMarkup()}<div id="recipe-grid" class="recipe-grid">${rankingsMarkup()}</div>`;
-      bindProgressSyncBar(root);
+      root.innerHTML = `<div id="recipe-grid" class="recipe-grid">${rankingsMarkup()}</div>`;
       $$('[data-rank-mode]', root).forEach(b => b.onclick = () => { activeRankMode = b.dataset.rankMode; render(); });
       const rankSearchEl = $('#rank-my-search', root);
       if (rankSearchEl) {
@@ -1122,12 +1121,10 @@
       root.innerHTML = `
         ${searchToolbarMarkup('재료로 추천 조합 검색', true, '조합 제안')}
         <div class="catalog-body" style="margin-top:12px;">
-          ${progressSyncMarkup()}
           <div id="recipe-grid" class="recipe-grid suggestions-view"></div>
         </div>
       `;
       bindToolbarEvents(root, () => renderSuggestionsGridOnly(root));
-      bindProgressSyncBar(root);
       renderSuggestionsGridOnly(root);
       return;
     }
