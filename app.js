@@ -879,18 +879,29 @@
   }
   function progressSyncMarkup() {
     const isQuiz = syncedProgress.mode !== 'tycoon';
-    const unlockedCount = isQuiz ? syncedProgress.quiz.length : syncedProgress.tycoon.length;
-    const pct = Math.round((unlockedCount / Math.max(1, recipes.length)) * 100);
+    const total = Math.max(1, recipes.length);
+    const quizCount = syncedProgress.quiz.length;
+    const tycoonCount = syncedProgress.tycoon.length;
+    const quizPct = Math.round((quizCount / total) * 100);
+    const tycoonPct = Math.round((tycoonCount / total) * 100);
     return `
       <div id="progress-sync-bar" class="progress-sync-bar">
-        <div class="sync-inline-row">
-          <div class="sync-mode-group">
-            <button type="button" data-progress-mode="quiz" class="sync-mode-btn ${isQuiz ? 'is-active' : ''}">🎯 퀴즈 ${syncedProgress.quiz.length}/${recipes.length}</button>
-            <button type="button" data-progress-mode="tycoon" class="sync-mode-btn ${!isQuiz ? 'is-active' : ''}">🏪 타이쿤 ${syncedProgress.tycoon.length}/${recipes.length}</button>
-          </div>
-          <div class="sync-meter-wrap">
-            <div class="sync-meter" aria-label="해금 진행률"><div class="sync-meter-fill" style="width:${pct}%"></div></div>
-            <span class="sync-meter-label">${pct}%</span>
+        <div class="sync-cards-row">
+          <div class="sync-cards-grid">
+            <button type="button" data-progress-mode="quiz" class="sync-stat-card ${isQuiz ? 'is-active' : ''}" aria-pressed="${isQuiz}">
+              <div class="sync-stat-head">
+                <span class="sync-stat-title">🎯 퀴즈 도감</span>
+                <span class="sync-stat-count"><b>${quizCount}</b>/${total} <em>(${quizPct}%)</em></span>
+              </div>
+              <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${quizPct}%"></span></span>
+            </button>
+            <button type="button" data-progress-mode="tycoon" class="sync-stat-card ${!isQuiz ? 'is-active' : ''}" aria-pressed="${!isQuiz}">
+              <div class="sync-stat-head">
+                <span class="sync-stat-title">🏪 타이쿤 도감</span>
+                <span class="sync-stat-count"><b>${tycoonCount}</b>/${total} <em>(${tycoonPct}%)</em></span>
+              </div>
+              <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${tycoonPct}%"></span></span>
+            </button>
           </div>
           ${!sbUser ? `<button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${showManualCodeInput ? '닫기' : '코드 입력'}</button>` : ''}
         </div>

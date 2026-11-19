@@ -90,15 +90,19 @@ body{--game-dock-width:400px}
 .nav-blog-link{text-decoration:none;color:var(--ink);font-size:12px;font-weight:800;padding:7px 11px;border:2px solid transparent;display:inline-flex;align-items:center;gap:4px;min-height:35px}
 .nav-blog-link:hover{background:var(--neo-yellow);border-color:var(--ink)}
 
-.progress-sync-bar{margin:0 0 12px;padding:0 0 10px;border:0;border-bottom:1.5px dashed #cbc5b4;background:transparent}
-.sync-inline-row{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
-.sync-mode-group{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.sync-mode-btn{padding:4px 8px;border:1.5px solid var(--ink);font-weight:800;font-size:11px;cursor:pointer;background:#fff;color:var(--ink);white-space:nowrap}
-.sync-mode-btn.is-active{background:var(--ink);color:#fff}
-.sync-meter-wrap{flex:1;min-width:80px;display:flex;align-items:center;gap:7px}
-.sync-meter{flex:1;min-width:50px;height:8px;border:1.5px solid var(--ink);background:#e9e4d4;overflow:hidden}
-.sync-meter-fill{height:100%;background:var(--green);transition:width .25s ease}
-.sync-meter-label{font-family:ui-monospace,'Consolas',monospace;font-size:10px;font-weight:850;color:var(--ink);white-space:nowrap}
+.progress-sync-bar{margin:0 0 14px;padding:0;border:0;background:transparent}
+.sync-cards-row{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+.sync-cards-grid{flex:1;min-width:260px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sync-stat-card{display:flex;flex-direction:column;gap:7px;padding:9px 12px;border:2px solid var(--ink);background:#fffdf5;color:var(--ink);cursor:pointer;text-align:left;transition:transform .12s ease,box-shadow .12s ease}
+.sync-stat-card:hover{background:#faf5e4}
+.sync-stat-card.is-active{background:var(--neo-yellow);box-shadow:3px 3px 0 var(--ink);transform:translate(-1px,-1px)}
+.sync-stat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}
+.sync-stat-title{font-size:12px;font-weight:900;letter-spacing:-0.3px}
+.sync-stat-count{font-family:ui-monospace,'Consolas',monospace;font-size:12px;font-weight:800;white-space:nowrap}
+.sync-stat-count em{font-style:normal;font-size:11px;opacity:.8;margin-left:2px}
+.sync-stat-meter{width:100%;height:10px;border:1.5px solid var(--ink);background:#efeadd;overflow:hidden;display:block}
+.sync-stat-fill{display:block;height:100%;background:var(--green);transition:width .25s ease}
+.sync-stat-card:not(.is-active) .sync-stat-fill{background:#c5d89d}
 .sync-code-link{border:0;background:none;padding:2px 4px;color:var(--muted);font-weight:750;font-size:10px;text-decoration:underline;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .sync-code-link:hover{color:var(--ink)}
 .sync-manual-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed #bcb5a0}
@@ -198,9 +202,9 @@ body.game-dock-open .recipe-grid.community-view { display:block; }
   .page{padding:10px 12px 0!important}
   .compact-banner{padding:10px 12px!important;min-height:50px!important;gap:8px!important;box-shadow:2px 2px 0 var(--ink)!important}
   .compact-banner h1{font-size:20px!important;letter-spacing:-1px!important}
-  .progress-sync-bar{padding:6px 9px;margin:8px 0}
-  .sync-inline-row{flex-wrap:wrap;gap:6px}
-  .sync-meter-wrap{min-width:0;flex:1 1 auto}
+  .progress-sync-bar{padding:0;margin:8px 0 12px}
+  .sync-cards-grid{grid-template-columns:1fr;gap:8px}
+  .sync-stat-card{padding:8px 10px;gap:6px}
   .view-mode-toggle{margin-right:0}
   .recipe-section-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .locked-compact-grid{grid-template-columns:1fr}
