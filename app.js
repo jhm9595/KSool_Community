@@ -410,7 +410,7 @@
   let showManualCodeInput = false;
   const sectionOpenState = new Map();
   const isSectionOpen = (id, defaultOpen) => (sectionOpenState.has(id) ? sectionOpenState.get(id) : defaultOpen);
-  let activeTab = 'recipes', activeCategory = '전체', activeUnlockFilter = 'all', query = '', sort = 'recommended', limit = 16, showAnswers = true;
+  let activeTab = 'recipes', activeCategory = '전체', activeUnlockFilter = 'all', query = '', sort = 'number', limit = 16, showAnswers = true;
   const revealedSpoilers = new Set();
   let toastTimer;
   const officialRecipeKeyMap = new Map(
@@ -499,7 +499,7 @@
   function recipeCard(r,index) {
     const saved = bookmarks.has(`r:${r.recipe_id}`);
     if (!isRecipeUnlocked(r.recipe_id)) {
-      return `<article class="recipe-card is-locked" style="--card-color:#ece8dc;"><div class="compact-card-head"><span class="compact-recipe-icon" style="display:grid;place-items:center;width:40px;height:40px;border:2px solid var(--ink);background:#fffdf5;font-size:1.15rem;">🔒</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula" style="justify-content:center; padding:12px 8px; color:var(--muted); font-size:11px; font-weight:750; text-align:center;">🔒 ${syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈'} 모드 해금 시 공개</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span><button data-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 힌트 보기">${uiIcon('flask',14)}</button></div></article>`;
+      return `<article class="recipe-card is-locked" style="--card-color:#ece8dc;"><div class="compact-card-head"><span class="compact-recipe-icon" style="display:grid;place-items:center;width:28px;height:28px;border:1.5px solid var(--ink);background:#fffdf5;font-size:14px;">🔒</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula" style="justify-content:center; padding:8px; color:var(--muted); font-size:11px; font-weight:750; text-align:center;">🔒 ${syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈'} 모드 해금 시 공개</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span></div></article>`;
     }
     return `<article class="recipe-card" style="--card-color:${colors[index%colors.length]}"><div class="compact-card-head"><span class="compact-recipe-icon">${icon(r,40)}</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula">${r.items.map((i,n)=>`<span class="formula-item">${r.requires_order?`<span class="ingredient-order">${n+1}</span>`:''}<span class="formula-image">${icon(ingredientFor(i),30)}<b>×${i.ratio}</b></span><span class="ingredient-name">${esc(name(ingredientFor(i)))}</span></span>`).join('<span class="formula-plus">+</span>')}</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span>${r.requires_order?'<span class="order-badge">순서대로</span>':''}<button data-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 힌트">${uiIcon('flask',14)}</button><button data-share-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 공유">${uiIcon('share',15)}</button></div></article>`;
   }
@@ -901,9 +901,9 @@
           <div class="sync-meter" aria-label="해금 진행률"><div class="sync-meter-fill" style="width:${pct}%"></div></div>
           <span class="sync-meter-label">${pct}%</span>
         </div>
-        <button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${showManualCodeInput ? '닫기' : '코드 입력'}</button>
+        ${!sbUser ? `<button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${showManualCodeInput ? '닫기' : '코드 입력'}</button>` : ''}
       </div>
-      ${showManualCodeInput ? `
+      ${(!sbUser && showManualCodeInput) ? `
         <div class="sync-manual-form">
           <input id="community-sync-input" type="text" placeholder="게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드">
           <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:32px;padding:5px 12px;">가져오기</button>
@@ -940,7 +940,7 @@
     }
   }
   function lockedCompactRow(r) {
-    return `<button type="button" class="locked-compact-row" data-recipe="${r.recipe_id}"><span class="locked-compact-num">${esc(r.formatted_number)}</span><span class="locked-compact-name">🔒 ${esc(name(r))}</span><span class="locked-compact-hint">힌트</span></button>`;
+    return `<div class="locked-compact-row"><span class="locked-compact-num">${esc(r.formatted_number)}</span><span class="locked-compact-name">🔒 ${esc(name(r))}</span></div>`;
   }
   function renderGroupedRecipes(matches) {
     const unlocked = matches.filter(r => isRecipeUnlocked(r.recipe_id));
@@ -1129,7 +1129,7 @@
       : '';
     if (!isRecipeUnlocked(id)) {
       const modeName = syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈';
-      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:70px;height:70px;background:#e4e4e7;font-size:2rem;">🔒</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="neo-panel" style="background:#fff9d6; margin:12px 0; font-size:12px; line-height:1.6;"><b>🔒 미해금 레시피입니다.</b><br>현재 선택한 <b>${modeName}</b> 모드에서 아직 해금하지 않아 재료·비율이 비공개 처리되었습니다.<br>오른쪽(또는 상단) <b>play.ksool.minibig.pw</b> 게임에서 조합에 성공한 뒤 Google 계정을 연동하면 자동으로 공개됩니다!</div><details class="hint-details"><summary>스포일러 없는 게임 힌트 보기</summary><p>${esc(r.unlock_hint || r.description)}</p></details>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 게임하러 가기 ${uiIcon('arrowUpRight',16)}</a><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">관련 커뮤니티 팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
+      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:70px;height:70px;background:#e4e4e7;font-size:2rem;">🔒</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="neo-panel" style="background:#fff9d6; margin:12px 0; font-size:12px; line-height:1.6;"><b>🔒 미해금 레시피입니다.</b><br>현재 선택한 <b>${modeName}</b> 모드에서 아직 해금하지 않아 재료·비율이 비공개 처리되었습니다.<br>오른쪽(또는 상단) <b>play.ksool.minibig.pw</b> 게임에서 조합에 성공한 뒤 Google 계정을 연동하면 자동으로 공개됩니다!</div>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 게임하러 가기 ${uiIcon('arrowUpRight',16)}</a><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">관련 커뮤니티 팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
       bindCardActions($('#recipe-detail'));
       $('#write-related').onclick=()=>openCompose(id);
       openDialog($('#recipe-dialog'));
