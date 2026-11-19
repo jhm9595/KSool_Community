@@ -513,7 +513,7 @@
   }
   function boardMarkup(rows) {
     if (!rows.length) return '';
-    return `<div class="community-board"><div class="board-head"><span>분류</span><span>제목</span><span>작성자</span><span>추천</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind">${p.kind === 'experiment' ? '새 조합' : '플레이 팁'}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ' · 예시' : ''}</small></button><span class="board-author">${esc(p.author)}</span><span class="board-votes">${p.upvotes || 0}</span></article>`).join('')}</div>`;
+    return `<div class="community-board"><div class="board-head"><span>분류</span><span>제목</span><span>작성자</span><span>추천</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${p.kind === 'experiment' ? '새 조합' : '플레이 팁'}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ' · 예시' : ''}</small></button><span class="board-author">${esc(p.author)}</span><span class="board-votes ${(p.upvotes || 0) > 0 ? 'has-votes' : ''}">${p.upvotes || 0}</span></article>`).join('')}</div>`;
   }
   function postCard(p) {
     const saved = bookmarks.has(`t:${p.id}`);
@@ -539,10 +539,23 @@
     if (blogLink) blogLink.textContent = pt('blog');
     const h1 = $('.compact-banner h1');
     if (h1) h1.textContent = pt('heroTitle');
-    const searchInput = $('#search');
-    if (searchInput) searchInput.placeholder = pt('search');
-    const composeBtn = $('[data-compose]');
-    if (composeBtn) composeBtn.innerHTML = `${uiIcon('plus')} ${esc(pt('write'))}`;
+    const toolbarEl = $('.compact-toolbar');
+    const showToolbar = !['rankings', 'updates', 'admin'].includes(activeTab);
+    if (toolbarEl) toolbarEl.hidden = !showToolbar;
+    const refreshBtnEl = $('#refresh-community');
+    const composeBtnEl = $('[data-compose]');
+    const showCommunityActions = ['tips', 'suggestions'].includes(activeTab);
+    if (refreshBtnEl) refreshBtnEl.hidden = !showCommunityActions;
+    if (composeBtnEl) {
+      composeBtnEl.hidden = !showCommunityActions;
+      if (showCommunityActions) {
+        composeBtnEl.innerHTML = `${uiIcon('plus')} ${esc(activeTab === 'suggestions' ? '조합 제안' : pt('write'))}`;
+      }
+    }
+    const searchEl = $('#search');
+    if (searchEl) {
+      searchEl.placeholder = activeTab === 'tips' ? '게시글 · 작성자 검색' : activeTab === 'suggestions' ? '재료로 추천 조합 검색' : pt('search');
+    }
   }
   const UPDATE_LOGS = [
     { version: 'v2.4', date: '2026-11-14', title: { ko: '글로벌 다국어 & 문화 가이드 확장', en: 'Global Languages & Korean Drinking Game Guides', ja: '多言語対応＆飲み会ゲーム文化ガイド追加', 'zh-CN': '多语言支持与韩国酒桌游戏文化指南', 'zh-TW': '多語言支援與韓國酒桌遊戲文化指南' }, body: { ko: '영어·일본어·중국어(간체/번체) 지원, 미니게임 우측 상단 문화/도구 설명(i), 레시피별 스토리·제휴 링크 구조가 추가되었습니다.', en: 'Added English, Japanese, Simplified & Traditional Chinese support, top-right info guides for all 10 party mini-games, and recipe story/video links.' } },
