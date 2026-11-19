@@ -541,10 +541,8 @@
     const toolbarEl = $('.compact-toolbar');
     const showToolbar = !['rankings', 'updates', 'admin'].includes(activeTab);
     if (toolbarEl) toolbarEl.hidden = !showToolbar;
-    const refreshBtnEl = $('#refresh-community');
     const composeBtnEl = $('[data-compose]');
     const showCommunityActions = ['tips', 'suggestions'].includes(activeTab);
-    if (refreshBtnEl) refreshBtnEl.hidden = !showCommunityActions;
     if (composeBtnEl) {
       composeBtnEl.hidden = !showCommunityActions;
       if (showCommunityActions) {
@@ -1019,7 +1017,7 @@
     return `
       <div class="compact-toolbar">
         <div class="search-row"><label class="search-box">${uiIcon('search',18)}<span class="visually-hidden">${esc(placeholder)}</span><input id="search" type="search" value="${esc(query)}" placeholder="${esc(placeholder)}" autocomplete="off"></label></div>
-        ${withActions ? `<button id="refresh-community" class="refresh-community" aria-label="새로고침">${uiIcon('refresh')}</button><button class="button coral" data-compose aria-label="${esc(composeLabel)}">${uiIcon('plus')} ${esc(composeLabel)}</button>` : ''}
+        ${withActions ? `<button class="button coral" data-compose aria-label="${esc(composeLabel)}">${uiIcon('plus')} ${esc(composeLabel)}</button>` : ''}
       </div>
     `;
   }
@@ -1028,8 +1026,6 @@
     if (searchEl) {
       searchEl.oninput = e => { query = e.target.value; limit = 16; onSearchInput(); };
     }
-    const refreshEl = $('#refresh-community', root);
-    if (refreshEl) refreshEl.onclick = () => { syncCommunity(); loadRemoteGameData(); };
     $$('[data-compose]', root).forEach(b => b.onclick = () => openCompose(null, activeTab === 'suggestions' ? 'experiment' : 'tip'));
   }
   function renderCatalogGridOnly(root) {
@@ -1345,7 +1341,6 @@
   window.addEventListener('hashchange',()=>{if(location.hash==='#home'){window.scrollTo({top:0,behavior:'smooth'});return;}parseLink();});
   render();
   api('/session').then(()=>syncCommunity()).then(()=>parseLink()).catch(()=>{serverConnected=false;$('#connection-status').textContent='○ 서버 연결 실패';});
-  $('#refresh-community').onclick=()=>{syncCommunity();loadRemoteGameData();refreshCloudProgress();};
   const langSelect = $('#portal-lang-select');
   if (langSelect) {
     langSelect.value = portalLang;
