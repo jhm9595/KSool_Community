@@ -44,6 +44,10 @@ await writeFile(
   'utf8'
 );
 await copyFile(resolve(source, 'src/js/services/PixelIconRegistry.js'), resolve(target, 'assets/game-icons.js'));
+for (const assetFile of ['app_logo.png', 'favicon-32x32.png', 'favicon.png', 'app_icon_192.png']) {
+  const srcAsset = resolve(source, 'assets', assetFile);
+  if (existsSync(srcAsset)) await copyFile(srcAsset, resolve(target, 'assets', assetFile));
+}
 
 // 게임의 다국어(i18n) 및 블로그/어필리에이트 링크 설정도 게임 프로젝트 기준으로 단일 동기화
 const i18nContext = { window: { KSool: { I18N_LOCALES: {} } } };

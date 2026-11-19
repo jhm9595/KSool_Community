@@ -68,13 +68,38 @@ async function suggestionList(env,actorId,url){
 const postSelect=`SELECT p.*,s.items_json,(SELECT COUNT(*) FROM votes v WHERE v.target_key=p.target_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=p.target_key AND v.direction='DOWN') AS downvotes,m.direction AS my_vote,(SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id) AS comment_count FROM posts p LEFT JOIN suggestions s ON s.suggestion_key=p.suggestion_key LEFT JOIN votes m ON m.target_key=p.target_key AND m.actor_id=?`;
 function serializePost(p,actorId){return {id:p.id,kind:p.kind,title:p.title,body:p.body,author:p.author,recipeId:p.recipe_id,suggestion_key:p.suggestion_key,items:p.items_json?JSON.parse(p.items_json):undefined,upvotes:p.upvotes,downvotes:p.downvotes,myVote:p.my_vote||null,commentCount:p.comment_count,createdAt:p.created_at,isMine:p.actor_id===actorId};}
 
+const SUPABASE_URL='https://jyjxvwxlwkoedxwkkysj.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5anh2d3hsd2tvZWR4d2treXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzY5NDUsImV4cCI6MjEwOTA1Mjk0NX0.wfaRfya2PV4Ykawd6md4fXrO91_TWnyGyusSRa-2fJ8';
+async function verifyAdminUser(req,env){
+  const auth=req.headers.get('authorization')||'';
+  const m=auth.match(/^Bearer\s+(.+)$/i);
+  if(!m)return null;
+  const token=m[1].trim();
+  if(!token)return null;
+  const allowedAdmins=new Set((env.ADMIN_EMAILS||'jhm9595@gmail.com').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean));
+  if(typeof env.ADMIN_VERIFY_OVERRIDE==='function'){
+    const u=await env.ADMIN_VERIFY_OVERRIDE(token);
+    return u&&u.email&&allowedAdmins.has(u.email.toLowerCase())?u:null;
+  }
+  const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${token}`}});
+  if(!res.ok)return null;
+  const user=await res.json();
+  if(!user?.email||!allowedAdmins.has(user.email.toLowerCase()))return null;
+  return user;
+}
+async function requireAdmin(req,env){
+  const user=await verifyAdminUser(req,env);
+  if(!user)throw problem('관리자 권한이 필요합니다',403);
+  return user;
+}
+
 export async function handleApi(req,env){
   const url=new URL(req.url),path=url.pathname;
   const origin=req.headers.get('origin');
   const allowed=new Set((env.GAME_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean));
   const allowedOrigin=origin&&(origin===url.origin||allowed.has(origin));
   if(origin&&!allowedOrigin)return json({error:'허용되지 않은 출처'},403);
-  const cors={'Vary':'Origin','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Allow-Credentials':'true'};
+  const cors={'Vary':'Origin','Access-Control-Allow-Methods':'GET,POST,PUT,PATCH,DELETE,OPTIONS','Access-Control-Allow-Headers':'Content-Type,Authorization','Access-Control-Allow-Credentials':'true'};
   if(allowedOrigin)cors['Access-Control-Allow-Origin']=origin;
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
   let identity={id:'',cookie:null};
@@ -130,6 +155,61 @@ export async function handleApi(req,env){
     }else if(req.method==='POST'&&path==='/api/reports'){
       const b=await readBody(req);if(!await stmt(env,'SELECT id FROM posts WHERE id=? AND deleted_at IS NULL',b.post_id).first())throw problem('글 없음',404);
       await stmt(env,'INSERT INTO reports(post_id,actor_id,reason,created_at) VALUES(?,?,?,?) ON CONFLICT(post_id,actor_id) DO UPDATE SET reason=excluded.reason',b.post_id,identity.id,str(b.reason,1,120,'신고 사유'),now()).run();result=json({ok:true});
+    }else if(req.method==='GET'&&path==='/api/updates'){
+      const {results}=await stmt(env,'SELECT id,version,date,title,body,created_at FROM updates ORDER BY created_at DESC LIMIT 30').all();
+      result=json({updates:results});
+    }else if(req.method==='GET'&&path==='/api/admin/me'){
+      const user=await verifyAdminUser(req,env);
+      result=json({isAdmin:Boolean(user),email:user?.email||null});
+    }else if(req.method==='GET'&&path==='/api/admin/overview'){
+      await requireAdmin(req,env);
+      const reports=(await stmt(env,`SELECT r.post_id,COUNT(*) AS report_count,MAX(r.created_at) AS latest_report,GROUP_CONCAT(r.reason,' | ') AS reasons,p.title,p.author,p.body,p.kind,p.created_at FROM reports r JOIN posts p ON p.id=r.post_id WHERE p.deleted_at IS NULL GROUP BY r.post_id ORDER BY report_count DESC,latest_report DESC LIMIT 50`).all()).results;
+      const recentPosts=(await stmt(env,`${postSelect} WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC LIMIT 50`,identity.id).all()).results.map(p=>serializePost(p,identity.id));
+      const sugRows=(await stmt(env,`SELECT s.*,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='DOWN') AS downvotes FROM suggestions s ORDER BY s.created_at DESC LIMIT 100`).all()).results.map(s=>({suggestion_key:s.suggestion_key,items:JSON.parse(s.items_json),upvotes:s.upvotes,downvotes:s.downvotes,is_applied:!!s.is_applied,created_at:s.created_at}));
+      const updates=(await stmt(env,'SELECT id,version,date,title,body,created_at FROM updates ORDER BY created_at DESC LIMIT 30').all()).results;
+      result=json({reports,posts:recentPosts,suggestions:sugRows,updates});
+    }else if(req.method==='DELETE'&&/^\/api\/admin\/posts\/[\w-]+$/.test(path)){
+      await requireAdmin(req,env);
+      const id=path.split('/').at(-1);
+      await stmt(env,'UPDATE posts SET deleted_at=? WHERE id=?',now(),id).run();
+      result=json({ok:true});
+    }else if(req.method==='DELETE'&&/^\/api\/admin\/comments\/[\w-]+$/.test(path)){
+      await requireAdmin(req,env);
+      const id=path.split('/').at(-1);
+      await stmt(env,'DELETE FROM comments WHERE id=?',id).run();
+      result=json({ok:true});
+    }else if(req.method==='POST'&&/^\/api\/admin\/reports\/[\w-]+\/dismiss$/.test(path)){
+      await requireAdmin(req,env);
+      const postId=path.split('/')[4];
+      await stmt(env,'DELETE FROM reports WHERE post_id=?',postId).run();
+      result=json({ok:true});
+    }else if(path.startsWith('/api/admin/suggestions/')){
+      await requireAdmin(req,env);
+      const key=decodeURIComponent(path.slice('/api/admin/suggestions/'.length));
+      if(!key)throw problem('조합 키 필요');
+      if(req.method==='PATCH'){
+        const b=await readBody(req);
+        await stmt(env,'UPDATE suggestions SET is_applied=? WHERE suggestion_key=?',b.is_applied?1:0,key).run();
+        result=json({ok:true});
+      }else if(req.method==='DELETE'){
+        await env.DB.batch([
+          stmt(env,'DELETE FROM votes WHERE target_key=?',key),
+          stmt(env,'UPDATE posts SET suggestion_key=NULL WHERE suggestion_key=?',key),
+          stmt(env,'DELETE FROM suggestions WHERE suggestion_key=?',key)
+        ]);
+        result=json({ok:true});
+      }else throw problem('지원하지 않는 요청',405);
+    }else if(req.method==='POST'&&path==='/api/admin/updates'){
+      await requireAdmin(req,env);
+      const b=await readBody(req);
+      const id=crypto.randomUUID();
+      await stmt(env,'INSERT INTO updates(id,version,date,title,body,created_at) VALUES(?,?,?,?,?,?)',id,str(b.version,1,20,'버전'),str(b.date,1,20,'날짜'),str(b.title,1,100,'제목'),str(b.body,1,1500,'내용'),now()).run();
+      result=json({ok:true,id},201);
+    }else if(req.method==='DELETE'&&/^\/api\/admin\/updates\/[\w-]+$/.test(path)){
+      await requireAdmin(req,env);
+      const id=path.split('/').at(-1);
+      await stmt(env,'DELETE FROM updates WHERE id=?',id).run();
+      result=json({ok:true});
     }else throw problem('경로 없음',404);
   }catch(error){if(!error.status)console.error('Community API:',error.message);result=json({error:error.status?error.message:'서버 오류'},error.status||500);}
   for(const [k,v]of Object.entries(cors))result.headers.set(k,v);

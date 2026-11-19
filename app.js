@@ -127,9 +127,50 @@
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
     : null;
   let sbUser = null;
+  let adminAccessToken = null;
+  let isAdminUser = false;
+  let activeAdminTab = 'reports';
+  let adminData = { reports: [], posts: [], suggestions: [], updates: [], gameSuggestions: [], leaderboard: { TIME_ATTACK: [], INFINITE: [] } };
+  let dbUpdates = [];
   let gameSuggestions = [];
   let tycoonRankings = { TIME_ATTACK: [], INFINITE: [] };
   let activeRankMode = 'TIME_ATTACK';
+
+  const adminApi = async (path, options = {}) => {
+    if (!adminAccessToken) throw new Error('관리자 인증 토큰이 없습니다.');
+    return api(path, { ...options, headers: { ...(options.headers || {}), Authorization: `Bearer ${adminAccessToken}` } });
+  };
+  async function checkAdminStatus(token) {
+    adminAccessToken = token || null;
+    if (!adminAccessToken) { isAdminUser = false; const btn = $('#admin-nav-btn'); if (btn) btn.hidden = true; return; }
+    try {
+      const res = await adminApi('/admin/me');
+      isAdminUser = Boolean(res?.isAdmin);
+    } catch (_) { isAdminUser = false; }
+    const btn = $('#admin-nav-btn');
+    if (btn) btn.hidden = !isAdminUser;
+  }
+  async function loadAdminData() {
+    if (!isAdminUser || !adminAccessToken) return;
+    try {
+      const overview = await adminApi('/admin/overview');
+      adminData.reports = overview.reports || [];
+      adminData.posts = overview.posts || [];
+      adminData.suggestions = overview.suggestions || [];
+      adminData.updates = overview.updates || [];
+      if (sbClient) {
+        const [gsRes, taRes, infRes] = await Promise.all([
+          sbClient.from('ksool_suggestions').select('*').order('upvotes', { ascending: false }).limit(100),
+          sbClient.from('ksool_tycoon_leaderboard').select('*').eq('mode', 'TIME_ATTACK').order('served_count', { ascending: false }).limit(100),
+          sbClient.from('ksool_tycoon_leaderboard').select('*').eq('mode', 'INFINITE').order('served_count', { ascending: false }).limit(100)
+        ]);
+        if (Array.isArray(gsRes.data)) adminData.gameSuggestions = gsRes.data;
+        if (Array.isArray(taRes.data)) adminData.leaderboard.TIME_ATTACK = taRes.data;
+        if (Array.isArray(infRes.data)) adminData.leaderboard.INFINITE = infRes.data;
+      }
+      render();
+    } catch (e) { toast(e.message || '관리자 데이터 로드 실패'); }
+  }
 
   function mergeProgressRow(row) {
     if (!row) return;
@@ -173,11 +214,13 @@
     progressSyncStarted = true;
     const { data } = await sbClient.auth.getSession();
     sbUser = data?.session?.user || null;
+    await checkAdminStatus(data?.session?.access_token);
     await refreshCloudProgress();
     sbClient.auth.onAuthStateChange((_event, session) => {
       const nextUser = session?.user || null;
       const changed = nextUser?.id !== sbUser?.id;
       sbUser = nextUser;
+      checkAdminStatus(session?.access_token);
       if (changed && !hasLiveGame()) {
         progressEpoch++;
         syncedProgress = { mode: syncedProgress.mode, tycoon: [], quiz: [], tycoonIngredients: [], quizIngredients: [] };
@@ -195,11 +238,13 @@
   async function loadRemoteGameData() {
     try {
       const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
-      const [sugRes, taRes, infRes] = await Promise.all([
+      const [sugRes, taRes, infRes, updRes] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/ksool_suggestions?select=*&is_applied=eq.false&order=upvotes.desc&limit=100`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/ksool_tycoon_leaderboard?mode=eq.TIME_ATTACK&select=*&order=served_count.desc,total_earnings.desc&limit=100`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/ksool_tycoon_leaderboard?mode=eq.INFINITE&select=*&order=served_count.desc,total_earnings.desc&limit=100`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/ksool_tycoon_leaderboard?mode=eq.INFINITE&select=*&order=served_count.desc,total_earnings.desc&limit=100`, { headers }),
+        api('/updates').catch(() => ({ updates: [] }))
       ]);
+      if (Array.isArray(updRes?.updates)) dbUpdates = updRes.updates;
       if (sugRes.ok) {
         const rows = await sugRes.json();
         if (Array.isArray(rows)) {
@@ -514,6 +559,7 @@
     `;
   }
   function updatesMarkup() {
+    const customList = dbUpdates.map(u => `<article class="neo-panel"><div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><span style="background:var(--coral); color:var(--ink); border:1.5px solid var(--ink); padding:2px 8px; font-size:11px; font-weight:800;">${esc(u.version)}</span><small style="color:var(--muted);">${esc(u.date)}</small></div><h4 style="margin:0 0 6px; font-size:15px; font-weight:850;">${esc(u.title)}</h4><p style="margin:0; font-size:12px; line-height:1.6; white-space:pre-wrap;">${esc(u.body)}</p></article>`).join('');
     return `
       <div class="updates-board" style="grid-column:1/-1; display:flex; flex-direction:column; gap:14px;">
         <div class="neo-panel" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
@@ -523,6 +569,7 @@
           </div>
           <a href="https://ksool.blogspot.com/" target="_blank" rel="noopener" class="button coral" style="text-decoration:none;">📖 ksool.blogspot.com ↗</a>
         </div>
+        ${customList}
         ${UPDATE_LOGS.map(u => {
           const title = u.title[portalLang] || u.title.en || u.title.ko;
           const body = u.body[portalLang] || u.body.en || u.body.ko;
@@ -530,6 +577,206 @@
         }).join('')}
       </div>
     `;
+  }
+  function adminMarkup() {
+    if (!isAdminUser) {
+      return `<div class="neo-panel" style="grid-column:1/-1;"><h3>⚙️ 관리자 전용 페이지</h3><p style="font-size:12px;color:var(--muted);">관리자 Google 계정으로 로그인하면 커뮤니티 신고·글, 게임 추천 조합, 타이쿤 랭킹, 업데이트 공지를 통합 관리할 수 있습니다.</p></div>`;
+    }
+    const subTabs = [
+      { id: 'reports', label: `🚨 신고/글 (${adminData.reports.length})` },
+      { id: 'suggestions', label: `🧪 추천 조합 (${adminData.gameSuggestions.length + adminData.suggestions.length})` },
+      { id: 'rankings', label: `🏆 타이쿤 랭킹` },
+      { id: 'updates', label: `📢 공지 관리 (${adminData.updates.length})` }
+    ];
+    let bodyHtml = '';
+    if (activeAdminTab === 'reports') {
+      bodyHtml = `
+        <section class="neo-panel">
+          <div class="neo-panel-head"><h3>🚨 신고 접수된 글</h3></div>
+          <div class="admin-list">
+            ${adminData.reports.length ? adminData.reports.map(r => `
+              <div class="admin-row">
+                <div class="admin-row-main">
+                  <strong>[${esc(r.report_count)}건] ${esc(r.title)} <small>(${esc(r.author)})</small></strong>
+                  <p>사유: ${esc(r.reasons)} · 내용: ${esc(String(r.body).slice(0, 90))}</p>
+                </div>
+                <div class="admin-row-actions">
+                  <button type="button" class="admin-btn" data-admin-dismiss-report="${esc(r.post_id)}">무혐의</button>
+                  <button type="button" class="admin-btn is-danger" data-admin-delete-post="${esc(r.post_id)}">글 삭제</button>
+                </div>
+              </div>
+            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">신고된 글이 없습니다.</p>'}
+          </div>
+        </section>
+        <section class="neo-panel">
+          <div class="neo-panel-head"><h3>💬 최근 커뮤니티 게시글 (${adminData.posts.length})</h3></div>
+          <div class="admin-list">
+            ${adminData.posts.map(p => `
+              <div class="admin-row">
+                <div class="admin-row-main">
+                  <strong>${esc(p.title)} <small>by ${esc(p.author)} · 댓글 ${p.commentCount || 0}</small></strong>
+                  <p>${esc(String(p.body).slice(0, 100))}</p>
+                </div>
+                <div class="admin-row-actions">
+                  <button type="button" class="admin-btn" data-comments="${esc(p.id)}">댓글 보기</button>
+                  <button type="button" class="admin-btn is-danger" data-admin-delete-post="${esc(p.id)}">삭제</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    } else if (activeAdminTab === 'suggestions') {
+      bodyHtml = `
+        <section class="neo-panel">
+          <div class="neo-panel-head"><h3>🎮 게임 내 추천 조합 (Supabase ksool_suggestions)</h3></div>
+          <div class="admin-list">
+            ${adminData.gameSuggestions.length ? adminData.gameSuggestions.map(s => `
+              <div class="admin-row">
+                <div class="admin-row-main">
+                  <strong>${formula(s.items || [], false)}</strong>
+                  <small>👍 ${s.upvotes || 0} / 👎 ${s.downvotes || 0} · 상태: ${s.is_applied ? '✅ 도감 반영됨' : '대기 중'}</small>
+                </div>
+                <div class="admin-row-actions">
+                  <button type="button" class="admin-btn ${s.is_applied ? '' : 'is-ok'}" data-admin-gsug-apply="${esc(s.suggestion_key)}" data-applied="${s.is_applied ? '1' : '0'}">${s.is_applied ? '반영 해제' : '⚡ 도감 반영'}</button>
+                  <button type="button" class="admin-btn is-danger" data-admin-gsug-delete="${esc(s.suggestion_key)}">삭제</button>
+                </div>
+              </div>
+            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">게임 내 추천 조합이 없습니다.</p>'}
+          </div>
+        </section>
+        <section class="neo-panel">
+          <div class="neo-panel-head"><h3>💬 커뮤니티 추천 조합</h3></div>
+          <div class="admin-list">
+            ${adminData.suggestions.length ? adminData.suggestions.map(s => `
+              <div class="admin-row">
+                <div class="admin-row-main">
+                  <strong>${formula(s.items || [], false)}</strong>
+                  <small>👍 ${s.upvotes || 0} / 👎 ${s.downvotes || 0} · 상태: ${s.is_applied ? '✅ 적용됨' : '노출 중'}</small>
+                </div>
+                <div class="admin-row-actions">
+                  <button type="button" class="admin-btn ${s.is_applied ? '' : 'is-ok'}" data-admin-csug-apply="${esc(s.suggestion_key)}" data-applied="${s.is_applied ? '1' : '0'}">${s.is_applied ? '적용 해제' : '적용 완료'}</button>
+                  <button type="button" class="admin-btn is-danger" data-admin-csug-delete="${esc(s.suggestion_key)}">삭제</button>
+                </div>
+              </div>
+            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">커뮤니티 추천 조합이 없습니다.</p>'}
+          </div>
+        </section>
+      `;
+    } else if (activeAdminTab === 'rankings') {
+      const list = adminData.leaderboard[activeRankMode] || [];
+      bodyHtml = `
+        <section class="neo-panel">
+          <div class="neo-panel-head">
+            <h3>🏆 타이쿤 글로벌 랭킹 관리</h3>
+            <div class="rank-mode-tabs">
+              <button type="button" data-rank-mode="TIME_ATTACK" class="${activeRankMode==='TIME_ATTACK'?'is-active':''}">⏱️ 타임어택</button>
+              <button type="button" data-rank-mode="INFINITE" class="${activeRankMode==='INFINITE'?'is-active':''}">♾️ 무한모드</button>
+            </div>
+          </div>
+          <div class="admin-list">
+            ${list.length ? list.map((row, idx) => `
+              <div class="admin-row">
+                <div class="admin-row-main">
+                  <strong>#${idx + 1} ${esc(row.badge_emoji || '🍶')} ${esc(row.player_name)}</strong>
+                  <small>서빙 ${row.served_count}잔 · ${Number(row.total_earnings || 0).toLocaleString()}냥 · ${row.max_combo || 0}콤보 · W${row.max_wave || 1}</small>
+                </div>
+                <div class="admin-row-actions">
+                  ${row.id != null ? `<button type="button" class="admin-btn is-danger" data-admin-rank-delete="${esc(row.id)}">기록 삭제</button>` : ''}
+                </div>
+              </div>
+            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">랭킹 기록이 없습니다.</p>'}
+          </div>
+        </section>
+      `;
+    } else if (activeAdminTab === 'updates') {
+      bodyHtml = `
+        <section class="neo-panel">
+          <div class="neo-panel-head"><h3>📢 업데이트 공지 작성</h3></div>
+          <form id="admin-update-form" class="admin-update-form">
+            <div class="admin-update-row">
+              <input name="version" placeholder="v2.5" maxlength="20" required>
+              <input name="date" value="${new Date().toISOString().slice(0, 10)}" maxlength="20" required>
+              <input name="title" placeholder="공지 제목" maxlength="100" required>
+            </div>
+            <textarea name="body" rows="3" placeholder="공지 내용을 입력하세요" maxlength="1500" required></textarea>
+            <button type="submit" class="button coral" style="justify-self:start;min-height:36px;">공지 등록</button>
+          </form>
+          <div class="admin-list">
+            ${adminData.updates.length ? adminData.updates.map(u => `
+              <div class="admin-row">
+                <div class="admin-row-main">
+                  <strong>[${esc(u.version)}] ${esc(u.title)} <small>${esc(u.date)}</small></strong>
+                  <p>${esc(u.body)}</p>
+                </div>
+                <div class="admin-row-actions">
+                  <button type="button" class="admin-btn is-danger" data-admin-delete-update="${esc(u.id)}">삭제</button>
+                </div>
+              </div>
+            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">등록된 공지가 없습니다.</p>'}
+          </div>
+        </section>
+      `;
+    }
+    return `
+      <div class="admin-board">
+        <div class="admin-subtabs">
+          ${subTabs.map(t => `<button type="button" data-admin-subtab="${t.id}" class="${activeAdminTab===t.id?'is-active':''}">${t.label}</button>`).join('')}
+          <button type="button" id="admin-refresh-btn" class="admin-btn" style="margin-left:auto;">↻ 새로고침</button>
+        </div>
+        ${bodyHtml}
+      </div>
+    `;
+  }
+  function bindAdminActions(root) {
+    $$('[data-admin-subtab]', root).forEach(b => b.onclick = () => { activeAdminTab = b.dataset.adminSubtab; render(); });
+    $$('[data-rank-mode]', root).forEach(b => b.onclick = () => { activeRankMode = b.dataset.rankMode; render(); });
+    const refreshBtn = $('#admin-refresh-btn', root);
+    if (refreshBtn) refreshBtn.onclick = () => loadAdminData();
+    $$('[data-admin-dismiss-report]', root).forEach(b => b.onclick = async () => {
+      try { await adminApi(`/admin/reports/${encodeURIComponent(b.dataset.adminDismissReport)}/dismiss`, { method: 'POST' }); toast('신고 해제 완료'); await loadAdminData(); } catch (e) { toast(e.message); }
+    });
+    $$('[data-admin-delete-post]', root).forEach(b => b.onclick = async () => {
+      try { await adminApi(`/admin/posts/${encodeURIComponent(b.dataset.adminDeletePost)}`, { method: 'DELETE' }); toast('게시글 삭제 완료'); await syncCommunity(); await loadAdminData(); } catch (e) { toast(e.message); }
+    });
+    $$('[data-admin-csug-apply]', root).forEach(b => b.onclick = async () => {
+      try { await adminApi(`/admin/suggestions/${encodeURIComponent(b.dataset.adminCsugApply)}`, { method: 'PATCH', body: JSON.stringify({ is_applied: b.dataset.applied !== '1' }) }); toast('상태 변경 완료'); await syncCommunity(); await loadAdminData(); } catch (e) { toast(e.message); }
+    });
+    $$('[data-admin-csug-delete]', root).forEach(b => b.onclick = async () => {
+      try { await adminApi(`/admin/suggestions/${encodeURIComponent(b.dataset.adminCsugDelete)}`, { method: 'DELETE' }); toast('추천 조합 삭제 완료'); await syncCommunity(); await loadAdminData(); } catch (e) { toast(e.message); }
+    });
+    $$('[data-admin-gsug-apply]', root).forEach(b => b.onclick = async () => {
+      if (!sbClient) return;
+      const { error } = await sbClient.from('ksool_suggestions').update({ is_applied: b.dataset.applied !== '1' }).eq('suggestion_key', b.dataset.adminGsugApply);
+      if (error) { toast(error.message); return; }
+      toast('게임 추천 조합 상태 변경 완료'); await loadRemoteGameData(); await loadAdminData();
+    });
+    $$('[data-admin-gsug-delete]', root).forEach(b => b.onclick = async () => {
+      if (!sbClient) return;
+      const { error } = await sbClient.from('ksool_suggestions').delete().eq('suggestion_key', b.dataset.adminGsugDelete);
+      if (error) { toast(error.message); return; }
+      toast('게임 추천 조합 삭제 완료'); await loadRemoteGameData(); await loadAdminData();
+    });
+    $$('[data-admin-rank-delete]', root).forEach(b => b.onclick = async () => {
+      if (!sbClient) return;
+      const { error } = await sbClient.from('ksool_tycoon_leaderboard').delete().eq('id', b.dataset.adminRankDelete);
+      if (error) { toast(error.message); return; }
+      toast('랭킹 기록 삭제 완료'); await loadRemoteGameData(); await loadAdminData();
+    });
+    $$('[data-admin-delete-update]', root).forEach(b => b.onclick = async () => {
+      try { await adminApi(`/admin/updates/${encodeURIComponent(b.dataset.adminDeleteUpdate)}`, { method: 'DELETE' }); toast('공지 삭제 완료'); await loadRemoteGameData(); await loadAdminData(); } catch (e) { toast(e.message); }
+    });
+    const updForm = $('#admin-update-form', root);
+    if (updForm) {
+      updForm.onsubmit = async e => {
+        e.preventDefault();
+        const f = new FormData(updForm);
+        try {
+          await adminApi('/admin/updates', { method: 'POST', body: JSON.stringify({ version: f.get('version').trim(), date: f.get('date').trim(), title: f.get('title').trim(), body: f.get('body').trim() }) });
+          toast('공지 등록 완료'); await loadRemoteGameData(); await loadAdminData();
+        } catch (err) { toast(err.message); }
+      };
+    }
   }
   function renderHeaderAuthButton() {
     const btn = $('#header-auth-btn');
@@ -671,7 +918,7 @@
     $$('[data-nav]').forEach(b => b.classList.toggle('nav-active', b.dataset.nav === activeTab));
     $('#saved-count').textContent = bookmarks.size;
     if($('#tip-count'))$('#tip-count').textContent = allPosts().length;
-    $('#category-filters').innerHTML = (['suggestions','rankings','updates'].includes(activeTab) ? ['전체'] : activeTab === 'tips' ? ['전체','플레이 팁','새 조합 제안'] : ['전체','소맥·폭탄주','막걸리','과일·편의점','기초 재료','특산 명주']).map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('');
+    $('#category-filters').innerHTML = (['suggestions','rankings','updates','admin'].includes(activeTab) ? ['전체'] : activeTab === 'tips' ? ['전체','플레이 팁','새 조합 제안'] : ['전체','소맥·폭탄주','막걸리','과일·편의점','기초 재료','특산 명주']).map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('');
     const viewToggleEl = $('#recipe-view-toggle');
     if (viewToggleEl) {
       if (activeTab === 'recipes') {
@@ -695,8 +942,16 @@
       unlockFiltersEl.hidden = true;
       unlockFiltersEl.innerHTML = '';
     }
-    $('.sort-control').hidden = ['tips','suggestions','rankings','updates'].includes(activeTab);
+    $('.sort-control').hidden = ['tips','suggestions','rankings','updates','admin'].includes(activeTab);
     if($('.spoiler-toggle'))$('.spoiler-toggle').hidden = activeTab === 'tips';
+    if (activeTab === 'admin') {
+      $('#result-count').innerHTML = `<b>ADMIN</b> CONSOLE`;
+      $('#recipe-grid').innerHTML = adminMarkup();
+      $('#load-more').hidden = true;
+      bindAdminActions($('#recipe-grid'));
+      bindCardActions($('#recipe-grid'));
+      return;
+    }
     if (activeTab === 'rankings') {
       $('#result-count').innerHTML = `<b>TOP</b> RANKINGS`;
       $('#recipe-grid').innerHTML = rankingsMarkup();
@@ -706,7 +961,7 @@
       return;
     }
     if (activeTab === 'updates') {
-      $('#result-count').innerHTML = `<b>${UPDATE_LOGS.length}</b> UPDATES`;
+      $('#result-count').innerHTML = `<b>${UPDATE_LOGS.length + dbUpdates.length}</b> UPDATES`;
       $('#recipe-grid').innerHTML = updatesMarkup();
       $('#load-more').hidden = true;
       return;
@@ -759,7 +1014,7 @@
     $$('[data-report]',root).forEach(b=>b.onclick=async()=>{try{await api('/reports',{method:'POST',body:JSON.stringify({post_id:b.dataset.report,reason:'커뮤니티 검토 요청'})});toast('신고 접수');}catch(e){toast(e.message);}});
     $$('[data-copy-combo]',root).forEach(b=>b.onclick=()=>{const url=new URL(location.href);url.hash=new URLSearchParams({suggestion:b.dataset.copyCombo}).toString();shareLink(url.href,'조합 추천 · 조합소');});
   }
-  function switchTab(tab,scroll=true) {activeTab=tab;if(tab==='tips')history.replaceState(null,'','#community');else if(tab==='suggestions')history.replaceState(null,'','#recommendations');else if(tab==='rankings')history.replaceState(null,'','#rankings');else if(tab==='updates')history.replaceState(null,'','#updates');else history.replaceState(null,'',location.pathname+location.search);if(['tips','suggestions','rankings'].includes(tab)){syncCommunity();loadRemoteGameData();}activeCategory='전체';limit=16;render();if(scroll)$('#browse').scrollIntoView({behavior:'smooth',block:'start'});}
+  function switchTab(tab,scroll=true) {activeTab=tab;if(tab==='tips')history.replaceState(null,'','#community');else if(tab==='suggestions')history.replaceState(null,'','#recommendations');else if(tab==='rankings')history.replaceState(null,'','#rankings');else if(tab==='updates')history.replaceState(null,'','#updates');else if(tab==='admin')history.replaceState(null,'','#admin');else history.replaceState(null,'',location.pathname+location.search);if(['tips','suggestions','rankings','updates'].includes(tab)){syncCommunity();loadRemoteGameData();}if(tab==='admin'){loadAdminData();}activeCategory='전체';limit=16;render();if(scroll)$('#browse').scrollIntoView({behavior:'smooth',block:'start'});}
   function openDialog(dialog) {
     $$('dialog[open]').forEach(d => {if(d!==dialog)d.close();});
     if(!dialog.open)dialog.showModal();
@@ -794,7 +1049,10 @@
     $('#recipe-detail').innerHTML=`<h2 style="font-size:25px;margin:23px 0;line-height:1.5">${esc(post.title)}</h2>${postCard(post)}`;
     if(!post.example){
       const data=await api(`/posts/${encodeURIComponent(id)}/comments`);
-      $('#recipe-detail').innerHTML+=`<div class="comments-list">${data.comments.map(c=>`<div><b>${esc(c.author)}</b><p>${esc(c.body)}</p></div>`).join('')}</div><form id="comment-form" class="comment-form"><input name="author" maxlength="16" placeholder="닉네임" aria-label="댓글 닉네임" value="${esc(getDefaultNickname())}" required><input name="body" maxlength="500" placeholder="댓글" aria-label="댓글 내용" required><button class="button coral" aria-label="댓글 등록">${uiIcon('plus',16)}</button></form>`;
+      $('#recipe-detail').innerHTML+=`<div class="comments-list">${data.comments.map(c=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><b>${esc(c.author)}</b><p>${esc(c.body)}</p></div>${isAdminUser?`<button type="button" class="admin-btn is-danger" data-admin-delete-comment="${esc(c.id)}">삭제</button>`:''}</div>`).join('')}</div><form id="comment-form" class="comment-form"><input name="author" maxlength="16" placeholder="닉네임" aria-label="댓글 닉네임" value="${esc(getDefaultNickname())}" required><input name="body" maxlength="500" placeholder="댓글" aria-label="댓글 내용" required><button class="button coral" aria-label="댓글 등록">${uiIcon('plus',16)}</button></form>`;
+      $$('[data-admin-delete-comment]', $('#recipe-detail')).forEach(b => b.onclick = async () => {
+        try { await adminApi(`/admin/comments/${encodeURIComponent(b.dataset.adminDeleteComment)}`, { method: 'DELETE' }); toast('댓글 삭제 완료'); await syncCommunity(); await openPost(id); } catch (e) { toast(e.message); }
+      });
       $('#comment-form').onsubmit=async event=>{event.preventDefault();const f=new FormData(event.target);try{await api(`/posts/${id}/comments`,{method:'POST',body:JSON.stringify({author:f.get('author').trim(),body:f.get('body').trim()})});await syncCommunity();await openPost(id);}catch(e){toast(e.message);}};
     }
     bindCardActions($('#recipe-detail'));openDialog($('#recipe-dialog'));
@@ -830,6 +1088,7 @@
     if(location.hash==='#recommendations'){activeTab='suggestions';render();return;}
     if(location.hash==='#rankings'){activeTab='rankings';render();return;}
     if(location.hash==='#updates'){activeTab='updates';render();return;}
+    if(location.hash==='#admin'){activeTab='admin';loadAdminData();render();return;}
     const params=new URLSearchParams(location.hash.slice(1));
     if(params.has('suggestion')){activeTab='suggestions';query='';$('#search').value='';render();const target=[...document.querySelectorAll('[data-copy-combo]')].find(el=>el.dataset.copyCombo===params.get('suggestion'));if(target){target.closest('article').classList.add('shared-highlight');target.closest('article').scrollIntoView({block:'center'});}}else if(params.has('recipe')){
       const id=Number(params.get('recipe'));
