@@ -1,14 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { openDatabase } from '../server/sqlite.mjs';
-import { handleApi } from '../server/worker.mjs';
+import { handleApi, normalizeItems } from '../server/worker.mjs';
 
-function makeEnv(db, adminEmail = 'jhm9595@gmail.com') {
+function makeEnv(db) {
   return {
     DB: db,
     GAME_ORIGINS: 'https://ksool.minibig.pw',
-    ADMIN_EMAILS: 'jhm9595@gmail.com',
-    ADMIN_VERIFY_OVERRIDE: async (token) => (token === 'valid-admin-token' ? { email: adminEmail } : { email: 'user@example.com' })
+    ADMIN_EMAILS: 'super@example.com',
+    ADMIN_VERIFY_OVERRIDE: async (token) => {
+      if (token === 'super-token') return { email: 'super@example.com' };
+      if (token === 'mod-token') return { email: 'mod@example.com' };
+      return { email: 'user@example.com' };
+    }
   };
 }
 
@@ -18,57 +22,66 @@ const call = (env, path, options = {}) =>
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
   }), env);
 
-test('admin endpoints reject non-admin and allow admin management', async () => {
+test('admin RBAC, prompt generator, and game-rule validation work end-to-end', async () => {
   const db = openDatabase(':memory:');
   try {
     const env = makeEnv(db);
-    // 1. Non-admin check
+    // 1. Non-admin check (no hardcoded email fallback)
     const noAuth = await call(env, '/api/admin/me');
     assert.equal((await noAuth.json()).isAdmin, false);
 
-    const forbidden = await call(env, '/api/admin/overview', {
-      headers: { Authorization: 'Bearer other-token' }
+    const userForbidden = await call(env, '/api/admin/overview', {
+      headers: { Authorization: 'Bearer user-token' }
     });
-    assert.equal(forbidden.status, 403);
+    assert.equal(userForbidden.status, 403);
 
-    // 2. Admin check
-    const isAdmin = await call(env, '/api/admin/me', {
-      headers: { Authorization: 'Bearer valid-admin-token' }
-    });
-    assert.equal((await isAdmin.json()).isAdmin, true);
+    // 2. Super admin check & delegate partial permission ('posts' only) to mod@example.com
+    const superMe = await (await call(env, '/api/admin/me', {
+      headers: { Authorization: 'Bearer super-token' }
+    })).json();
+    assert.equal(superMe.isAdmin, true);
+    assert.equal(superMe.isSuperAdmin, true);
 
-    // 3. Create post & update announcement
-    const postRes = await call(env, '/api/posts', {
+    const addRoleRes = await call(env, '/api/admin/roles', {
       method: 'POST',
-      body: JSON.stringify({ kind: 'tip', title: '테스트 글', body: '내용', author: '유저' })
+      headers: { Authorization: 'Bearer super-token' },
+      body: JSON.stringify({ email: 'mod@example.com', permissions: ['posts'] })
     });
-    assert.equal(postRes.status, 201);
-    const { post } = await postRes.json();
+    assert.equal(addRoleRes.status, 200);
 
-    const updRes = await call(env, '/api/admin/updates', {
+    const modMe = await (await call(env, '/api/admin/me', {
+      headers: { Authorization: 'Bearer mod-token' }
+    })).json();
+    assert.equal(modMe.isAdmin, true);
+    assert.equal(modMe.isSuperAdmin, false);
+    assert.deepEqual(modMe.permissions, ['posts']);
+
+    // Mod cannot create updates or manage roles
+    const modUpdateFail = await call(env, '/api/admin/updates', {
       method: 'POST',
-      headers: { Authorization: 'Bearer valid-admin-token' },
-      body: JSON.stringify({ version: 'v2.5', date: '2026-11-19', title: '공지', body: '새 소식' })
+      headers: { Authorization: 'Bearer mod-token' },
+      body: JSON.stringify({ version: 'v2.5', date: '2026-11-19', title: '공지', body: '내용' })
     });
-    assert.equal(updRes.status, 201);
+    assert.equal(modUpdateFail.status, 403);
 
-    const publicUpdates = await call(env, '/api/updates');
-    assert.equal((await publicUpdates.json()).updates.length, 1);
+    // 3. Game-rule validation: >4 slots rejected
+    assert.throws(() => normalizeItems([
+      { ingredient_id: 101, ratio: 1 },
+      { ingredient_id: 102, ratio: 1 },
+      { ingredient_id: 103, ratio: 1 },
+      { ingredient_id: 104, ratio: 1 },
+      { ingredient_id: 105, ratio: 1 }
+    ]));
 
-    const overviewRes = await call(env, '/api/admin/overview', {
-      headers: { Authorization: 'Bearer valid-admin-token' }
+    // 4. Prompt generator works for super admin
+    const promptRes = await call(env, '/api/admin/generate-recipe-prompt', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer super-token' },
+      body: JSON.stringify({ items: [{ ingredient_id: 101, detail_id: null, ratio: 2 }, { ingredient_id: 102, detail_id: null, ratio: 1 }] })
     });
-    assert.equal(overviewRes.status, 200);
-    const overview = await overviewRes.json();
-    assert.equal(overview.posts.length, 1);
-    assert.equal(overview.updates.length, 1);
-
-    // 4. Delete post as admin
-    const delRes = await call(env, `/api/admin/posts/${post.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: 'Bearer valid-admin-token' }
-    });
-    assert.equal(delRes.status, 200);
+    assert.equal(promptRes.status, 200);
+    const promptData = await promptRes.json();
+    assert.match(promptData.prompt, /recipe_id/);
   } finally {
     db.close();
   }

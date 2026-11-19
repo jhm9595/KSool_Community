@@ -129,24 +129,33 @@
   let sbUser = null;
   let adminAccessToken = null;
   let isAdminUser = false;
+  let isSuperAdmin = false;
+  let adminPermissions = [];
   let activeAdminTab = 'reports';
-  let adminData = { reports: [], posts: [], suggestions: [], updates: [], gameSuggestions: [], leaderboard: { TIME_ATTACK: [], INFINITE: [] } };
+  let adminData = { reports: [], posts: [], suggestions: [], updates: [], roles: [], gameSuggestions: [] };
   let dbUpdates = [];
   let gameSuggestions = [];
   let tycoonRankings = { TIME_ATTACK: [], INFINITE: [] };
   let activeRankMode = 'TIME_ATTACK';
+  let rankSearchQuery = (() => { try { return localStorage.getItem('ksool_tycoon_player_name') || ''; } catch (_) { return ''; } })();
 
+  const canAdmin = (perm) => isSuperAdmin || adminPermissions.includes(perm);
   const adminApi = async (path, options = {}) => {
     if (!adminAccessToken) throw new Error('관리자 인증 토큰이 없습니다.');
     return api(path, { ...options, headers: { ...(options.headers || {}), Authorization: `Bearer ${adminAccessToken}` } });
   };
   async function checkAdminStatus(token) {
     adminAccessToken = token || null;
-    if (!adminAccessToken) { isAdminUser = false; const btn = $('#admin-nav-btn'); if (btn) btn.hidden = true; return; }
+    if (!adminAccessToken) { isAdminUser = false; isSuperAdmin = false; adminPermissions = []; const btn = $('#admin-nav-btn'); if (btn) btn.hidden = true; return; }
     try {
       const res = await adminApi('/admin/me');
       isAdminUser = Boolean(res?.isAdmin);
-    } catch (_) { isAdminUser = false; }
+      isSuperAdmin = Boolean(res?.isSuperAdmin);
+      adminPermissions = Array.isArray(res?.permissions) ? res.permissions : [];
+      if (isAdminUser && !canAdmin(activeAdminTab) && activeAdminTab !== 'roles') {
+        activeAdminTab = ['reports','suggestions','updates','roles'].find(t => t === 'roles' ? isSuperAdmin : canAdmin(t === 'reports' ? 'posts' : t)) || 'reports';
+      }
+    } catch (_) { isAdminUser = false; isSuperAdmin = false; adminPermissions = []; }
     const btn = $('#admin-nav-btn');
     if (btn) btn.hidden = !isAdminUser;
   }
@@ -158,15 +167,10 @@
       adminData.posts = overview.posts || [];
       adminData.suggestions = overview.suggestions || [];
       adminData.updates = overview.updates || [];
-      if (sbClient) {
-        const [gsRes, taRes, infRes] = await Promise.all([
-          sbClient.from('ksool_suggestions').select('*').order('upvotes', { ascending: false }).limit(100),
-          sbClient.from('ksool_tycoon_leaderboard').select('*').eq('mode', 'TIME_ATTACK').order('served_count', { ascending: false }).limit(100),
-          sbClient.from('ksool_tycoon_leaderboard').select('*').eq('mode', 'INFINITE').order('served_count', { ascending: false }).limit(100)
-        ]);
+      adminData.roles = overview.roles || [];
+      if (sbClient && canAdmin('suggestions')) {
+        const gsRes = await sbClient.from('ksool_suggestions').select('*').order('upvotes', { ascending: false }).limit(100);
         if (Array.isArray(gsRes.data)) adminData.gameSuggestions = gsRes.data;
-        if (Array.isArray(taRes.data)) adminData.leaderboard.TIME_ATTACK = taRes.data;
-        if (Array.isArray(infRes.data)) adminData.leaderboard.INFINITE = infRes.data;
       }
       render();
     } catch (e) { toast(e.message || '관리자 데이터 로드 실패'); }
@@ -376,16 +380,22 @@
   let activeTab = 'recipes', activeCategory = '전체', activeUnlockFilter = 'all', query = '', sort = 'recommended', limit = 16, showAnswers = true;
   const revealedSpoilers = new Set();
   let toastTimer;
+  const officialRecipeKeyMap = new Map(
+    recipes.map(r => [r.items.map(i => `${i.ingredient_id}:${i.detail_ingredient_id||i.detail_id||0}@${i.ratio}`).sort().join('+'), r])
+  );
   function validatePost(p) {
     if (!p || typeof p !== 'object' || !['tip','experiment'].includes(p.kind) || typeof p.id !== 'string' || p.id.length > 80 || typeof p.title !== 'string' || !p.title.trim() || p.title.length > 70 || typeof p.body !== 'string' || !p.body.trim() || p.body.length > 1500 || typeof p.author !== 'string' || !p.author.trim() || p.author.length > 16) return false;
     if (p.recipeId != null && !data.recipes.some(r => r.recipe_id === p.recipeId)) return false;
     if (p.kind === 'experiment') {
-      if (!Array.isArray(p.items) || p.items.length < 2 || p.items.length > 6) return false;
+      if (!Array.isArray(p.items) || p.items.length < 2 || p.items.length > 4) return false;
       const keys = new Set();
+      let sum = 0;
       for (const i of p.items) {
         if (!i || !data.ingredients_base.some(b => b.ingredient_id === i.ingredient_id) || !Number.isInteger(i.ratio) || i.ratio < 1 || i.ratio > 10 || keys.has(`${i.ingredient_id}:${i.detail_id||0}`)) return false;
         keys.add(`${i.ingredient_id}:${i.detail_id||0}`);
+        sum += i.ratio;
       }
+      if (sum > 10) return false;
     }
     return true;
   }
@@ -513,32 +523,41 @@
     const hiddenSugCount = allSug.length - allSug.filter(s => isItemsUnlocked(s.items, avail)).length;
     const topPosts = [...posts].sort((a,b) => ((b.upvotes||0)-(b.downvotes||0)) - ((a.upvotes||0)-(a.downvotes||0))).slice(0, 6);
     const rankList = tycoonRankings[activeRankMode] || [];
+    const findName = (rankSearchQuery || getDefaultNickname() || '').trim().toLowerCase();
+    const myRankIndex = findName ? rankList.findIndex(r => String(r.player_name || '').toLowerCase().includes(findName)) : -1;
+    const myRankRow = myRankIndex >= 0 ? rankList[myRankIndex] : null;
     const topRecipes = [1, 7, 19, 51, 74, 2, 80, 31].map(id => byId.get(id)).filter(Boolean);
     return `
       <div class="rankings-board">
         <section class="neo-panel">
           <div class="neo-panel-head">
-            <h3>🏆 주점 타이쿤 글로벌 Top 100</h3>
+            <h3>🏆 주점 타이쿤 글로벌 Top 100 <small style="font-size:11px;font-weight:700;color:var(--muted);">(게임 내 Top 10 · 사이트 전체 100위 조회)</small></h3>
             <div class="rank-mode-tabs">
               <button type="button" data-rank-mode="TIME_ATTACK" class="${activeRankMode==='TIME_ATTACK'?'is-active':''}">⏱️ 타임어택</button>
               <button type="button" data-rank-mode="INFINITE" class="${activeRankMode==='INFINITE'?'is-active':''}">♾️ 무한모드</button>
             </div>
           </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <input id="rank-my-search" type="search" value="${esc(rankSearchQuery)}" placeholder="내 주모 닉네임으로 순위 찾기 (예: 미니빅)" style="flex:1;min-width:200px;padding:7px 10px;border:2px solid var(--ink);font-size:12px;background:#fff;">
+            ${myRankRow ? `<div style="padding:6px 12px;border:2px solid var(--ink);background:var(--green);font-size:12px;font-weight:850;">🎯 내 순위: <b>#${myRankIndex + 1}위</b> · ${esc(myRankRow.player_name)} (${myRankRow.served_count}잔 / ${Number(myRankRow.total_earnings || 0).toLocaleString()}냥)</div>` : (findName ? `<span style="font-size:11px;color:var(--muted);">'${esc(findName)}' 기록이 Top 100 내에 없습니다.</span>` : '')}
+          </div>
           ${rankList.length ? `
-            <div class="rank-table-wrap">
+            <div class="rank-table-wrap" style="max-height:460px;overflow-y:auto;">
               <table class="rank-table">
                 <thead><tr><th>순위</th><th>주모</th><th>서빙</th><th>매출</th><th>최대 콤보</th><th>웨이브</th></tr></thead>
                 <tbody>
-                  ${rankList.slice(0, 30).map((row, idx) => `
-                    <tr class="${idx < 3 ? 'is-top3' : ''}">
+                  ${rankList.slice(0, 100).map((row, idx) => {
+                    const isMine = findName && String(row.player_name || '').toLowerCase().includes(findName);
+                    return `
+                    <tr class="${isMine ? 'is-mine-rank' : idx < 3 ? 'is-top3' : ''}" style="${isMine ? 'background:#d5f88a;font-weight:900;' : ''}">
                       <td><span class="rank-badge-num">${idx + 1}</span></td>
-                      <td>${esc(row.badge_emoji || '🍶')} <strong>${esc(row.player_name || '익명주모')}</strong></td>
+                      <td>${esc(row.badge_emoji || '🍶')} <strong>${esc(row.player_name || '익명주모')}</strong>${isMine ? ' <span style="font-size:10px;border:1px solid var(--ink);background:#fff;padding:1px 4px;">ME</span>' : ''}</td>
                       <td>${Number(row.served_count || 0)}잔</td>
                       <td>${Number(row.total_earnings || 0).toLocaleString()}냥</td>
                       <td>${Number(row.max_combo || 0)}콤보</td>
                       <td>W${Number(row.max_wave || 1)}</td>
-                    </tr>
-                  `).join('')}
+                    </tr>`;
+                  }).join('')}
                 </tbody>
               </table>
             </div>
@@ -580,16 +599,16 @@
   }
   function adminMarkup() {
     if (!isAdminUser) {
-      return `<div class="neo-panel" style="grid-column:1/-1;"><h3>⚙️ 관리자 전용 페이지</h3><p style="font-size:12px;color:var(--muted);">관리자 Google 계정으로 로그인하면 커뮤니티 신고·글, 게임 추천 조합, 타이쿤 랭킹, 업데이트 공지를 통합 관리할 수 있습니다.</p></div>`;
+      return `<div class="neo-panel" style="grid-column:1/-1;"><h3>⚙️ 관리자 전용 페이지</h3><p style="font-size:12px;color:var(--muted);">관리자 권한이 부여된 Google 계정으로 로그인하면 커뮤니티·추천 조합·공지를 관리할 수 있습니다.</p></div>`;
     }
     const subTabs = [
-      { id: 'reports', label: `🚨 신고/글 (${adminData.reports.length})` },
-      { id: 'suggestions', label: `🧪 추천 조합 (${adminData.gameSuggestions.length + adminData.suggestions.length})` },
-      { id: 'rankings', label: `🏆 타이쿤 랭킹` },
-      { id: 'updates', label: `📢 공지 관리 (${adminData.updates.length})` }
-    ];
+      canAdmin('posts') ? { id: 'reports', label: `🚨 신고/글 (${adminData.reports.length})` } : null,
+      canAdmin('suggestions') ? { id: 'suggestions', label: `🧪 추천 조합 (${adminData.gameSuggestions.length + adminData.suggestions.length})` } : null,
+      canAdmin('updates') ? { id: 'updates', label: `📢 공지 관리 (${adminData.updates.length})` } : null,
+      isSuperAdmin ? { id: 'roles', label: `👥 운영자 권한 (${adminData.roles.length})` } : null
+    ].filter(Boolean);
     let bodyHtml = '';
-    if (activeAdminTab === 'reports') {
+    if (activeAdminTab === 'reports' && canAdmin('posts')) {
       bodyHtml = `
         <section class="neo-panel">
           <div class="neo-panel-head"><h3>🚨 신고 접수된 글</h3></div>
@@ -626,7 +645,7 @@
           </div>
         </section>
       `;
-    } else if (activeAdminTab === 'suggestions') {
+    } else if (activeAdminTab === 'suggestions' && canAdmin('suggestions')) {
       bodyHtml = `
         <section class="neo-panel">
           <div class="neo-panel-head"><h3>🎮 게임 내 추천 조합 (Supabase ksool_suggestions)</h3></div>
@@ -638,6 +657,7 @@
                   <small>👍 ${s.upvotes || 0} / 👎 ${s.downvotes || 0} · 상태: ${s.is_applied ? '✅ 도감 반영됨' : '대기 중'}</small>
                 </div>
                 <div class="admin-row-actions">
+                  ${canAdmin('prompt_gen') ? `<button type="button" class="admin-btn" data-admin-prompt-items='${esc(JSON.stringify(s.items || []))}'>🤖 Agent 프롬프트</button>` : ''}
                   <button type="button" class="admin-btn ${s.is_applied ? '' : 'is-ok'}" data-admin-gsug-apply="${esc(s.suggestion_key)}" data-applied="${s.is_applied ? '1' : '0'}">${s.is_applied ? '반영 해제' : '⚡ 도감 반영'}</button>
                   <button type="button" class="admin-btn is-danger" data-admin-gsug-delete="${esc(s.suggestion_key)}">삭제</button>
                 </div>
@@ -655,6 +675,7 @@
                   <small>👍 ${s.upvotes || 0} / 👎 ${s.downvotes || 0} · 상태: ${s.is_applied ? '✅ 적용됨' : '노출 중'}</small>
                 </div>
                 <div class="admin-row-actions">
+                  ${canAdmin('prompt_gen') ? `<button type="button" class="admin-btn" data-admin-prompt-items='${esc(JSON.stringify(s.items || []))}'>🤖 Agent 프롬프트</button>` : ''}
                   <button type="button" class="admin-btn ${s.is_applied ? '' : 'is-ok'}" data-admin-csug-apply="${esc(s.suggestion_key)}" data-applied="${s.is_applied ? '1' : '0'}">${s.is_applied ? '적용 해제' : '적용 완료'}</button>
                   <button type="button" class="admin-btn is-danger" data-admin-csug-delete="${esc(s.suggestion_key)}">삭제</button>
                 </div>
@@ -663,33 +684,7 @@
           </div>
         </section>
       `;
-    } else if (activeAdminTab === 'rankings') {
-      const list = adminData.leaderboard[activeRankMode] || [];
-      bodyHtml = `
-        <section class="neo-panel">
-          <div class="neo-panel-head">
-            <h3>🏆 타이쿤 글로벌 랭킹 관리</h3>
-            <div class="rank-mode-tabs">
-              <button type="button" data-rank-mode="TIME_ATTACK" class="${activeRankMode==='TIME_ATTACK'?'is-active':''}">⏱️ 타임어택</button>
-              <button type="button" data-rank-mode="INFINITE" class="${activeRankMode==='INFINITE'?'is-active':''}">♾️ 무한모드</button>
-            </div>
-          </div>
-          <div class="admin-list">
-            ${list.length ? list.map((row, idx) => `
-              <div class="admin-row">
-                <div class="admin-row-main">
-                  <strong>#${idx + 1} ${esc(row.badge_emoji || '🍶')} ${esc(row.player_name)}</strong>
-                  <small>서빙 ${row.served_count}잔 · ${Number(row.total_earnings || 0).toLocaleString()}냥 · ${row.max_combo || 0}콤보 · W${row.max_wave || 1}</small>
-                </div>
-                <div class="admin-row-actions">
-                  ${row.id != null ? `<button type="button" class="admin-btn is-danger" data-admin-rank-delete="${esc(row.id)}">기록 삭제</button>` : ''}
-                </div>
-              </div>
-            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">랭킹 기록이 없습니다.</p>'}
-          </div>
-        </section>
-      `;
-    } else if (activeAdminTab === 'updates') {
+    } else if (activeAdminTab === 'updates' && canAdmin('updates')) {
       bodyHtml = `
         <section class="neo-panel">
           <div class="neo-panel-head"><h3>📢 업데이트 공지 작성</h3></div>
@@ -717,6 +712,36 @@
           </div>
         </section>
       `;
+    } else if (activeAdminTab === 'roles' && isSuperAdmin) {
+      bodyHtml = `
+        <section class="neo-panel">
+          <div class="neo-panel-head"><h3>👥 부분 권한 운영자 지정 (최고 관리자 전용)</h3></div>
+          <p style="margin:0 0 10px;font-size:12px;color:var(--muted);">최고 관리자 권한은 Cloud Run 비밀 환경변수(<code>ADMIN_EMAILS</code>)로만 제어되며, 아래에서 다른 Google 계정에 필요한 일부 관리 권한만 위임할 수 있습니다.</p>
+          <form id="admin-role-form" class="admin-update-form">
+            <input name="email" type="email" placeholder="권한을 부여할 Google 이메일 (예: helper@gmail.com)" required>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;font-weight:700;">
+              <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" name="perm" value="posts" checked> 🚨 신고/글/댓글 관리</label>
+              <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" name="perm" value="suggestions"> 🧪 추천 조합 관리</label>
+              <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" name="perm" value="prompt_gen"> 🤖 Agent 프롬프트 생성</label>
+              <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" name="perm" value="updates"> 📢 공지 작성</label>
+            </div>
+            <button type="submit" class="button coral" style="justify-self:start;min-height:36px;">운영자 권한 저장</button>
+          </form>
+          <div class="admin-list">
+            ${adminData.roles.length ? adminData.roles.map(r => `
+              <div class="admin-row">
+                <div class="admin-row-main">
+                  <strong>${esc(r.email)}</strong>
+                  <small>부여된 권한: ${esc((r.permissions || []).join(', '))}</small>
+                </div>
+                <div class="admin-row-actions">
+                  <button type="button" class="admin-btn is-danger" data-admin-delete-role="${esc(r.email)}">권한 회수</button>
+                </div>
+              </div>
+            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">등록된 부분 권한 운영자가 없습니다.</p>'}
+          </div>
+        </section>
+      `;
     }
     return `
       <div class="admin-board">
@@ -730,7 +755,6 @@
   }
   function bindAdminActions(root) {
     $$('[data-admin-subtab]', root).forEach(b => b.onclick = () => { activeAdminTab = b.dataset.adminSubtab; render(); });
-    $$('[data-rank-mode]', root).forEach(b => b.onclick = () => { activeRankMode = b.dataset.rankMode; render(); });
     const refreshBtn = $('#admin-refresh-btn', root);
     if (refreshBtn) refreshBtn.onclick = () => loadAdminData();
     $$('[data-admin-dismiss-report]', root).forEach(b => b.onclick = async () => {
@@ -745,6 +769,26 @@
     $$('[data-admin-csug-delete]', root).forEach(b => b.onclick = async () => {
       try { await adminApi(`/admin/suggestions/${encodeURIComponent(b.dataset.adminCsugDelete)}`, { method: 'DELETE' }); toast('추천 조합 삭제 완료'); await syncCommunity(); await loadAdminData(); } catch (e) { toast(e.message); }
     });
+    $$('[data-admin-prompt-items]', root).forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      const orig = b.textContent;
+      b.textContent = '생성 중...';
+      try {
+        const items = JSON.parse(b.dataset.adminPromptItems || '[]');
+        const res = await adminApi('/admin/generate-recipe-prompt', { method: 'POST', body: JSON.stringify({ items }) });
+        $('#recipe-detail').innerHTML = `
+          <h2 style="font-size:20px;margin:6px 0 10px;">🤖 개발 Agent 도감 편입 프롬프트 <small style="font-size:11px;color:var(--muted);">(${res.mode === 'gemini' ? 'Google Gemini AI 생성' : '구조화 템플릿 생성'})</small></h2>
+          <p style="font-size:12px;color:var(--muted);margin:0 0 10px;">아래 프롬프트를 복사해 개발 Agent에게 전달하면 <code>data/recipes.json</code>, <code>ProgressionEngine.js</code>, 아이콘 SVG, 다국어 파일까지 한 번에 반영됩니다.</p>
+          <textarea id="generated-agent-prompt" rows="16" style="width:100%;font-family:ui-monospace,Consolas,monospace;font-size:11px;padding:10px;border:2px solid var(--ink);background:#fffdf5;">${esc(res.prompt)}</textarea>
+          <div class="detail-actions">
+            <button type="button" id="copy-agent-prompt-btn" class="button coral" style="width:100%;justify-content:center;">📋 프롬프트 복사하기</button>
+          </div>
+        `;
+        $('#copy-agent-prompt-btn').onclick = () => shareLink(res.prompt, 'Agent 프롬프트');
+        openDialog($('#recipe-dialog'));
+      } catch (e) { toast(e.message); }
+      finally { b.disabled = false; b.textContent = orig; }
+    });
     $$('[data-admin-gsug-apply]', root).forEach(b => b.onclick = async () => {
       if (!sbClient) return;
       const { error } = await sbClient.from('ksool_suggestions').update({ is_applied: b.dataset.applied !== '1' }).eq('suggestion_key', b.dataset.adminGsugApply);
@@ -756,12 +800,6 @@
       const { error } = await sbClient.from('ksool_suggestions').delete().eq('suggestion_key', b.dataset.adminGsugDelete);
       if (error) { toast(error.message); return; }
       toast('게임 추천 조합 삭제 완료'); await loadRemoteGameData(); await loadAdminData();
-    });
-    $$('[data-admin-rank-delete]', root).forEach(b => b.onclick = async () => {
-      if (!sbClient) return;
-      const { error } = await sbClient.from('ksool_tycoon_leaderboard').delete().eq('id', b.dataset.adminRankDelete);
-      if (error) { toast(error.message); return; }
-      toast('랭킹 기록 삭제 완료'); await loadRemoteGameData(); await loadAdminData();
     });
     $$('[data-admin-delete-update]', root).forEach(b => b.onclick = async () => {
       try { await adminApi(`/admin/updates/${encodeURIComponent(b.dataset.adminDeleteUpdate)}`, { method: 'DELETE' }); toast('공지 삭제 완료'); await loadRemoteGameData(); await loadAdminData(); } catch (e) { toast(e.message); }
@@ -777,6 +815,21 @@
         } catch (err) { toast(err.message); }
       };
     }
+    const roleForm = $('#admin-role-form', root);
+    if (roleForm) {
+      roleForm.onsubmit = async e => {
+        e.preventDefault();
+        const f = new FormData(roleForm);
+        const permissions = f.getAll('perm');
+        try {
+          await adminApi('/admin/roles', { method: 'POST', body: JSON.stringify({ email: f.get('email').trim(), permissions }) });
+          toast('운영자 권한 저장 완료'); await loadAdminData();
+        } catch (err) { toast(err.message); }
+      };
+    }
+    $$('[data-admin-delete-role]', root).forEach(b => b.onclick = async () => {
+      try { await adminApi(`/admin/roles/${encodeURIComponent(b.dataset.adminDeleteRole)}`, { method: 'DELETE' }); toast('권한 회수 완료'); await loadAdminData(); } catch (e) { toast(e.message); }
+    });
   }
   function renderHeaderAuthButton() {
     const btn = $('#header-auth-btn');
@@ -957,6 +1010,16 @@
       $('#recipe-grid').innerHTML = rankingsMarkup();
       $('#load-more').hidden = true;
       $$('[data-rank-mode]', $('#recipe-grid')).forEach(b => b.onclick = () => { activeRankMode = b.dataset.rankMode; render(); });
+      const rankSearchEl = $('#rank-my-search', $('#recipe-grid'));
+      if (rankSearchEl) {
+        rankSearchEl.oninput = e => {
+          rankSearchQuery = e.target.value;
+          const pos = e.target.selectionStart;
+          render();
+          const nextEl = $('#rank-my-search');
+          if (nextEl) { nextEl.focus(); try { nextEl.setSelectionRange(pos, pos); } catch (_) {} }
+        };
+      }
       bindCardActions($('#recipe-grid'));
       return;
     }
@@ -1076,9 +1139,10 @@
     openDialog($('#compose-dialog'));
   }
   function addCompositionRow() {
-    if($$('.composition-row').length>=6){toast('재료는 최대 6종류까지 넣을 수 있어요.');return;}
+    if($$('.composition-row').length>=4){toast('게임 룰: 재료는 최대 4종류까지 넣을 수 있어요.');return;}
+    const avail = getAvailableIngredients();
     const row=document.createElement('div');row.className='composition-row';
-    row.innerHTML=`<select class="base-select" aria-label="조합 재료" required><option value="">재료 선택</option>${data.ingredients_base.map(i=>`<option value="${i.ingredient_id}">${esc(name(i))}</option>`).join('')}</select><select class="detail-select" aria-label="상세 재료"><option value="">기본</option></select><input type="number" aria-label="재료 개수" min="1" max="10" value="1" required><button type="button" aria-label="이 재료 삭제">×</button>`;
+    row.innerHTML=`<select class="base-select" aria-label="조합 재료" required><option value="">재료 선택</option>${data.ingredients_base.filter(i=>avail.has(i.ingredient_id)).map(i=>`<option value="${i.ingredient_id}">${esc(name(i))}</option>`).join('')}</select><select class="detail-select" aria-label="상세 재료"><option value="">기본</option></select><input type="number" aria-label="재료 개수" min="1" max="10" value="1" required><button type="button" aria-label="이 재료 삭제">×</button>`;
     $('.base-select',row).onchange=()=>{const id=Number($('.base-select',row).value);$('.detail-select',row).innerHTML='<option value="">기본</option>'+data.ingredients_detail.filter(d=>d.base_ingredient_id===id).map(d=>`<option value="${d.detail_id}">${esc(name(d))}</option>`).join('');};
     $('button',row).onclick=()=>row.remove();$('#composition-rows').append(row);
   }
@@ -1126,8 +1190,20 @@
     const form=e.target;
     const f=new FormData(form);
     const entry={id:crypto.randomUUID ? crypto.randomUUID() : `post-${Date.now()}`,kind:f.get('kind'),title:f.get('title').trim(),body:f.get('body').trim(),author:f.get('author').trim(),recipeId:f.get('recipe')?Number(f.get('recipe')):null};
-    if(entry.kind==='experiment')entry.items=$$('.composition-row').map(row=>({ingredient_id:Number($('.base-select',row).value),detail_id:$('.detail-select',row).value?Number($('.detail-select',row).value):null,ratio:Number($('input',row).value)}));
-    if(!validatePost(entry)){$('#compose-error').textContent=entry.kind==='experiment'?'제목과 내용을 입력하고, 중복되지 않는 재료를 2종류 이상 골라 개수(1~10)를 확인해주세요.':'공백만 입력할 수 없어요. 제목·닉네임·내용을 확인해주세요.';return;}
+    if (entry.kind === 'experiment') {
+      entry.items = $$('.composition-row').map(row => ({
+        ingredient_id: Number($('.base-select', row).value),
+        detail_id: $('.detail-select', row).value ? Number($('.detail-select', row).value) : null,
+        ratio: Number($('input', row).value)
+      }));
+      const key = entry.items.map(i => `${i.ingredient_id}:${i.detail_id || 0}@${i.ratio}`).sort().join('+');
+      const dupOfficial = officialRecipeKeyMap.get(key);
+      if (dupOfficial) {
+        $('#compose-error').textContent = `이미 공식 도감에 존재하는 조합입니다 (${dupOfficial.formatted_number} ${name(dupOfficial)}).`;
+        return;
+      }
+    }
+    if(!validatePost(entry)){$('#compose-error').textContent=entry.kind==='experiment'?'게임 룰: 중복 없는 2~4종류 재료, 각 1~10개(총합 최대 10개)와 제목·내용을 확인해주세요.':'공백만 입력할 수 없어요. 제목·닉네임·내용을 확인해주세요.';return;}
     const submit=$('[type=submit]',form);submit.disabled=true;
     try{const result=await api('/posts',{method:'POST',body:JSON.stringify(entry)});try{localStorage.setItem('community-nickname',entry.author);}catch(_){}await syncCommunity();}
     catch(error){$('#compose-error').textContent=error.message;submit.disabled=false;return;}

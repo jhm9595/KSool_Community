@@ -39,7 +39,8 @@ await writeFile(
   `export default ${JSON.stringify({
     ingredients: bundle.ingredients_base,
     details: bundle.ingredients_detail,
-    recipes: bundle.recipes
+    recipes: bundle.recipes,
+    recipe_ingredients: bundle.recipe_ingredients
   })};`,
   'utf8'
 );

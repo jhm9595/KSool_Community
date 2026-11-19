@@ -3,6 +3,21 @@ import catalog from './catalog.mjs';
 const ingredientMap = new Map(catalog.ingredients.map(i=>[i.ingredient_id,i]));
 const detailMap = new Map(catalog.details.map(i=>[i.detail_id,i]));
 const recipeIds = new Set(catalog.recipes.map(r=>r.recipe_id));
+const officialRecipeKeys = (() => {
+  const byRec = new Map();
+  for (const ri of (catalog.recipe_ingredients || [])) {
+    if (!byRec.has(ri.recipe_id)) byRec.set(ri.recipe_id, []);
+    byRec.get(ri.recipe_id).push(ri);
+  }
+  const map = new Map();
+  for (const r of catalog.recipes) {
+    const items = byRec.get(r.recipe_id) || [];
+    if (!items.length) continue;
+    const key = items.map(i => `${i.ingredient_id}:${i.detail_ingredient_id||i.detail_id||0}@${i.ratio}`).sort().join('+');
+    map.set(key, r);
+  }
+  return map;
+})();
 const json = (data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 const problem=(message,status=400)=>Object.assign(new Error(message),{status});
 const str=(value,min,max,label)=>{if(typeof value!=='string'||value.trim().length<min||value.trim().length>max)throw problem(`${label} 확인`);return value.trim();};
@@ -10,18 +25,22 @@ const stmt=(env,sql,...args)=>env.DB.prepare(sql).bind(...args);
 const now=()=>Date.now();
 const cursor=(raw)=>{if(!raw)return [Number.MAX_SAFE_INTEGER,'~'];const [time,...id]=raw.split('|');return [Number(time)||Number.MAX_SAFE_INTEGER,id.join('|')||'~'];};
 export function normalizeItems(input){
-  if(!Array.isArray(input)||input.length<2||input.length>10)throw problem('재료는 2종류 이상');
+  if(!Array.isArray(input)||input.length<2||input.length>4)throw problem('게임 룰: 재료는 2~4종류까지 넣을 수 있습니다');
   const seen=new Set();
   const items=input.map(i=>{
-    if(!i||!Number.isInteger(i.ingredient_id)||!ingredientMap.has(i.ingredient_id)||!Number.isInteger(i.ratio)||i.ratio<1||i.ratio>10)throw problem('재료·개수 확인');
+    if(!i||!Number.isInteger(i.ingredient_id)||!ingredientMap.has(i.ingredient_id)||!Number.isInteger(i.ratio)||i.ratio<1||i.ratio>10)throw problem('재료·개수(1~10) 확인');
     const detail=i.detail_id ?? i.detail_ingredient_id ?? null;
     if(detail!==null&&(!Number.isInteger(detail)||detailMap.get(detail)?.base_ingredient_id!==i.ingredient_id))throw problem('상세 재료 확인');
     const key=`${i.ingredient_id}:${detail||0}`;
     if(seen.has(key))throw problem('중복 재료');seen.add(key);
     return {ingredient_id:i.ingredient_id,detail_id:detail,ratio:i.ratio};
   });
-  if(items.reduce((sum,i)=>sum+i.ratio,0)>10)throw problem('총 개수는 최대 10');
+  if(items.reduce((sum,i)=>sum+i.ratio,0)>10)throw problem('게임 룰: 총 재료 개수는 최대 10개입니다');
   return items;
+}
+function ensureNotOfficialRecipe(key){
+  const match=officialRecipeKeys.get(key);
+  if(match)throw problem(`이미 공식 도감에 존재하는 조합입니다 (${match.formatted_number} ${match.display_name})`);
 }
 export const buildKey=items=>items.map(i=>`${i.ingredient_id}:${i.detail_id||0}@${i.ratio}`).sort().join('+');
 async function digest(value){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)))].map(b=>b.toString(16).padStart(2,'0')).join('');}
@@ -70,27 +89,96 @@ function serializePost(p,actorId){return {id:p.id,kind:p.kind,title:p.title,body
 
 const SUPABASE_URL='https://jyjxvwxlwkoedxwkkysj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5anh2d3hsd2tvZWR4d2treXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzY5NDUsImV4cCI6MjEwOTA1Mjk0NX0.wfaRfya2PV4Ykawd6md4fXrO91_TWnyGyusSRa-2fJ8';
+const ALL_ADMIN_PERMS=['posts','suggestions','updates','prompt_gen'];
 async function verifyAdminUser(req,env){
   const auth=req.headers.get('authorization')||'';
   const m=auth.match(/^Bearer\s+(.+)$/i);
   if(!m)return null;
   const token=m[1].trim();
   if(!token)return null;
-  const allowedAdmins=new Set((env.ADMIN_EMAILS||'jhm9595@gmail.com').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean));
+  const allowedAdmins=new Set((env.ADMIN_EMAILS||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean));
+  let user=null;
   if(typeof env.ADMIN_VERIFY_OVERRIDE==='function'){
-    const u=await env.ADMIN_VERIFY_OVERRIDE(token);
-    return u&&u.email&&allowedAdmins.has(u.email.toLowerCase())?u:null;
+    user=await env.ADMIN_VERIFY_OVERRIDE(token);
+  }else{
+    const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${token}`}});
+    if(res.ok)user=await res.json();
   }
-  const res=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${token}`}});
-  if(!res.ok)return null;
-  const user=await res.json();
-  if(!user?.email||!allowedAdmins.has(user.email.toLowerCase()))return null;
-  return user;
+  const email=user?.email?.trim().toLowerCase();
+  if(!email)return null;
+  if(allowedAdmins.has(email)){
+    return {email,isSuperAdmin:true,permissions:[...ALL_ADMIN_PERMS,'roles']};
+  }
+  const roleRow=await stmt(env,'SELECT permissions_json FROM admin_roles WHERE email=?',email).first();
+  if(!roleRow)return null;
+  let perms=[];
+  try{perms=JSON.parse(roleRow.permissions_json).filter(p=>ALL_ADMIN_PERMS.includes(p));}catch(_){}
+  if(!perms.length)return null;
+  return {email,isSuperAdmin:false,permissions:perms};
 }
-async function requireAdmin(req,env){
+async function requireAdmin(req,env,perm=null){
   const user=await verifyAdminUser(req,env);
   if(!user)throw problem('관리자 권한이 필요합니다',403);
+  if(perm&&!user.isSuperAdmin&&!user.permissions.includes(perm))throw problem('해당 관리 권한이 없습니다',403);
   return user;
+}
+async function buildAgentRecipePrompt(items,env){
+  const nextId=Math.max(0,...catalog.recipes.map(r=>Number(r.recipe_id)||0))+1;
+  const nextNum=Math.max(0,...catalog.recipes.map(r=>Number(r.recipe_number)||0))+1;
+  const maxRatio=Math.max(...items.map(i=>i.ratio));
+  const sumRatio=items.reduce((s,i)=>s+i.ratio,0);
+  const hasDetail=items.some(i=>i.detail_id!=null);
+  const suggestedStep=hasDetail?6:maxRatio>2?5:maxRatio===2?4:3;
+  const difficulty=hasDetail?'MASTER':maxRatio===1?'EASY':'NORMAL';
+  const ingLines=items.map((it,idx)=>{
+    const base=ingredientMap.get(it.ingredient_id);
+    const det=it.detail_id?detailMap.get(it.detail_id):null;
+    return `- slot ${idx+1}: ${base?.display_name||it.ingredient_id} (ingredient_id: ${it.ingredient_id}${det?`, detail_ingredient_id: ${det.detail_id} (${det.display_name})`:''}) × ${it.ratio}`;
+  }).join('\n');
+  const fallbackPrompt=`[K-술 게임 신규 레시피 도감 편입 작업 요청]
+
+아래 유저 추천 조합을 C:\\secjob\\KSool_Gemini 게임 프로젝트에 정식 레시피로 추가해 주세요.
+
+1. 조합 정보
+${ingLines}
+- 총 재료 수: ${items.length}종 / 총 개수: ${sumRatio}개 / 최대 비율: ${maxRatio}
+- 권장 난이도: ${difficulty} / 권장 스테이지: STAGE ${suggestedStep} (step_id: ${suggestedStep})
+- 신규 ID 제안: recipe_id = ${nextId}, recipe_number = ${nextNum} (No.${String(nextNum).padStart(2,'0')})
+
+2. 수정해야 할 파일 및 작업 체크리스트
+- data/recipes.json: 신규 레시피 객체 추가 (display_name, real_name, difficulty: "${difficulty}", category, description, unlock_hint, emoji 등)
+- data/recipe_ingredients.json: 위 slot 순서대로 ingredient_id, detail_ingredient_id, ratio, slot_order 추가
+- src/js/core/ProgressionEngine.js: STAGE ${suggestedStep}의 canonicalRecipeOrder 배열 적절한 위치에 recipe_id(${nextId}) 추가
+- src/js/services/PixelIconRegistry.js: rec:${nextId} 전용 SVG 픽셀/일러스트 아이콘 추가
+- src/js/i18n/{ko,en,ja,zh-CN,zh-TW}.js: entities["rec:${nextId}"] 다국어 명칭 및 설명 추가
+- 검증: node tests/test_full_suite.js 실행 후 통과 확인`;
+
+  if(!env.GEMINI_API_KEY)return {prompt:fallbackPrompt,mode:'template'};
+  try{
+    const aiRes=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{parts:[{text:`너는 'K-술: 한국의 술자리 연금술' 게임의 수석 기획자 겸 개발자야. 아래 유저 추천 재료 조합을 분석해서 개발 Agent에게 그대로 붙여넣을 수 있는 구체적인 작업 지시 프롬프트를 한국어로 작성해줘.
+
+조합 정보:
+${ingLines}
+권장 난이도: ${difficulty}, 권장 STAGE: ${suggestedStep}, 신규 recipe_id: ${nextId}, recipe_number: ${nextNum}
+
+반드시 포함할 내용:
+1) 어울리는 위트있는 K-술 레시피 이름(한국어/영어/일본어/중국어), 카테고리, 1줄 설명, 스포일러 없는 힌트(unlock_hint)
+2) data/recipes.json 및 data/recipe_ingredients.json 에 넣을 정확한 JSON 예시
+3) ProgressionEngine.js(canonicalRecipeOrder 배치), PixelIconRegistry.js(아이콘 디자인 컨셉), i18n 다국어 파일 수정 지침
+4) 테스트(node tests/test_full_suite.js) 실행 지침`}]}]
+      })
+    });
+    if(aiRes.ok){
+      const aiData=await aiRes.json();
+      const text=aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if(text&&text.trim())return {prompt:text.trim(),mode:'gemini'};
+    }
+  }catch(_){}
+  return {prompt:fallbackPrompt,mode:'template'};
 }
 
 export async function handleApi(req,env){
@@ -113,7 +201,7 @@ export async function handleApi(req,env){
     else if(req.method==='GET'&&path==='/api/suggestions')result=json(await suggestionList(env,identity.id,url));
     else if(req.method==='POST'&&path==='/api/suggestions'){
       const body=await readBody(req);const items=normalizeItems(body.items||body.potSlots?.map(s=>({ingredient_id:s.baseId,detail_id:s.detailId||null,ratio:s.count})));
-      const key=buildKey(items);
+      const key=buildKey(items);ensureNotOfficialRecipe(key);
       await env.DB.batch([suggestionInsert(env,items),voteInsert(env,key,identity.id,'UP')]);
       result=json({suggestion_key:key,items,...await countVotes(env,key,identity.id),is_applied:false},201);
     }else if(req.method==='PUT'&&path==='/api/votes'){
@@ -136,7 +224,7 @@ export async function handleApi(req,env){
       const title=str(b.title,1,70,'제목'),body=str(b.body,1,1500,'내용'),author=str(b.author,1,16,'닉네임');
       const recipeId=b.recipeId??null;if(recipeId!==null&&!recipeIds.has(recipeId))throw problem('공식 조합 확인');
       let key=null,batch=[];
-      if(b.kind==='experiment'){const items=normalizeItems(b.items);key=buildKey(items);batch.push(suggestionInsert(env,items));}
+      if(b.kind==='experiment'){const items=normalizeItems(b.items);key=buildKey(items);ensureNotOfficialRecipe(key);batch.push(suggestionInsert(env,items));}
       const target=key||`post:${id}`;
       batch.push(stmt(env,'INSERT INTO posts(id,actor_id,kind,title,body,author,recipe_id,suggestion_key,target_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',id,identity.id,b.kind,title,body,author,recipeId,key,target,time));
       await env.DB.batch(batch);
@@ -160,31 +248,33 @@ export async function handleApi(req,env){
       result=json({updates:results});
     }else if(req.method==='GET'&&path==='/api/admin/me'){
       const user=await verifyAdminUser(req,env);
-      result=json({isAdmin:Boolean(user),email:user?.email||null});
+      result=json({isAdmin:Boolean(user),isSuperAdmin:Boolean(user?.isSuperAdmin),permissions:user?.permissions||[],email:user?.email||null});
     }else if(req.method==='GET'&&path==='/api/admin/overview'){
-      await requireAdmin(req,env);
-      const reports=(await stmt(env,`SELECT r.post_id,COUNT(*) AS report_count,MAX(r.created_at) AS latest_report,GROUP_CONCAT(r.reason,' | ') AS reasons,p.title,p.author,p.body,p.kind,p.created_at FROM reports r JOIN posts p ON p.id=r.post_id WHERE p.deleted_at IS NULL GROUP BY r.post_id ORDER BY report_count DESC,latest_report DESC LIMIT 50`).all()).results;
-      const recentPosts=(await stmt(env,`${postSelect} WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC LIMIT 50`,identity.id).all()).results.map(p=>serializePost(p,identity.id));
-      const sugRows=(await stmt(env,`SELECT s.*,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='DOWN') AS downvotes FROM suggestions s ORDER BY s.created_at DESC LIMIT 100`).all()).results.map(s=>({suggestion_key:s.suggestion_key,items:JSON.parse(s.items_json),upvotes:s.upvotes,downvotes:s.downvotes,is_applied:!!s.is_applied,created_at:s.created_at}));
-      const updates=(await stmt(env,'SELECT id,version,date,title,body,created_at FROM updates ORDER BY created_at DESC LIMIT 30').all()).results;
-      result=json({reports,posts:recentPosts,suggestions:sugRows,updates});
+      const admin=await requireAdmin(req,env);
+      const can=(p)=>admin.isSuperAdmin||admin.permissions.includes(p);
+      const reports=can('posts')?(await stmt(env,`SELECT r.post_id,COUNT(*) AS report_count,MAX(r.created_at) AS latest_report,GROUP_CONCAT(r.reason,' | ') AS reasons,p.title,p.author,p.body,p.kind,p.created_at FROM reports r JOIN posts p ON p.id=r.post_id WHERE p.deleted_at IS NULL GROUP BY r.post_id ORDER BY report_count DESC,latest_report DESC LIMIT 50`).all()).results:[];
+      const recentPosts=can('posts')?(await stmt(env,`${postSelect} WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC LIMIT 50`,identity.id).all()).results.map(p=>serializePost(p,identity.id)):[];
+      const sugRows=can('suggestions')?(await stmt(env,`SELECT s.*,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='DOWN') AS downvotes FROM suggestions s ORDER BY s.created_at DESC LIMIT 100`).all()).results.map(s=>({suggestion_key:s.suggestion_key,items:JSON.parse(s.items_json),upvotes:s.upvotes,downvotes:s.downvotes,is_applied:!!s.is_applied,created_at:s.created_at})):[];
+      const updates=can('updates')?(await stmt(env,'SELECT id,version,date,title,body,created_at FROM updates ORDER BY created_at DESC LIMIT 30').all()).results:[];
+      const roles=admin.isSuperAdmin?(await stmt(env,'SELECT email,permissions_json,added_by,created_at FROM admin_roles ORDER BY created_at DESC').all()).results.map(r=>({email:r.email,permissions:JSON.parse(r.permissions_json),added_by:r.added_by,created_at:r.created_at})):[];
+      result=json({reports,posts:recentPosts,suggestions:sugRows,updates,roles});
     }else if(req.method==='DELETE'&&/^\/api\/admin\/posts\/[\w-]+$/.test(path)){
-      await requireAdmin(req,env);
+      await requireAdmin(req,env,'posts');
       const id=path.split('/').at(-1);
       await stmt(env,'UPDATE posts SET deleted_at=? WHERE id=?',now(),id).run();
       result=json({ok:true});
     }else if(req.method==='DELETE'&&/^\/api\/admin\/comments\/[\w-]+$/.test(path)){
-      await requireAdmin(req,env);
+      await requireAdmin(req,env,'posts');
       const id=path.split('/').at(-1);
       await stmt(env,'DELETE FROM comments WHERE id=?',id).run();
       result=json({ok:true});
     }else if(req.method==='POST'&&/^\/api\/admin\/reports\/[\w-]+\/dismiss$/.test(path)){
-      await requireAdmin(req,env);
+      await requireAdmin(req,env,'posts');
       const postId=path.split('/')[4];
       await stmt(env,'DELETE FROM reports WHERE post_id=?',postId).run();
       result=json({ok:true});
     }else if(path.startsWith('/api/admin/suggestions/')){
-      await requireAdmin(req,env);
+      await requireAdmin(req,env,'suggestions');
       const key=decodeURIComponent(path.slice('/api/admin/suggestions/'.length));
       if(!key)throw problem('조합 키 필요');
       if(req.method==='PATCH'){
@@ -200,16 +290,35 @@ export async function handleApi(req,env){
         result=json({ok:true});
       }else throw problem('지원하지 않는 요청',405);
     }else if(req.method==='POST'&&path==='/api/admin/updates'){
-      await requireAdmin(req,env);
+      await requireAdmin(req,env,'updates');
       const b=await readBody(req);
       const id=crypto.randomUUID();
       await stmt(env,'INSERT INTO updates(id,version,date,title,body,created_at) VALUES(?,?,?,?,?,?)',id,str(b.version,1,20,'버전'),str(b.date,1,20,'날짜'),str(b.title,1,100,'제목'),str(b.body,1,1500,'내용'),now()).run();
       result=json({ok:true,id},201);
     }else if(req.method==='DELETE'&&/^\/api\/admin\/updates\/[\w-]+$/.test(path)){
-      await requireAdmin(req,env);
+      await requireAdmin(req,env,'updates');
       const id=path.split('/').at(-1);
       await stmt(env,'DELETE FROM updates WHERE id=?',id).run();
       result=json({ok:true});
+    }else if(req.method==='POST'&&path==='/api/admin/roles'){
+      const admin=await requireAdmin(req,env,'roles');
+      const b=await readBody(req);
+      const targetEmail=str(b.email,3,120,'이메일').toLowerCase();
+      if(!targetEmail.includes('@'))throw problem('올바른 이메일을 입력하세요');
+      const perms=(Array.isArray(b.permissions)?b.permissions:[]).filter(p=>ALL_ADMIN_PERMS.includes(p));
+      if(!perms.length)throw problem('최소 1개 이상의 권한을 선택하세요');
+      await stmt(env,'INSERT INTO admin_roles(email,permissions_json,added_by,created_at) VALUES(?,?,?,?) ON CONFLICT(email) DO UPDATE SET permissions_json=excluded.permissions_json,added_by=excluded.added_by',targetEmail,JSON.stringify(perms),admin.email,now()).run();
+      result=json({ok:true});
+    }else if(req.method==='DELETE'&&path.startsWith('/api/admin/roles/')){
+      await requireAdmin(req,env,'roles');
+      const targetEmail=decodeURIComponent(path.slice('/api/admin/roles/'.length)).trim().toLowerCase();
+      await stmt(env,'DELETE FROM admin_roles WHERE email=?',targetEmail).run();
+      result=json({ok:true});
+    }else if(req.method==='POST'&&path==='/api/admin/generate-recipe-prompt'){
+      await requireAdmin(req,env,'prompt_gen');
+      const b=await readBody(req);
+      const items=normalizeItems(b.items);
+      result=json(await buildAgentRecipePrompt(items,env));
     }else throw problem('경로 없음',404);
   }catch(error){if(!error.status)console.error('Community API:',error.message);result=json({error:error.status?error.message:'서버 오류'},error.status||500);}
   for(const [k,v]of Object.entries(cors))result.headers.set(k,v);
