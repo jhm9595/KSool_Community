@@ -31,7 +31,7 @@ const server=createServer(async(req,res)=>{
       }
       const request=new Request(url,{method:req.method,headers:req.headers,body});
       const clientIp=String(req.headers['x-forwarded-for']||'').split(',')[0].trim()||req.socket.remoteAddress;
-      const response=await handleApi(request,{DB:db,STORAGE_LABEL:process.env.K_SERVICE?'Cloud Run SQLite':'SQLite local',CLIENT_IP:clientIp,GAME_ORIGINS:process.env.GAME_ORIGINS||'https://ksool.minibig.pw,https://play.ksool.minibig.pw'});
+      const response=await handleApi(request,{DB:db,STORAGE_LABEL:process.env.K_SERVICE?'Cloud Run SQLite':'SQLite local',CLIENT_IP:clientIp,GAME_ORIGINS:process.env.GAME_ORIGINS||'https://ksool.minibig.pw,https://play.ksool.minibig.pw',ADMIN_EMAILS:process.env.ADMIN_EMAILS||'',GEMINI_API_KEY:process.env.GEMINI_API_KEY||''});
       res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));return;
     }
     if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}
