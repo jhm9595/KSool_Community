@@ -66,23 +66,8 @@
     <section class="compact-banner" aria-label="조합 공략"><div><span class="banner-kicker">K-SOOL MIX CLUB</span><h1>조합, 한눈에.</h1></div><div class="banner-icons" aria-hidden="true"><span data-art="101"></span><b>＋</b><span data-art="102"></span><b>＝</b><span id="hero-recipe-icon"></span></div><span class="banner-count"><b id="recipe-total">84</b> RECIPES</span></section>
     <div class="content-layout" id="browse">
       <section class="main-content" aria-labelledby="list-title">
-        <div class="compact-toolbar"><h2 id="list-title" class="visually-hidden">조합 목록</h2>
-        <div class="search-row"><label class="search-box"><span data-ui-icon="search" aria-hidden="true"></span><span class="visually-hidden">조합이나 재료 검색</span><input id="search" type="search" placeholder="조합 · 재료 검색" autocomplete="off"></label></div>
-        <button id="refresh-community" class="refresh-community" aria-label="커뮤니티 새로고침"><span data-ui-icon="refresh"></span></button><button class="button coral" data-compose aria-label="글쓰기"><span data-ui-icon="plus"></span> 글쓰기</button></div>
-        <div class="catalog-shell">
-          <div class="catalog-tabs-bar">
-            <div id="category-filters" class="category-filters"></div>
-            <div id="unlock-filters" class="unlock-filters" hidden></div>
-            <div class="filter-right-controls"><div id="recipe-view-toggle" class="view-mode-toggle"></div><label class="sort-control"><span class="visually-hidden">정렬 기준</span><select id="sort"><option value="number">도감 번호순</option><option value="recommended">추천 공략순</option><option value="simple">재료가 적은 순</option></select></label></div>
-          </div>
-          <div class="catalog-body">
-            <div id="progress-sync-bar" class="progress-sync-bar"></div>
-            <div class="results-heading" id="results-heading" hidden><p id="result-count"></p><input id="spoiler" type="checkbox" checked hidden></div>
-            <div id="recipe-grid" class="recipe-grid"></div>
-            <div class="load-more-wrap"><button id="load-more" class="load-more-btn" hidden>더 보기</button></div>
-          </div>
-        </div>
-
+        <h2 id="list-title" class="visually-hidden">조합소 콘텐츠</h2>
+        <div id="view-root"></div>
       </section>
     </div>
     <footer><span id="connection-status" hidden></span><nav aria-label="정책 및 안내" class="footer-links"><a href="about.html">About</a><span>·</span><a href="privacy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms</a></nav><div id="adsense-footer-slot" class="footer-ad" hidden></div></footer>

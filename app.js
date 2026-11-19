@@ -895,34 +895,35 @@
       };
     }
   }
-  function renderProgressSyncBar() {
-    const bar = $('#progress-sync-bar');
-    if (!bar) return;
-    const showBar = ['recipes', 'saved', 'suggestions', 'rankings'].includes(activeTab);
-    bar.hidden = !showBar;
-    if (!showBar) return;
+  function progressSyncMarkup() {
     const isQuiz = syncedProgress.mode !== 'tycoon';
     const unlockedCount = isQuiz ? syncedProgress.quiz.length : syncedProgress.tycoon.length;
     const pct = Math.round((unlockedCount / Math.max(1, recipes.length)) * 100);
-    bar.innerHTML = `
-      <div class="sync-inline-row">
-        <div class="sync-mode-group">
-          <button type="button" data-progress-mode="quiz" class="sync-mode-btn ${isQuiz ? 'is-active' : ''}">🎯 퀴즈 ${syncedProgress.quiz.length}/${recipes.length}</button>
-          <button type="button" data-progress-mode="tycoon" class="sync-mode-btn ${!isQuiz ? 'is-active' : ''}">🏪 타이쿤 ${syncedProgress.tycoon.length}/${recipes.length}</button>
+    return `
+      <div id="progress-sync-bar" class="progress-sync-bar">
+        <div class="sync-inline-row">
+          <div class="sync-mode-group">
+            <button type="button" data-progress-mode="quiz" class="sync-mode-btn ${isQuiz ? 'is-active' : ''}">🎯 퀴즈 ${syncedProgress.quiz.length}/${recipes.length}</button>
+            <button type="button" data-progress-mode="tycoon" class="sync-mode-btn ${!isQuiz ? 'is-active' : ''}">🏪 타이쿤 ${syncedProgress.tycoon.length}/${recipes.length}</button>
+          </div>
+          <div class="sync-meter-wrap">
+            <div class="sync-meter" aria-label="해금 진행률"><div class="sync-meter-fill" style="width:${pct}%"></div></div>
+            <span class="sync-meter-label">${pct}%</span>
+          </div>
+          ${!sbUser ? `<button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${showManualCodeInput ? '닫기' : '코드 입력'}</button>` : ''}
         </div>
-        <div class="sync-meter-wrap">
-          <div class="sync-meter" aria-label="해금 진행률"><div class="sync-meter-fill" style="width:${pct}%"></div></div>
-          <span class="sync-meter-label">${pct}%</span>
-        </div>
-        ${!sbUser ? `<button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${showManualCodeInput ? '닫기' : '코드 입력'}</button>` : ''}
+        ${(!sbUser && showManualCodeInput) ? `
+          <div class="sync-manual-form">
+            <input id="community-sync-input" type="text" placeholder="게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드">
+            <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:32px;padding:5px 12px;">가져오기</button>
+          </div>
+        ` : ''}
       </div>
-      ${(!sbUser && showManualCodeInput) ? `
-        <div class="sync-manual-form">
-          <input id="community-sync-input" type="text" placeholder="게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드">
-          <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:32px;padding:5px 12px;">가져오기</button>
-        </div>
-      ` : ''}
     `;
+  }
+  function bindProgressSyncBar(root) {
+    const bar = $('#progress-sync-bar', root);
+    if (!bar) return;
     $$('[data-progress-mode]', bar).forEach(b => b.onclick = () => {
       followGameMode = false;
       syncedProgress.mode = b.dataset.progressMode === 'tycoon' ? 'tycoon' : 'quiz';
@@ -930,9 +931,7 @@
       render();
     });
     const toggleCodeBtn = $('#toggle-manual-code-btn', bar);
-    if (toggleCodeBtn) {
-      toggleCodeBtn.onclick = () => { showManualCodeInput = !showManualCodeInput; render(); };
-    }
+    if (toggleCodeBtn) toggleCodeBtn.onclick = () => { showManualCodeInput = !showManualCodeInput; render(); };
     const importBtn = $('#community-sync-import-btn', bar);
     const importInput = $('#community-sync-input', bar);
     if (importBtn && importInput) {
@@ -1006,58 +1005,85 @@
     }
     return sections.join('');
   }
+  function searchToolbarMarkup(placeholder, withActions = false, composeLabel = pt('write')) {
+    return `
+      <div class="compact-toolbar">
+        <div class="search-row"><label class="search-box">${uiIcon('search',18)}<span class="visually-hidden">${esc(placeholder)}</span><input id="search" type="search" value="${esc(query)}" placeholder="${esc(placeholder)}" autocomplete="off"></label></div>
+        ${withActions ? `<button id="refresh-community" class="refresh-community" aria-label="새로고침">${uiIcon('refresh')}</button><button class="button coral" data-compose aria-label="${esc(composeLabel)}">${uiIcon('plus')} ${esc(composeLabel)}</button>` : ''}
+      </div>
+    `;
+  }
+  function bindToolbarEvents(root, onSearchInput) {
+    const searchEl = $('#search', root);
+    if (searchEl) {
+      searchEl.oninput = e => { query = e.target.value; limit = 16; onSearchInput(); };
+    }
+    const refreshEl = $('#refresh-community', root);
+    if (refreshEl) refreshEl.onclick = () => { syncCommunity(); loadRemoteGameData(); };
+    $$('[data-compose]', root).forEach(b => b.onclick = () => openCompose(null, activeTab === 'suggestions' ? 'experiment' : 'tip'));
+  }
+  function renderCatalogGridOnly(root) {
+    const grid = $('#recipe-grid', root);
+    if (!grid) return;
+    const matches = filterRecipes();
+    const postsMatches = activeTab === 'saved'
+      ? allPosts().filter(p => bookmarks.has(`t:${p.id}`) && `${p.title} ${p.body} ${p.author}`.toLowerCase().includes(query.toLowerCase()))
+      : [];
+    const markup = activeTab === 'recipes'
+      ? (matches.length ? (activeViewMode === 'stage' ? renderStageRecipes(matches) : renderGroupedRecipes(matches)) : '')
+      : (matches.map(recipeCard).join('') + postsMatches.map(postCard).join(''));
+    grid.innerHTML = markup || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 필터로 찾아보세요.'}</p></div>`;
+    bindCardActions(grid);
+    $$('details[data-section-id]', grid).forEach(d => {
+      d.addEventListener('toggle', () => sectionOpenState.set(d.dataset.sectionId, d.open));
+    });
+  }
+  function renderCommunityGridOnly(root) {
+    const grid = $('#recipe-grid', root);
+    if (!grid) return;
+    const matchingPosts = allPosts().filter(p => (activeCategory === '전체' || (activeCategory === '플레이 팁' ? p.kind === 'tip' : p.kind === 'experiment')) && `${p.title} ${p.body} ${p.author}`.toLowerCase().includes(query.toLowerCase()));
+    grid.innerHTML = boardMarkup(matchingPosts) || `<div class="empty-state"><span>✧</span><h3>아직 일치하는 글이 없어요</h3><p>다른 검색어나 분류로 찾아보세요.</p></div>`;
+    bindCardActions(grid);
+  }
+  function renderSuggestionsGridOnly(root) {
+    const grid = $('#recipe-grid', root);
+    if (!grid) return;
+    const avail = getAvailableIngredients();
+    const allMergedSug = mergedSuggestions();
+    const safeSug = allMergedSug.filter(s => isItemsUnlocked(s.items, avail));
+    const hiddenSugCount = allMergedSug.length - safeSug.length;
+    const matchingSuggestions = safeSug.filter(s => s.items.map(i => name(ingredientFor(i))).join(' ').toLowerCase().includes(query.toLowerCase()));
+    const spoilerBanner = hiddenSugCount > 0
+      ? `<div class="spoiler-shield" style="grid-column:1/-1;"><span>🔒 아직 해금하지 않은 재료가 포함된 추천 조합 <b>${hiddenSugCount}개</b>는 스포일러 방지를 위해 숨겨져 있습니다.</span><a href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer" style="font-weight:850;color:var(--ink);">게임에서 재료 해금하기 ↗</a></div>`
+      : '';
+    grid.innerHTML = spoilerBanner + (matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>일치하는 추천 조합이 없어요</h3><p>다른 재료로 검색하거나 새 조합을 제안해보세요.</p></div>`);
+    bindCardActions(grid);
+  }
   function render() {
     applyPortalLangUi();
     renderHeaderAuthButton();
-    renderProgressSyncBar();
-    $('#recipe-grid').classList.toggle('community-view',activeTab==='tips');
-    $('#recipe-grid').classList.toggle('suggestions-view',activeTab==='suggestions');
-    $('#recipe-grid').classList.toggle('is-sectioned',activeTab==='recipes');
     $$('[data-tab]').forEach(b => b.classList.toggle('selected', b.dataset.tab === activeTab));
     $$('[data-nav]').forEach(b => b.classList.toggle('nav-active', b.dataset.nav === activeTab));
     $('#saved-count').textContent = bookmarks.size;
-    if($('#tip-count'))$('#tip-count').textContent = allPosts().length;
-    $('#category-filters').innerHTML = (['suggestions','rankings','updates','admin'].includes(activeTab) ? ['전체'] : activeTab === 'tips' ? ['전체','플레이 팁','새 조합 제안'] : ['전체','소맥·폭탄주','막걸리','과일·편의점','기초 재료','특산 명주']).map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('');
-    const viewToggleEl = $('#recipe-view-toggle');
-    if (viewToggleEl) {
-      if (activeTab === 'recipes') {
-        viewToggleEl.hidden = false;
-        viewToggleEl.innerHTML = `
-          <button type="button" data-view-mode="grouped" class="${activeViewMode==='grouped'?'is-active':''}">🔓 해금/미해금</button>
-          <button type="button" data-view-mode="stage" class="${activeViewMode==='stage'?'is-active':''}">🗺️ 스테이지별</button>
-        `;
-        $$('[data-view-mode]', viewToggleEl).forEach(b => b.onclick = () => {
-          activeViewMode = b.dataset.viewMode === 'stage' ? 'stage' : 'grouped';
-          try { localStorage.setItem('ksool-recipe-view-mode', activeViewMode); } catch (_) {}
-          render();
-        });
-      } else {
-        viewToggleEl.hidden = true;
-        viewToggleEl.innerHTML = '';
-      }
+    if ($('#tip-count')) $('#tip-count').textContent = allPosts().length;
+    if (!$('#post-recipe').dataset.ready) {
+      $('#post-recipe').innerHTML = '<option value="">선택하지 않음</option>' + recipes.map(r => `<option value="${r.recipe_id}">${esc(r.formatted_number)} · ${esc(name(r))}</option>`).join('');
+      $('#post-recipe').dataset.ready = '1';
     }
-    const unlockFiltersEl = $('#unlock-filters');
-    if (unlockFiltersEl) {
-      unlockFiltersEl.hidden = true;
-      unlockFiltersEl.innerHTML = '';
-    }
-    $('.sort-control').hidden = ['tips','suggestions','rankings','updates','admin'].includes(activeTab);
-    const resultsHeadingEl = $('#results-heading');
-    if (resultsHeadingEl) resultsHeadingEl.hidden = activeTab === 'recipes';
+    const root = $('#view-root');
+    if (!root) return;
+
     if (activeTab === 'admin') {
-      $('#result-count').innerHTML = `<b>ADMIN</b> CONSOLE`;
-      $('#recipe-grid').innerHTML = adminMarkup();
-      $('#load-more').hidden = true;
-      bindAdminActions($('#recipe-grid'));
-      bindCardActions($('#recipe-grid'));
+      root.innerHTML = `<div id="recipe-grid" class="recipe-grid">${adminMarkup()}</div>`;
+      bindAdminActions(root);
+      bindCardActions(root);
       return;
     }
     if (activeTab === 'rankings') {
-      $('#result-count').innerHTML = `<b>TOP</b> RANKINGS`;
-      $('#recipe-grid').innerHTML = rankingsMarkup();
-      $('#load-more').hidden = true;
-      $$('[data-rank-mode]', $('#recipe-grid')).forEach(b => b.onclick = () => { activeRankMode = b.dataset.rankMode; render(); });
-      const rankSearchEl = $('#rank-my-search', $('#recipe-grid'));
+      root.innerHTML = `${progressSyncMarkup()}<div id="recipe-grid" class="recipe-grid">${rankingsMarkup()}</div>`;
+      bindProgressSyncBar(root);
+      $$('[data-rank-mode]', root).forEach(b => b.onclick = () => { activeRankMode = b.dataset.rankMode; render(); });
+      const rankSearchEl = $('#rank-my-search', root);
       if (rankSearchEl) {
         rankSearchEl.oninput = e => {
           rankSearchQuery = e.target.value;
@@ -1067,40 +1093,79 @@
           if (nextEl) { nextEl.focus(); try { nextEl.setSelectionRange(pos, pos); } catch (_) {} }
         };
       }
-      bindCardActions($('#recipe-grid'));
+      bindCardActions(root);
       return;
     }
     if (activeTab === 'updates') {
-      $('#result-count').innerHTML = `<b>${UPDATE_LOGS.length + dbUpdates.length}</b> UPDATES`;
-      $('#recipe-grid').innerHTML = updatesMarkup();
-      $('#load-more').hidden = true;
+      root.innerHTML = `<div id="recipe-grid" class="recipe-grid">${updatesMarkup()}</div>`;
       return;
     }
-    const matches = ['tips','suggestions'].includes(activeTab) ? [] : filterRecipes();
-    const matchingPosts = ['recipes','suggestions'].includes(activeTab) ? [] : allPosts().filter(p => (activeTab !== 'saved' || bookmarks.has(`t:${p.id}`)) && (activeTab !== 'tips' || activeCategory === '전체' || (activeCategory === '플레이 팁' ? p.kind === 'tip' : p.kind === 'experiment')) && `${p.title} ${p.body} ${p.author}`.toLowerCase().includes(query.toLowerCase()));
-    const avail = getAvailableIngredients();
-    const allMergedSug = activeTab === 'suggestions' ? mergedSuggestions() : [];
-    const safeSug = allMergedSug.filter(s => isItemsUnlocked(s.items, avail));
-    const hiddenSugCount = allMergedSug.length - safeSug.length;
-    const matchingSuggestions = activeTab === 'suggestions'
-      ? safeSug.filter(s => s.items.map(i => name(ingredientFor(i))).join(' ').toLowerCase().includes(query.toLowerCase()))
-      : [];
-    const totalCount = matches.length + matchingPosts.length + matchingSuggestions.length;
-    $('#result-count').innerHTML = `<b>${totalCount}</b> ${activeTab==='tips'?'TIPS':activeTab==='suggestions'?'COMBOS':'RECIPES'}`;
-    const spoilerBanner = activeTab === 'suggestions' && hiddenSugCount > 0
-      ? `<div class="spoiler-shield" style="grid-column:1/-1;"><span>🔒 아직 해금하지 않은 재료가 포함된 추천 조합 <b>${hiddenSugCount}개</b>는 스포일러 방지를 위해 숨겨져 있습니다.</span><a href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer" style="font-weight:850;color:var(--ink);">게임에서 재료 해금하기 ↗</a></div>`
-      : '';
-    const recipeMarkup = activeTab === 'recipes'
-      ? (matches.length ? (activeViewMode === 'stage' ? renderStageRecipes(matches) : renderGroupedRecipes(matches)) : '')
-      : matches.map(recipeCard).join('');
-    $('#recipe-grid').innerHTML = spoilerBanner + (recipeMarkup + (activeTab === 'tips' ? boardMarkup(matchingPosts) : matchingPosts.map(postCard).join('')) + matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 필터로 찾아보세요.'}</p></div>`);
-    $('#load-more').hidden = true;
-    if(!$('#post-recipe').dataset.ready){$('#post-recipe').innerHTML = '<option value="">선택하지 않음</option>' + recipes.map(r => `<option value="${r.recipe_id}">${esc(r.formatted_number)} · ${esc(name(r))}</option>`).join('');$('#post-recipe').dataset.ready='1';}
-    bindCardActions($('#recipe-grid'));
-    $$('details[data-section-id]', $('#recipe-grid')).forEach(d => {
-      d.addEventListener('toggle', () => sectionOpenState.set(d.dataset.sectionId, d.open));
+    if (activeTab === 'tips') {
+      const cats = ['전체', '플레이 팁', '새 조합 제안'];
+      root.innerHTML = `
+        ${searchToolbarMarkup('게시글 · 작성자 검색', true, pt('write'))}
+        <div class="catalog-shell">
+          <div class="catalog-tabs-bar">
+            <div id="category-filters" class="category-filters">${cats.map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('')}</div>
+          </div>
+          <div class="catalog-body">
+            <div id="recipe-grid" class="recipe-grid community-view"></div>
+          </div>
+        </div>
+      `;
+      bindToolbarEvents(root, () => renderCommunityGridOnly(root));
+      $$('[data-category]', root).forEach(b => b.onclick = () => { activeCategory = b.dataset.category; render(); });
+      renderCommunityGridOnly(root);
+      return;
+    }
+    if (activeTab === 'suggestions') {
+      root.innerHTML = `
+        ${searchToolbarMarkup('재료로 추천 조합 검색', true, '조합 제안')}
+        <div class="catalog-body" style="margin-top:12px;">
+          ${progressSyncMarkup()}
+          <div id="recipe-grid" class="recipe-grid suggestions-view"></div>
+        </div>
+      `;
+      bindToolbarEvents(root, () => renderSuggestionsGridOnly(root));
+      bindProgressSyncBar(root);
+      renderSuggestionsGridOnly(root);
+      return;
+    }
+
+    // Default: 'recipes' or 'saved'
+    const cats = ['전체', '소맥·폭탄주', '막걸리', '과일·편의점', '기초 재료', '특산 명주'];
+    root.innerHTML = `
+      ${searchToolbarMarkup(pt('search'), false)}
+      <div class="catalog-shell">
+        <div class="catalog-tabs-bar">
+          <div id="category-filters" class="category-filters">${cats.map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('')}</div>
+          ${activeTab === 'recipes' ? `
+            <div class="filter-right-controls">
+              <div id="recipe-view-toggle" class="view-mode-toggle">
+                <button type="button" data-view-mode="grouped" class="${activeViewMode==='grouped'?'is-active':''}">🔓 해금/미해금</button>
+                <button type="button" data-view-mode="stage" class="${activeViewMode==='stage'?'is-active':''}">🗺️ 스테이지별</button>
+              </div>
+              <label class="sort-control"><span class="visually-hidden">정렬 기준</span><select id="sort"><option value="number" ${sort==='number'?'selected':''}>도감 번호순</option><option value="recommended" ${sort==='recommended'?'selected':''}>추천 공략순</option><option value="simple" ${sort==='simple'?'selected':''}>재료가 적은 순</option></select></label>
+            </div>
+          ` : ''}
+        </div>
+        <div class="catalog-body">
+          ${progressSyncMarkup()}
+          <div id="recipe-grid" class="recipe-grid ${activeTab==='recipes'?'is-sectioned':''}"></div>
+        </div>
+      </div>
+    `;
+    bindToolbarEvents(root, () => renderCatalogGridOnly(root));
+    bindProgressSyncBar(root);
+    $$('[data-category]', root).forEach(b => b.onclick = () => { activeCategory = b.dataset.category; render(); });
+    $$('[data-view-mode]', root).forEach(b => b.onclick = () => {
+      activeViewMode = b.dataset.viewMode === 'stage' ? 'stage' : 'grouped';
+      try { localStorage.setItem('ksool-recipe-view-mode', activeViewMode); } catch (_) {}
+      render();
     });
-    $$('[data-category]').forEach(b => b.onclick = () => {activeCategory=b.dataset.category;limit=16;render();});
+    const sortEl = $('#sort', root);
+    if (sortEl) sortEl.onchange = e => { sort = e.target.value; renderCatalogGridOnly(root); };
+    renderCatalogGridOnly(root);
   }
   function bindCardActions(root) {
     bindRemoteActions(root);
@@ -1178,8 +1243,13 @@
     const url=new URL(location.href);url.hash=new URLSearchParams(p.example?{note:id}:{thread:id}).toString();
     shareLink(url.href,`${p.title} · 조합소`);
   }
-  function openCompose(recipeId=null) {
+  function openCompose(recipeId=null, defaultKind='tip') {
     $('#compose-error').textContent='';
+    const kindSelect = $('#post-kind');
+    if (kindSelect) {
+      kindSelect.value = defaultKind === 'experiment' ? 'experiment' : 'tip';
+      kindSelect.dispatchEvent(new Event('change'));
+    }
     const authorInput = $('#compose-form [name=author]');
     if (authorInput && !authorInput.value) authorInput.value = getDefaultNickname();
     if(recipeId)$('#post-recipe').value=String(recipeId);
@@ -1201,7 +1271,7 @@
     if(location.hash==='#updates'){activeTab='updates';render();return;}
     if(location.hash==='#admin'){activeTab='admin';loadAdminData();render();return;}
     const params=new URLSearchParams(location.hash.slice(1));
-    if(params.has('suggestion')){activeTab='suggestions';query='';$('#search').value='';render();const target=[...document.querySelectorAll('[data-copy-combo]')].find(el=>el.dataset.copyCombo===params.get('suggestion'));if(target){target.closest('article').classList.add('shared-highlight');target.closest('article').scrollIntoView({block:'center'});}}else if(params.has('recipe')){
+    if(params.has('suggestion')){activeTab='suggestions';query='';render();const target=[...document.querySelectorAll('[data-copy-combo]')].find(el=>el.dataset.copyCombo===params.get('suggestion'));if(target){target.closest('article').classList.add('shared-highlight');target.closest('article').scrollIntoView({block:'center'});}}else if(params.has('recipe')){
       const id=Number(params.get('recipe'));
       if(byId.has(id))openRecipe(id);else toast('이 조합을 찾지 못했어요.');
     }else if(params.has('thread')){try{const {post}=await api('/posts/'+encodeURIComponent(params.get('thread')));if(!posts.some(p=>p.id===post.id))posts.unshift(post);activeTab='tips';render();await openPost(post.id);}catch(e){toast(e.message);}}else if(params.has('note'))openPost(params.get('note'));
@@ -1210,7 +1280,7 @@
         const p=JSON.parse(params.get('post'));
         if(!validatePost(p))throw new Error('invalid');
         sharedPost={id:p.id,kind:p.kind,title:p.title,body:p.body,author:p.author,recipeId:p.recipeId,...(p.kind==='experiment'?{items:p.items}:{})};
-        activeTab='tips';activeCategory='전체';query='';$('#search').value='';render();openPost(p.id);
+        activeTab='tips';activeCategory='전체';query='';render();openPost(p.id);
       }catch(_){toast('올바른 공유 글을 찾지 못했어요.');}
     }
   }
@@ -1226,10 +1296,6 @@
   $$('[data-compose]').forEach(b=>b.onclick=()=>openCompose());
   $$('.dialog-close').forEach(b=>b.onclick=()=>b.closest('dialog').close());
   $$('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
-  $('#search').oninput=e=>{query=e.target.value;limit=16;render();};
-  $('#sort').onchange=e=>{sort=e.target.value;limit=16;render();};
-  $('#spoiler').onchange=e=>{showAnswers=e.target.checked;render();};
-  $('#load-more').onclick=()=>{limit+=16;render();};
   $('#post-kind').onchange=e=>{$('#experiment-fields').hidden=e.target.value!=='experiment';if(e.target.value==='experiment'&&!$$('.composition-row').length){addCompositionRow();addCompositionRow();}$$('#composition-rows select, #composition-rows input').forEach(field=>field.disabled=e.target.value!=='experiment');};
   $('#add-composition-row').onclick=addCompositionRow;
   $('#compose-form').onsubmit=async e=>{
@@ -1256,10 +1322,10 @@
     catch(error){$('#compose-error').textContent=error.message;submit.disabled=false;return;}
     submit.disabled=false;
     form.reset();$('#experiment-fields').hidden=true;$('#composition-rows').innerHTML='';
-    $('#compose-dialog').close();activeTab='tips';query='';$('#search').value='';switchTab('tips');
+    $('#compose-dialog').close();activeTab='tips';query='';switchTab('tips');
     toast('공유 완료');
   };
-  document.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&!$('dialog[open]')){e.preventDefault();$('#search').focus();$('#browse').scrollIntoView({behavior:'smooth'});}});
+  document.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&!$('dialog[open]')){const s=$('#search');if(s){e.preventDefault();s.focus();$('#browse').scrollIntoView({behavior:'smooth'});}}});
   window.addEventListener('hashchange',()=>{if(location.hash==='#home'){window.scrollTo({top:0,behavior:'smooth'});return;}parseLink();});
   render();
   api('/session').then(()=>syncCommunity()).then(()=>parseLink()).catch(()=>{serverConnected=false;$('#connection-status').textContent='○ 서버 연결 실패';});
