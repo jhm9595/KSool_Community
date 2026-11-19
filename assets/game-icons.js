@@ -228,6 +228,36 @@
     "name": "제주 화산 쏘토닉",
     "innerSvg": "<rect x=\"3\" y=\"3\" width=\"2\" height=\"1\" fill=\"#ffffff\"/><rect x=\"3\" y=\"4\" width=\"2\" height=\"2\" fill=\"#e0f2fe\"/><rect x=\"2\" y=\"6\" width=\"4\" height=\"9\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"8\" width=\"2\" height=\"3\" fill=\"#0284c7\"/><rect x=\"8\" y=\"5\" width=\"6\" height=\"10\" fill=\"#38bdf8\"/><rect x=\"9\" y=\"6\" width=\"2\" height=\"2\" fill=\"#ffffff\"/><rect x=\"8\" y=\"2\" width=\"3\" height=\"3\" fill=\"#fde047\"/><rect x=\"11\" y=\"12\" width=\"4\" height=\"3\" fill=\"#1e293b\"/>"
   },
+  "rec_cheorwon_makgeolli": {
+    "key": "rec_cheorwon_makgeolli",
+    "name": "철원 현무암 오대 막걸리",
+    "innerSvg": "<rect x=\"6\" y=\"1\" width=\"4\" height=\"2\" fill=\"#cbd5e1\"/><rect x=\"5\" y=\"3\" width=\"6\" height=\"2\" fill=\"#334155\"/><rect x=\"4\" y=\"5\" width=\"8\" height=\"9\" fill=\"#1e293b\"/><rect x=\"4\" y=\"5\" width=\"2\" height=\"9\" fill=\"#334155\"/><rect x=\"5\" y=\"7\" width=\"6\" height=\"5\" fill=\"#f8fafc\"/><rect x=\"7\" y=\"8\" width=\"2\" height=\"1\" fill=\"#ef4444\"/><rect x=\"7\" y=\"9\" width=\"2\" height=\"2\" fill=\"#0f172a\"/><rect x=\"5\" y=\"14\" width=\"6\" height=\"1\" fill=\"#0f172a\"/>"
+  },
+  "rec_gimje_makgeolli": {
+    "key": "rec_gimje_makgeolli",
+    "name": "김제 호남평야 생막걸리",
+    "innerSvg": "<rect x=\"6\" y=\"1\" width=\"4\" height=\"2\" fill=\"#0d9488\"/><rect x=\"6\" y=\"3\" width=\"4\" height=\"2\" fill=\"#fef9c3\"/><rect x=\"4\" y=\"5\" width=\"8\" height=\"9\" fill=\"#fef9c3\"/><rect x=\"4\" y=\"5\" width=\"1\" height=\"9\" fill=\"#ffffff\"/><rect x=\"11\" y=\"5\" width=\"1\" height=\"9\" fill=\"#fde047\"/><rect x=\"5\" y=\"8\" width=\"6\" height=\"3\" fill=\"#eab308\"/><rect x=\"6\" y=\"9\" width=\"4\" height=\"1\" fill=\"#fef08a\"/><rect x=\"5\" y=\"14\" width=\"6\" height=\"1\" fill=\"#ca8a04\"/>"
+  },
+  "rec_haenam_makgeolli": {
+    "key": "rec_haenam_makgeolli",
+    "name": "해남 해풍 고도수 막걸리",
+    "innerSvg": "<rect x=\"6\" y=\"1\" width=\"4\" height=\"2\" fill=\"#facc15\"/><rect x=\"5\" y=\"3\" width=\"6\" height=\"2\" fill=\"#16a34a\"/><rect x=\"4\" y=\"5\" width=\"8\" height=\"9\" fill=\"#14532d\"/><rect x=\"4\" y=\"5\" width=\"2\" height=\"9\" fill=\"#16a34a\"/><rect x=\"5\" y=\"7\" width=\"6\" height=\"5\" fill=\"#fefce8\"/><rect x=\"6\" y=\"8\" width=\"4\" height=\"1\" fill=\"#facc15\"/><rect x=\"6\" y=\"10\" width=\"4\" height=\"1\" fill=\"#15803d\"/><rect x=\"5\" y=\"14\" width=\"6\" height=\"1\" fill=\"#052e16\"/>"
+  },
+  "rec_sangju_makgeolli": {
+    "key": "rec_sangju_makgeolli",
+    "name": "상주 낙동강 생탁주",
+    "innerSvg": "<rect x=\"4\" y=\"2\" width=\"3\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"3\" width=\"5\" height=\"2\" fill=\"#e0f2fe\"/><rect x=\"2\" y=\"5\" width=\"7\" height=\"9\" fill=\"#bae6fd\"/><rect x=\"3\" y=\"7\" width=\"5\" height=\"5\" fill=\"#ffffff\"/><rect x=\"10\" y=\"10\" width=\"5\" height=\"4\" fill=\"#d97706\"/><rect x=\"11\" y=\"10\" width=\"3\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"11\" y=\"14\" width=\"3\" height=\"1\" fill=\"#92400e\"/>"
+  },
+  "rec_ihwaju": {
+    "key": "rec_ihwaju",
+    "name": "떠먹는 이화주",
+    "innerSvg": "<rect x=\"9\" y=\"2\" width=\"2\" height=\"6\" fill=\"#b45309\"/><rect x=\"8\" y=\"3\" width=\"2\" height=\"1\" fill=\"#d97706\"/><rect x=\"4\" y=\"6\" width=\"8\" height=\"2\" fill=\"#fef9c3\"/><rect x=\"3\" y=\"8\" width=\"10\" height=\"6\" fill=\"#f8fafc\"/><rect x=\"3\" y=\"8\" width=\"2\" height=\"6\" fill=\"#ffffff\"/><rect x=\"11\" y=\"8\" width=\"2\" height=\"6\" fill=\"#cbd5e1\"/><rect x=\"5\" y=\"10\" width=\"6\" height=\"2\" fill=\"#e2e8f0\"/><rect x=\"4\" y=\"14\" width=\"8\" height=\"1\" fill=\"#94a3b8\"/>"
+  },
+  "rec_gwahaju": {
+    "key": "rec_gwahaju",
+    "name": "조선 과하주",
+    "innerSvg": "<rect x=\"4\" y=\"2\" width=\"4\" height=\"1\" fill=\"#78350f\"/><rect x=\"5\" y=\"3\" width=\"2\" height=\"2\" fill=\"#f59e0b\"/><rect x=\"3\" y=\"5\" width=\"6\" height=\"4\" fill=\"#fbbf24\"/><rect x=\"2\" y=\"6\" width=\"8\" height=\"5\" fill=\"#f59e0b\"/><rect x=\"3\" y=\"11\" width=\"6\" height=\"3\" fill=\"#d97706\"/><rect x=\"11\" y=\"10\" width=\"3\" height=\"4\" fill=\"#fef3c7\"/><rect x=\"11\" y=\"11\" width=\"3\" height=\"2\" fill=\"#f59e0b\"/>"
+  },
   "melona": {
     "key": "melona",
     "name": "올때메론바",
@@ -722,6 +752,12 @@
   "rec_calamansiju": "🍋",
   "rec_icheon_makgeolli": "👑",
   "rec_hallasan_sotonic": "🌋",
+  "rec_cheorwon_makgeolli": "🦢",
+  "rec_gimje_makgeolli": "🌾",
+  "rec_haenam_makgeolli": "🌊",
+  "rec_sangju_makgeolli": "🏞️",
+  "rec_ihwaju": "🥄",
+  "rec_gwahaju": "🏺",
   "rec_tesla": "⚡",
   "rec_tejina": "🎤",
   "rec_casscheorom": "🌊",
@@ -1455,6 +1491,42 @@ const SPRITE_DATA_HD = {
     "name": "제주 화산 쏘토닉",
     "viewBox": "0 0 32 32",
     "innerSvg": "<rect x=\"5\" y=\"5\" width=\"4\" height=\"2\" fill=\"#94a3b8\"/><rect x=\"5\" y=\"7\" width=\"4\" height=\"4\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"11\" width=\"8\" height=\"18\" rx=\"1.5\" fill=\"#e0f2fe\"/><rect x=\"4\" y=\"16\" width=\"6\" height=\"5\" fill=\"#0284c7\"/><rect x=\"15\" y=\"10\" width=\"13\" height=\"19\" rx=\"2\" fill=\"#7dd3fc\"/><rect x=\"17\" y=\"13\" width=\"4\" height=\"4\" rx=\"0.8\" fill=\"#ffffff\" opacity=\"0.8\"/><circle cx=\"25\" cy=\"10\" r=\"3.5\" fill=\"#facc15\"/><path d=\"M 17,29 L 22,22 L 24,22 L 29,29 Z\" fill=\"#334155\"/>"
+  },
+  "rec_cheorwon_makgeolli": {
+    "key": "rec_cheorwon_makgeolli",
+    "name": "철원 현무암 오대 막걸리",
+    "viewBox": "0 0 32 32",
+    "innerSvg": "<rect x=\"12\" y=\"3\" width=\"8\" height=\"3\" rx=\"1\" fill=\"#cbd5e1\"/><rect x=\"11\" y=\"6\" width=\"10\" height=\"3.5\" fill=\"#334155\"/><rect x=\"8\" y=\"9.5\" width=\"16\" height=\"19.5\" rx=\"3\" fill=\"#1e293b\"/><rect x=\"8\" y=\"9.5\" width=\"3\" height=\"19.5\" rx=\"1\" fill=\"#334155\"/><rect x=\"10\" y=\"13\" width=\"12\" height=\"10\" rx=\"1.5\" fill=\"#f8fafc\"/><circle cx=\"16\" cy=\"16.5\" r=\"2\" fill=\"#ef4444\"/><rect x=\"13\" y=\"19\" width=\"6\" height=\"2\" fill=\"#0f172a\"/>"
+  },
+  "rec_gimje_makgeolli": {
+    "key": "rec_gimje_makgeolli",
+    "name": "김제 호남평야 생막걸리",
+    "viewBox": "0 0 32 32",
+    "innerSvg": "<rect x=\"12\" y=\"3\" width=\"8\" height=\"3\" rx=\"1\" fill=\"#0d9488\"/><rect x=\"11\" y=\"6\" width=\"10\" height=\"3.5\" fill=\"#fef9c3\"/><rect x=\"8\" y=\"9.5\" width=\"16\" height=\"19.5\" rx=\"3\" fill=\"#fef9c3\"/><rect x=\"8\" y=\"9.5\" width=\"2.5\" height=\"19.5\" fill=\"#ffffff\"/><rect x=\"9\" y=\"16\" width=\"14\" height=\"6\" fill=\"#eab308\"/><ellipse cx=\"13\" cy=\"19\" rx=\"2\" ry=\"1\" fill=\"#fef08a\"/><ellipse cx=\"19\" cy=\"19\" rx=\"2\" ry=\"1\" fill=\"#fef08a\"/>"
+  },
+  "rec_haenam_makgeolli": {
+    "key": "rec_haenam_makgeolli",
+    "name": "해남 해풍 고도수 막걸리",
+    "viewBox": "0 0 32 32",
+    "innerSvg": "<rect x=\"12\" y=\"3\" width=\"8\" height=\"3\" rx=\"1\" fill=\"#facc15\"/><rect x=\"11\" y=\"6\" width=\"10\" height=\"3.5\" fill=\"#16a34a\"/><rect x=\"8\" y=\"9.5\" width=\"16\" height=\"19.5\" rx=\"3\" fill=\"#14532d\"/><rect x=\"8\" y=\"9.5\" width=\"3\" height=\"19.5\" fill=\"#16a34a\"/><rect x=\"10\" y=\"13\" width=\"12\" height=\"10\" rx=\"1.5\" fill=\"#fefce8\"/><rect x=\"11\" y=\"14.5\" width=\"10\" height=\"2\" fill=\"#facc15\"/><rect x=\"12\" y=\"18.5\" width=\"8\" height=\"2\" fill=\"#15803d\"/>"
+  },
+  "rec_sangju_makgeolli": {
+    "key": "rec_sangju_makgeolli",
+    "name": "상주 낙동강 생탁주",
+    "viewBox": "0 0 32 32",
+    "innerSvg": "<rect x=\"7\" y=\"4\" width=\"6\" height=\"2.5\" rx=\"1\" fill=\"#0284c7\"/><rect x=\"6\" y=\"6.5\" width=\"8\" height=\"3\" fill=\"#e0f2fe\"/><rect x=\"4\" y=\"9.5\" width=\"12\" height=\"19\" rx=\"2.5\" fill=\"#38bdf8\"/><rect x=\"5.5\" y=\"13\" width=\"9\" height=\"10\" rx=\"1\" fill=\"#ffffff\"/><path d=\"M 18,20 L 29,20 L 27,28 L 20,28 Z\" fill=\"#d97706\"/><ellipse cx=\"23.5\" cy=\"20\" rx=\"5.5\" ry=\"1.8\" fill=\"#fef9c3\"/>"
+  },
+  "rec_ihwaju": {
+    "key": "rec_ihwaju",
+    "name": "떠먹는 이화주",
+    "viewBox": "0 0 32 32",
+    "innerSvg": "<rect x=\"18\" y=\"4\" width=\"3.5\" height=\"12\" rx=\"1\" fill=\"#b45309\"/><ellipse cx=\"17\" cy=\"6\" rx=\"3\" ry=\"2\" fill=\"#d97706\"/><ellipse cx=\"16\" cy=\"13\" rx=\"9\" ry=\"3\" fill=\"#fef9c3\"/><path d=\"M 6,13 C 5,23 8,28 16,28 C 24,28 27,23 26,13 Z\" fill=\"#f8fafc\"/><path d=\"M 8,15 C 8,22 10,25 14,26\" stroke=\"#ffffff\" stroke-width=\"2\" fill=\"none\"/>"
+  },
+  "rec_gwahaju": {
+    "key": "rec_gwahaju",
+    "name": "조선 과하주",
+    "viewBox": "0 0 32 32",
+    "innerSvg": "<rect x=\"8\" y=\"4\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#78350f\"/><rect x=\"9\" y=\"6\" width=\"4\" height=\"4\" fill=\"#f59e0b\"/><path d=\"M 11,10 C 5,11 4,18 6,25 C 7,28 15,28 16,25 C 18,18 17,11 11,10 Z\" fill=\"#f59e0b\"/><rect x=\"8\" y=\"13\" width=\"3\" height=\"9\" rx=\"1\" fill=\"#fde68a\" opacity=\"0.7\"/><path d=\"M 21,21 L 28,21 L 27,28 L 22,28 Z\" fill=\"#fef3c7\"/><rect x=\"22\" y=\"23\" width=\"5\" height=\"4\" fill=\"#f59e0b\"/>"
   }
 };
 
@@ -1542,6 +1614,12 @@ const SPRITE_DATA_HD = {
   "81": "rec_jawsbarju",
   "82": "rec_bibibig_makgeolli",
   "83": "rec_kahlua_milk",
+  "86": "rec_cheorwon_makgeolli",
+  "87": "rec_gimje_makgeolli",
+  "88": "rec_haenam_makgeolli",
+  "89": "rec_sangju_makgeolli",
+  "90": "rec_ihwaju",
+  "91": "rec_gwahaju",
   "101": "soju",
   "102": "beer",
   "103": "bokbunjaju",
@@ -1734,6 +1812,36 @@ const SPRITE_DATA_HD = {
   "ing_807": "red_bean_porridge",
   "rec_85": "red_bean_porridge",
   "85": "red_bean_porridge",
+  "rec_cheorwon_makgeolli": "rec_cheorwon_makgeolli",
+  "철원 현무암 오대 막걸리": "rec_cheorwon_makgeolli",
+  "철원 오대쌀 막걸리 (두루미양조장)": "rec_cheorwon_makgeolli",
+  "rec_86": "rec_cheorwon_makgeolli",
+  "86": "rec_cheorwon_makgeolli",
+  "rec_gimje_makgeolli": "rec_gimje_makgeolli",
+  "김제 호남평야 생막걸리": "rec_gimje_makgeolli",
+  "김제 지평선 생막걸리": "rec_gimje_makgeolli",
+  "rec_87": "rec_gimje_makgeolli",
+  "87": "rec_gimje_makgeolli",
+  "rec_haenam_makgeolli": "rec_haenam_makgeolli",
+  "해남 해풍 고도수 막걸리": "rec_haenam_makgeolli",
+  "해남 해창 막걸리 (12도/18도)": "rec_haenam_makgeolli",
+  "rec_88": "rec_haenam_makgeolli",
+  "88": "rec_haenam_makgeolli",
+  "rec_sangju_makgeolli": "rec_sangju_makgeolli",
+  "상주 낙동강 생탁주": "rec_sangju_makgeolli",
+  "상주 은자골 생탁배기 (5도)": "rec_sangju_makgeolli",
+  "rec_89": "rec_sangju_makgeolli",
+  "89": "rec_sangju_makgeolli",
+  "rec_ihwaju": "rec_ihwaju",
+  "떠먹는 이화주": "rec_ihwaju",
+  "고려 이화주": "rec_ihwaju",
+  "rec_90": "rec_ihwaju",
+  "90": "rec_ihwaju",
+  "rec_gwahaju": "rec_gwahaju",
+  "조선 과하주": "rec_gwahaju",
+  "전통 과하주": "rec_gwahaju",
+  "rec_91": "rec_gwahaju",
+  "91": "rec_gwahaju",
   "black_tea": "black_tea",
   "홍차": "black_tea",
   "ing_601": "black_tea",
