@@ -513,10 +513,9 @@
   }
   function boardMarkup(rows) {
     if (!rows.length) return '';
-    return `<div class="community-board"><div class="board-head"><span>분류</span><span>제목</span><span>작성자</span><span>추천</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${p.kind === 'experiment' ? '새 조합' : '플레이 팁'}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ' · 예시' : ''}</small></button><span class="board-author">${esc(p.author)}</span><span class="board-votes ${(p.upvotes || 0) > 0 ? 'has-votes' : ''}">${p.upvotes || 0}</span></article>`).join('')}</div>`;
+    return `<div class="community-board"><div class="board-head"><span>분류</span><span>제목</span><span>작성자</span><span>추천</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${p.kind === 'experiment' ? '새 조합' : '플레이 팁'}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ' · 예시' : ''}</small></button><span class="board-author">${esc(p.author)}</span>${p.example ? `<span class="board-votes">-</span>` : `<button type="button" class="board-votes ${(p.upvotes || 0) > 0 ? 'has-votes' : ''}" data-vote-target="p:${esc(p.id)}" data-vote-type="UP" aria-label="추천" aria-pressed="${p.myVote === 'UP'}" style="cursor:pointer;">👍 <span>${p.upvotes || 0}</span></button>`}</article>`).join('')}</div>`;
   }
   function postCard(p) {
-    const saved = bookmarks.has(`t:${p.id}`);
     const avail = getAvailableIngredients();
     const hasLockedIngredient = p.kind === 'experiment' && Array.isArray(p.items) && !isItemsUnlocked(p.items, avail);
     const revealed = revealedSpoilers.has(p.id);
@@ -525,7 +524,7 @@
         ? `<div class="spoiler-shield"><span>🔒 미해금 재료가 포함된 실험 조합입니다.</span><button type="button" data-reveal-spoiler="${esc(p.id)}">스포일러 확인</button></div>`
         : `<div class="card-formula">${formula(p.items,true)}</div><p class="detail-note">실험 · 정답 미확인</p>`)
       : '';
-    return `<article class="tip-card"><div class="tip-card-top"><span class="tip-kind">${p.kind === 'experiment' ? '새 조합 제안' : '플레이 팁'}</span><span>${p.example ? '예시' : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span></div><h3>${esc(p.title)}</h3><p>${renderBodyWithSafeHelpLinks(p.body)}</p>${formulaHtml}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':voteControls(p)}<button data-bookmark="t:${esc(p.id)}" aria-label="팁 저장" aria-pressed="${saved}">${uiIcon('bookmark',17)}</button><button data-share-post="${esc(p.id)}" aria-label="팁 공유">${uiIcon('share',17)}</button>${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}${p.example?'':`<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
+    return `<article class="tip-card"><div class="tip-card-top"><span class="tip-kind">${p.kind === 'experiment' ? '새 조합 제안' : '플레이 팁'}</span><span>${p.example ? '예시' : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span></div><h3>${esc(p.title)}</h3><p>${renderBodyWithSafeHelpLinks(p.body)}</p>${formulaHtml}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':`${voteControls(p)}${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
   }
   function applyPortalLangUi() {
     document.documentElement.lang = portalLang;
@@ -563,16 +562,11 @@
     { version: 'v2.2', date: '2026-11-12', title: { ko: '친구 SOS 풀이 독립 페이지 출시', en: 'Friend SOS Standalone Solver', ja: 'フレンドSOS独立ページ公開', 'zh-CN': '好友求助独立解题页面上线', 'zh-TW': '好友求助獨立解題頁面上線' }, body: { ko: '링크만으로 친구의 막힌 술 조합 퀴즈를 도와줄 수 있는 초경량 SOS 풀이 화면이 추가되었습니다.', en: 'Share a compact link so friends can help solve tricky drink ratios without spoilers.' } }
   ];
   function rankingsMarkup() {
-    const avail = getAvailableIngredients();
-    const allSug = mergedSuggestions();
-    const safeSuggestions = allSug.filter(s => isItemsUnlocked(s.items, avail)).slice(0, 10);
-    const hiddenSugCount = allSug.length - allSug.filter(s => isItemsUnlocked(s.items, avail)).length;
     const topPosts = [...posts].sort((a,b) => ((b.upvotes||0)-(b.downvotes||0)) - ((a.upvotes||0)-(a.downvotes||0))).slice(0, 6);
     const rankList = tycoonRankings[activeRankMode] || [];
     const findName = (rankSearchQuery || getDefaultNickname() || '').trim().toLowerCase();
     const myRankIndex = findName ? rankList.findIndex(r => String(r.player_name || '').toLowerCase().includes(findName)) : -1;
     const myRankRow = myRankIndex >= 0 ? rankList[myRankIndex] : null;
-    const topRecipes = [1, 7, 19, 51, 74, 2, 80, 31].map(id => byId.get(id)).filter(Boolean);
     return `
       <div class="rankings-board">
         <section class="neo-panel">
@@ -608,16 +602,6 @@
               </table>
             </div>
           ` : '<p style="margin:0;color:var(--muted);font-size:12px;">랭킹 데이터를 불러오는 중이거나 아직 등록된 기록이 없습니다.</p>'}
-        </section>
-        <section class="neo-panel">
-          <div class="neo-panel-head"><h3>${esc(pt('rankTitle'))}</h3></div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px;">
-            ${topRecipes.map((r, idx) => `<button type="button" data-recipe="${r.recipe_id}" style="display:flex; align-items:center; gap:10px; padding:10px; border:2px solid var(--ink); background:${colors[idx%colors.length]}; cursor:pointer; text-align:left; box-shadow:2px 2px 0 var(--ink);"><strong style="font-size:16px;">#${idx+1}</strong>${isRecipeUnlocked(r.recipe_id) ? icon(r,32) : '<span style="font-size:20px;">🔒</span>'}<div><div style="font-weight:850; font-size:13px;">${esc(name(r))}</div><small style="opacity:0.8;">${esc(r.formatted_number)}</small></div></button>`).join('')}
-          </div>
-        </section>
-        <section class="neo-panel">
-          <div class="neo-panel-head"><h3>🔥 인기 추천 조합 (내 해금 재료 기준)</h3>${hiddenSugCount > 0 ? `<small style="color:var(--muted);font-weight:700;">🔒 미해금 재료 포함 ${hiddenSugCount}개 숨김</small>` : ''}</div>
-          ${safeSuggestions.length ? `<div style="display:flex;flex-direction:column;gap:8px;">${safeSuggestions.map((s,i) => suggestionCard(s,i)).join('')}</div>` : '<p style="margin:0; color:var(--muted); font-size:12px;">현재 해금한 재료로 만들 수 있는 추천 조합이 없습니다. 게임에서 재료를 더 해금해 보세요!</p>'}
         </section>
         ${topPosts.length ? `<section class="neo-panel"><div class="neo-panel-head"><h3>💬 인기 커뮤니티 팁</h3></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">${topPosts.map(postCard).join('')}</div></section>` : ''}
       </div>
