@@ -326,6 +326,8 @@
     try { return localStorage.getItem('ksool-recipe-view-mode') === 'stage' ? 'stage' : 'grouped'; } catch (_) { return 'grouped'; }
   })();
   let showManualCodeInput = false;
+  const sectionOpenState = new Map();
+  const isSectionOpen = (id, defaultOpen) => (sectionOpenState.has(id) ? sectionOpenState.get(id) : defaultOpen);
   let activeTab = 'recipes', activeCategory = '전체', activeUnlockFilter = 'all', query = '', sort = 'recommended', limit = 16, showAnswers = true;
   const revealedSpoilers = new Set();
   let toastTimer;
@@ -561,26 +563,20 @@
         <div class="sync-mode-group">
           <button type="button" data-progress-mode="quiz" class="sync-mode-btn ${isQuiz ? 'is-active' : ''}">🎯 퀴즈 ${syncedProgress.quiz.length}/${recipes.length}</button>
           <button type="button" data-progress-mode="tycoon" class="sync-mode-btn ${!isQuiz ? 'is-active' : ''}">🏪 타이쿤 ${syncedProgress.tycoon.length}/${recipes.length}</button>
-          <label class="sync-follow" style="font-size:11px;display:inline-flex;align-items:center;gap:4px;margin-left:4px;"><input id="follow-game-mode" type="checkbox" ${followGameMode ? 'checked' : ''}> 게임 연동</label>
         </div>
         <div class="sync-meter-wrap">
           <div class="sync-meter" aria-label="해금 진행률"><div class="sync-meter-fill" style="width:${pct}%"></div></div>
-          <span class="sync-meter-label">${pct}% (${getAvailableIngredients().size}종)</span>
+          <span class="sync-meter-label">${pct}%</span>
         </div>
-        <button type="button" id="toggle-manual-code-btn" class="sync-code-toggle" aria-expanded="${showManualCodeInput}">코드 입력</button>
+        <button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${showManualCodeInput ? '닫기' : '코드 입력'}</button>
       </div>
       ${showManualCodeInput ? `
         <div class="sync-manual-form">
-          <input id="community-sync-input" type="text" placeholder="게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드 붙여넣기">
-          <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:32px;padding:5px 12px;">📥 가져오기</button>
+          <input id="community-sync-input" type="text" placeholder="게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드">
+          <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:32px;padding:5px 12px;">가져오기</button>
         </div>
       ` : ''}
     `;
-    $('#follow-game-mode', bar).onchange = event => {
-      followGameMode = event.target.checked;
-      if (followGameMode && currentGameMode && hasLiveGame()) syncedProgress.mode = currentGameMode;
-      saveSyncedProgress(); render();
-    };
     $$('[data-progress-mode]', bar).forEach(b => b.onclick = () => {
       followGameMode = false;
       syncedProgress.mode = b.dataset.progressMode === 'tycoon' ? 'tycoon' : 'quiz';
@@ -617,17 +613,16 @@
     const unlocked = matches.filter(r => isRecipeUnlocked(r.recipe_id));
     const locked = matches.filter(r => !isRecipeUnlocked(r.recipe_id));
     let html = '';
-    if (activeUnlockFilter !== 'locked') {
-      html += `<section class="recipe-section">
-        <div class="recipe-section-head"><h3>🔓 해금한 조합</h3><span class="recipe-section-count">${unlocked.length}</span></div>
-        ${unlocked.length
-          ? `<div class="recipe-section-grid">${unlocked.map((r, i) => recipeCard(r, i)).join('')}</div>`
-          : `<p style="margin:0;font-size:12px;color:var(--muted);">아직 해금된 조합이 없습니다. 게임에서 조합에 성공하거나 상단 <b>Google 연동</b>을 눌러 진행도를 불러오세요.</p>`}
-      </section>`;
-    }
-    if (activeUnlockFilter !== 'unlocked' && locked.length) {
-      const openByDefault = unlocked.length === 0 || activeUnlockFilter === 'locked' || Boolean(query.trim());
-      html += `<details class="stage-accordion" ${openByDefault ? 'open' : ''}>
+    html += `<section class="recipe-section-clean">
+      <div class="recipe-section-head"><h3>🔓 해금한 조합</h3><span class="recipe-section-count">${unlocked.length}</span></div>
+      ${unlocked.length
+        ? `<div class="recipe-section-grid">${unlocked.map((r, i) => recipeCard(r, i)).join('')}</div>`
+        : `<p style="margin:8px 0 0;font-size:12px;color:var(--muted);">아직 해금된 조합이 없습니다. 게임에서 조합에 성공하거나 상단 <b>Google 연동</b>을 눌러 진행도를 불러오세요.</p>`}
+    </section>`;
+    if (locked.length) {
+      const openByDefault = unlocked.length === 0 || Boolean(query.trim());
+      const isOpen = isSectionOpen('locked', openByDefault);
+      html += `<details class="stage-accordion" data-section-id="locked" ${isOpen ? 'open' : ''}>
         <summary><span class="stage-code">LOCKED</span><span class="stage-title">🔒 아직 해금하지 않은 조합</span><span class="stage-progress">${locked.length}개</span></summary>
         <div class="stage-body"><div class="locked-compact-grid">${locked.map(lockedCompactRow).join('')}</div></div>
       </details>`;
@@ -647,13 +642,14 @@
       const meta = STAGE_META[step] || { code: `STAGE ${step}`, title: `단계 ${step}` };
       const unlocked = list.filter(r => isRecipeUnlocked(r.recipe_id));
       const locked = list.filter(r => !isRecipeUnlocked(r.recipe_id));
-      const openByDefault = Boolean(query.trim()) || (unlocked.length > 0 && unlocked.length < list.length) || (step === 1 && unlocked.length === 0);
+      const defaultOpen = Boolean(query.trim()) || (unlocked.length > 0 && unlocked.length < list.length) || (step === 1 && unlocked.length === 0);
+      const isOpen = isSectionOpen(`stage-${step}`, defaultOpen);
       sections.push(`
-        <details class="stage-accordion" ${openByDefault ? 'open' : ''}>
+        <details class="stage-accordion" data-section-id="stage-${step}" ${isOpen ? 'open' : ''}>
           <summary>
             <span class="stage-code">${esc(meta.code)}</span>
             <span class="stage-title">${esc(meta.title)}</span>
-            <span class="stage-progress">${unlocked.length} / ${list.length} 해금</span>
+            <span class="stage-progress">${unlocked.length} / ${list.length}</span>
           </summary>
           <div class="stage-body">
             ${unlocked.length ? `<div class="recipe-section-grid">${unlocked.map((r, i) => recipeCard(r, i)).join('')}</div>` : ''}
@@ -696,20 +692,8 @@
     }
     const unlockFiltersEl = $('#unlock-filters');
     if (unlockFiltersEl) {
-      if (activeTab === 'recipes') {
-        const unlockedN = syncedProgress.mode === 'tycoon' ? syncedProgress.tycoon.length : syncedProgress.quiz.length;
-        const lockedN = Math.max(0, recipes.length - unlockedN);
-        unlockFiltersEl.hidden = false;
-        unlockFiltersEl.innerHTML = [
-          { id: 'all', label: `전체 (${recipes.length})` },
-          { id: 'unlocked', label: `🔓 해금 (${unlockedN})` },
-          { id: 'locked', label: `🔒 미해금 (${lockedN})` }
-        ].map(f => `<button type="button" data-unlock-filter="${f.id}" class="${activeUnlockFilter===f.id?'active':''}">${f.label}</button>`).join('');
-        $$('[data-unlock-filter]', unlockFiltersEl).forEach(b => b.onclick = () => { activeUnlockFilter = b.dataset.unlockFilter; limit = 16; render(); });
-      } else {
-        unlockFiltersEl.hidden = true;
-        unlockFiltersEl.innerHTML = '';
-      }
+      unlockFiltersEl.hidden = true;
+      unlockFiltersEl.innerHTML = '';
     }
     $('.sort-control').hidden = ['tips','suggestions','rankings','updates'].includes(activeTab);
     if($('.spoiler-toggle'))$('.spoiler-toggle').hidden = activeTab === 'tips';
@@ -748,6 +732,9 @@
     $('#load-more').hidden = true;
     if(!$('#post-recipe').dataset.ready){$('#post-recipe').innerHTML = '<option value="">선택하지 않음</option>' + recipes.map(r => `<option value="${r.recipe_id}">${esc(r.formatted_number)} · ${esc(name(r))}</option>`).join('');$('#post-recipe').dataset.ready='1';}
     bindCardActions($('#recipe-grid'));
+    $$('details[data-section-id]', $('#recipe-grid')).forEach(d => {
+      d.addEventListener('toggle', () => sectionOpenState.set(d.dataset.sectionId, d.open));
+    });
     $$('[data-category]').forEach(b => b.onclick = () => {activeCategory=b.dataset.category;limit=16;render();});
   }
   function bindCardActions(root) {
