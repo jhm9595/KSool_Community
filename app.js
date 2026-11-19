@@ -974,7 +974,25 @@
     }
     return html;
   }
+  function getMaxUnlockedStep() {
+    let maxStep = 1;
+    const byStep = new Map();
+    for (const r of data.recipes) {
+      const s = Math.min(6, Math.max(1, Number(r.step_id) || 1));
+      if (!byStep.has(s)) byStep.set(s, []);
+      byStep.get(s).push(r);
+      if (isRecipeUnlocked(r.recipe_id) && s > maxStep) maxStep = s;
+    }
+    for (let s = 1; s < 6; s++) {
+      const stepList = byStep.get(s) || [];
+      if (stepList.length && stepList.every(r => isRecipeUnlocked(r.recipe_id))) {
+        maxStep = Math.max(maxStep, s + 1);
+      }
+    }
+    return maxStep;
+  }
   function renderStageRecipes(matches) {
+    const maxUnlockedStep = getMaxUnlockedStep();
     const groups = new Map();
     for (let s = 1; s <= 6; s++) groups.set(s, []);
     for (const r of matches) {
@@ -982,8 +1000,13 @@
       groups.get(step).push(r);
     }
     const sections = [];
+    let hiddenStageCount = 0;
     for (const [step, list] of groups.entries()) {
       if (!list.length) continue;
+      if (step > maxUnlockedStep) {
+        hiddenStageCount += 1;
+        continue;
+      }
       const meta = STAGE_META[step] || { code: `STAGE ${step}`, title: `단계 ${step}` };
       const unlocked = list.filter(r => isRecipeUnlocked(r.recipe_id));
       const locked = list.filter(r => !isRecipeUnlocked(r.recipe_id));
@@ -1002,6 +1025,9 @@
           </div>
         </details>
       `);
+    }
+    if (hiddenStageCount > 0) {
+      sections.push(`<div class="stage-locked-notice" style="padding:12px 14px;border:2px dashed var(--ink);background:var(--paper-soft);font-size:12px;font-weight:700;color:var(--muted);">🔒 아직 해금하지 않은 상위 스테이지 ${hiddenStageCount}개는 스포일러 방지를 위해 숨겨져 있습니다. 게임에서 해금 후 동기화하면 공개됩니다.</div>`);
     }
     return sections.join('');
   }
