@@ -6,7 +6,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .ui-icon{display:block;flex-shrink:0}
 .header{background:#fffdf5;border-bottom:3px solid var(--ink)}
 .header-inner{max-width:1120px;margin:0 auto;padding:11px 20px;gap:28px;min-height:66px}
-.brand{gap:9px}.brand-logo-img{height:36px;width:auto;padding:2px 7px;object-fit:contain;border:2px solid var(--ink);box-shadow:none;background:var(--neo-purple);flex-shrink:0}.footer-brand .brand-logo-img{height:28px;padding:2px 5px}.brand-mark{width:34px;height:34px;background:var(--coral);color:var(--ink);border:2px solid var(--ink);border-radius:0;box-shadow:3px 3px 0 var(--ink);font-size:29px;transform:none}.brand strong{font-size:24px;font-weight:950;letter-spacing:-1.4px;white-space:nowrap}
+.brand{gap:9px}.brand-logo-img{height:36px;width:auto;padding:2px 7px;object-fit:contain;border:2px solid var(--ink);box-shadow:none;background:#ffffff;flex-shrink:0}.footer-brand .brand-logo-img{height:28px;padding:2px 5px}.brand-mark{width:34px;height:34px;background:var(--coral);color:var(--ink);border:2px solid var(--ink);border-radius:0;box-shadow:3px 3px 0 var(--ink);font-size:29px;transform:none}.brand strong{font-size:24px;font-weight:950;letter-spacing:-1.4px;white-space:nowrap}
 .header nav{gap:7px;margin:0;align-items:center}
 .header nav button{min-width:58px;min-height:35px;padding:7px 13px;color:var(--ink);font-size:12px;font-weight:800;border:2px solid transparent;display:flex;align-items:center;gap:7px;justify-content:center}
 .header nav button.nav-active{color:var(--ink);background:var(--neo-yellow);border-color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
