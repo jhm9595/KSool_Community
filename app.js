@@ -3,6 +3,27 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const safeHttpsUrl = rawUrl => {
+    try {
+      const u = new URL(String(rawUrl || '').trim());
+      return u.protocol === 'https:' ? u.href : '';
+    } catch (_) { return ''; }
+  };
+  const renderBodyWithSafeHelpLinks = rawText => {
+    const escaped = esc(rawText);
+    return escaped.replace(/https:\/\/play\.ksool\.minibig\.pw\/\?help=([A-Za-z0-9_-]{4,500})/g, (full, token) => {
+      try {
+        const u = new URL(`https://play.ksool.minibig.pw/?help=${token}`);
+        if (u.protocol !== 'https:' || u.origin !== 'https://play.ksool.minibig.pw') return full;
+        return `<a href="${esc(u.href)}" target="_blank" rel="noopener noreferrer" class="text-link" style="font-weight:800;text-decoration:underline;">🆘 친구 SOS 도와주기 ↗</a>`;
+      } catch (_) { return full; }
+    });
+  };
+  const getSafeOAuthRedirectUrl = () => {
+    const allowed = new Set(['https://ksool.minibig.pw', 'http://localhost:8766', 'http://127.0.0.1:8766']);
+    const origin = (typeof location !== 'undefined' && allowed.has(location.origin)) ? location.origin : 'https://ksool.minibig.pw';
+    return `${origin}/`;
+  };
   const uiIcon = (type,size=18) => {
     const paths={refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5 8a8 8 0 0 1 13-3l2 2M4 17l2 2a8 8 0 0 0 13-3"/>',up:'<path d="M7 10v11H3V10zm0 1 5-8c3 0 2 4 1 6h6c2 0 2 2 1 5l-2 7H7"/>',down:'<path d="M7 14V3H3v11zm0-1 5 8c3 0 2-4 1-6h6c2 0 2-2 1-5l-2-7H7"/>',comment:'<path d="M3 4h18v13H9l-6 4z"/>',flag:'<path d="M5 22V3m0 0c5-4 9 4 15 0v11c-6 4-10-4-15 0"/>',bookmark:'<path d="M6 3h12v18l-6-4-6 4z"/>',search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',arrowUpRight:'<path d="M6 18 18 6M6 6h12v12"/>',arrowDown:'<path d="M12 4v16m-7-7 7 7 7-7"/>',plus:'<path d="M12 4v16M4 12h16"/>',share:'<path d="M12 15V3m-5 5 5-5 5 5M5 12v8h14v-8"/>',heart:'<path d="M20.5 5.5c-3-3-6-1-8.5 1.5-2.5-2.5-5.5-4.5-8.5-1.5C-1 10 7 17 12 21c5-4 13-11 8.5-15.5z"/>',check:'<path d="m5 12 4 4L20 5"/>',flask:'<path d="M9 3h6m-5 0v7L4 20h16l-6-10V3M8 14h8"/>',close:'<path d="m5 5 14 14M5 19 19 5"/>',trash:'<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',sparkles:'<path d="m12 3 3 6 6 3-6 3-3 6-3-6-6-3 6-3z"/>'};
     return `<svg class="ui-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[type]||paths.plus}</svg>`;
@@ -504,7 +525,7 @@
         ? `<div class="spoiler-shield"><span>🔒 미해금 재료가 포함된 실험 조합입니다.</span><button type="button" data-reveal-spoiler="${esc(p.id)}">스포일러 확인</button></div>`
         : `<div class="card-formula">${formula(p.items,true)}</div><p class="detail-note">실험 · 정답 미확인</p>`)
       : '';
-    return `<article class="tip-card"><div class="tip-card-top"><span class="tip-kind">${p.kind === 'experiment' ? '새 조합 제안' : '플레이 팁'}</span><span>${p.example ? '예시' : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span></div><h3>${esc(p.title)}</h3><p>${esc(p.body)}</p>${formulaHtml}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':voteControls(p)}<button data-bookmark="t:${esc(p.id)}" aria-label="팁 저장" aria-pressed="${saved}">${uiIcon('bookmark',17)}</button><button data-share-post="${esc(p.id)}" aria-label="팁 공유">${uiIcon('share',17)}</button>${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}${p.example?'':`<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
+    return `<article class="tip-card"><div class="tip-card-top"><span class="tip-kind">${p.kind === 'experiment' ? '새 조합 제안' : '플레이 팁'}</span><span>${p.example ? '예시' : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span></div><h3>${esc(p.title)}</h3><p>${renderBodyWithSafeHelpLinks(p.body)}</p>${formulaHtml}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':voteControls(p)}<button data-bookmark="t:${esc(p.id)}" aria-label="팁 저장" aria-pressed="${saved}">${uiIcon('bookmark',17)}</button><button data-share-post="${esc(p.id)}" aria-label="팁 공유">${uiIcon('share',17)}</button>${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}${p.example?'':`<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
   }
   function applyPortalLangUi() {
     document.documentElement.lang = portalLang;
@@ -598,7 +619,7 @@
             <h3 style="margin:0 0 4px; font-size:16px; font-weight:900;">${esc(pt('updateTitle'))}</h3>
             <p style="margin:0; font-size:12px; color:var(--muted);">K-Sool Official Blog &amp; Video Guides</p>
           </div>
-          <a href="https://ksool.blogspot.com/" target="_blank" rel="noopener" class="button coral" style="text-decoration:none;">📖 ksool.blogspot.com ↗</a>
+          <a href="https://ksool.blogspot.com/" target="_blank" rel="noopener noreferrer" class="button coral" style="text-decoration:none;">📖 ksool.blogspot.com ↗</a>
         </div>
         ${customList}
         ${UPDATE_LOGS.map(u => {
@@ -856,7 +877,7 @@
       btn.classList.remove('is-signed-in');
       btn.textContent = 'G Google 연동';
       btn.onclick = async () => {
-        const { error } = await sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+        const { error } = await sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getSafeOAuthRedirectUrl() } });
         if (error) toast(`Google 연동 오류: ${error.message}`);
       };
     }
@@ -1053,7 +1074,7 @@
     const totalCount = matches.length + matchingPosts.length + matchingSuggestions.length;
     $('#result-count').innerHTML = `<b>${totalCount}</b> ${activeTab==='tips'?'TIPS':activeTab==='suggestions'?'COMBOS':'RECIPES'}`;
     const spoilerBanner = activeTab === 'suggestions' && hiddenSugCount > 0
-      ? `<div class="spoiler-shield" style="grid-column:1/-1;"><span>🔒 아직 해금하지 않은 재료가 포함된 추천 조합 <b>${hiddenSugCount}개</b>는 스포일러 방지를 위해 숨겨져 있습니다.</span><a href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener" style="font-weight:850;color:var(--ink);">게임에서 재료 해금하기 ↗</a></div>`
+      ? `<div class="spoiler-shield" style="grid-column:1/-1;"><span>🔒 아직 해금하지 않은 재료가 포함된 추천 조합 <b>${hiddenSugCount}개</b>는 스포일러 방지를 위해 숨겨져 있습니다.</span><a href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer" style="font-weight:850;color:var(--ink);">게임에서 재료 해금하기 ↗</a></div>`
       : '';
     const recipeMarkup = activeTab === 'recipes'
       ? (matches.length ? (activeViewMode === 'stage' ? renderStageRecipes(matches) : renderGroupedRecipes(matches)) : '')
@@ -1101,19 +1122,19 @@
     const r=byId.get(id);if(!r)return;
     const related=allPosts().filter(p=>p.recipeId===id);
     const storyMap = gameLinks.stories?.[`rec:${id}`] || {};
-    const storyUrl = String(storyMap[portalLang] || storyMap.en || storyMap.ko || '').trim();
-    const storyHtml = /^https?:\/\//i.test(storyUrl)
-      ? `<a class="button coral" href="${esc(storyUrl)}" target="_blank" rel="noopener" style="width:100%; justify-content:center; margin-top:8px; text-decoration:none;">${esc(pt('storyBtn'))} ↗</a>`
+    const storyUrl = safeHttpsUrl(storyMap[portalLang] || storyMap.en || storyMap.ko || '');
+    const storyHtml = storyUrl
+      ? `<a class="button coral" href="${esc(storyUrl)}" target="_blank" rel="noopener noreferrer" style="width:100%; justify-content:center; margin-top:8px; text-decoration:none;">${esc(pt('storyBtn'))} ↗</a>`
       : '';
     if (!isRecipeUnlocked(id)) {
       const modeName = syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈';
-      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:70px;height:70px;background:#e4e4e7;font-size:2rem;">🔒</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="neo-panel" style="background:#fff9d6; margin:12px 0; font-size:12px; line-height:1.6;"><b>🔒 미해금 레시피입니다.</b><br>현재 선택한 <b>${modeName}</b> 모드에서 아직 해금하지 않아 재료·비율이 비공개 처리되었습니다.<br>오른쪽(또는 상단) <b>play.ksool.minibig.pw</b> 게임에서 조합에 성공한 뒤 Google 계정을 연동하면 자동으로 공개됩니다!</div><details class="hint-details"><summary>스포일러 없는 게임 힌트 보기</summary><p>${esc(r.unlock_hint || r.description)}</p></details>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener">🎮 게임하러 가기 ${uiIcon('arrowUpRight',16)}</a><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">관련 커뮤니티 팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${esc(p.body)}</p></div>`).join('')}`:''}`;
+      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:70px;height:70px;background:#e4e4e7;font-size:2rem;">🔒</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="neo-panel" style="background:#fff9d6; margin:12px 0; font-size:12px; line-height:1.6;"><b>🔒 미해금 레시피입니다.</b><br>현재 선택한 <b>${modeName}</b> 모드에서 아직 해금하지 않아 재료·비율이 비공개 처리되었습니다.<br>오른쪽(또는 상단) <b>play.ksool.minibig.pw</b> 게임에서 조합에 성공한 뒤 Google 계정을 연동하면 자동으로 공개됩니다!</div><details class="hint-details"><summary>스포일러 없는 게임 힌트 보기</summary><p>${esc(r.unlock_hint || r.description)}</p></details>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 게임하러 가기 ${uiIcon('arrowUpRight',16)}</a><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">관련 커뮤니티 팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
       bindCardActions($('#recipe-detail'));
       $('#write-related').onclick=()=>openCompose(id);
       openDialog($('#recipe-dialog'));
       return;
     }
-    $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon">${icon(r,70)}</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="detail-formula">${r.items.map((i,index)=>`<span class="detail-ingredient">${r.requires_order?`${index+1}. `:''}${icon(ingredientFor(i),30)} ${esc(name(ingredientFor(i)))} <b>×${i.ratio}</b></span>`).join('<span>＋</span>')}</div>${r.requires_order?'<p class="detail-note">표시된 순서대로.</p>':''}<details class="hint-details"><summary>힌트</summary><p>${esc(r.unlock_hint || r.description)}</p></details>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener">K-술 플레이 ${uiIcon('arrowUpRight',16)}</a><button data-bookmark="r:${id}" aria-label="공략 저장" aria-pressed="${bookmarks.has(`r:${id}`)}">${uiIcon('bookmark',18)}</button><button id="share-recipe" aria-label="공략 링크 공유">${uiIcon('share',18)}</button><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${esc(p.body)}</p></div>`).join('')}`:''}`;
+    $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon">${icon(r,70)}</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="detail-formula">${r.items.map((i,index)=>`<span class="detail-ingredient">${r.requires_order?`${index+1}. `:''}${icon(ingredientFor(i),30)} ${esc(name(ingredientFor(i)))} <b>×${i.ratio}</b></span>`).join('<span>＋</span>')}</div>${r.requires_order?'<p class="detail-note">표시된 순서대로.</p>':''}<details class="hint-details"><summary>힌트</summary><p>${esc(r.unlock_hint || r.description)}</p></details>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">K-술 플레이 ${uiIcon('arrowUpRight',16)}</a><button data-bookmark="r:${id}" aria-label="공략 저장" aria-pressed="${bookmarks.has(`r:${id}`)}">${uiIcon('bookmark',18)}</button><button id="share-recipe" aria-label="공략 링크 공유">${uiIcon('share',18)}</button><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
     bindCardActions($('#recipe-detail'));
     $('#share-recipe').onclick=()=>shareLink(new URL(`#recipe=${id}`,location.href).href,`${name(r)} 조합 공략 · 조합소`);
     $('#write-related').onclick=()=>openCompose(id);
@@ -1124,7 +1145,7 @@
     $('#recipe-detail').innerHTML=`<h2 style="font-size:25px;margin:23px 0;line-height:1.5">${esc(post.title)}</h2>${postCard(post)}`;
     if(!post.example){
       const data=await api(`/posts/${encodeURIComponent(id)}/comments`);
-      $('#recipe-detail').innerHTML+=`<div class="comments-list">${data.comments.map(c=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><b>${esc(c.author)}</b><p>${esc(c.body)}</p></div>${isAdminUser?`<button type="button" class="admin-btn is-danger" data-admin-delete-comment="${esc(c.id)}">삭제</button>`:''}</div>`).join('')}</div><form id="comment-form" class="comment-form"><input name="author" maxlength="16" placeholder="닉네임" aria-label="댓글 닉네임" value="${esc(getDefaultNickname())}" required><input name="body" maxlength="500" placeholder="댓글" aria-label="댓글 내용" required><button class="button coral" aria-label="댓글 등록">${uiIcon('plus',16)}</button></form>`;
+      $('#recipe-detail').innerHTML+=`<div class="comments-list">${data.comments.map(c=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><b>${esc(c.author)}</b><p>${renderBodyWithSafeHelpLinks(c.body)}</p></div>${isAdminUser?`<button type="button" class="admin-btn is-danger" data-admin-delete-comment="${esc(c.id)}">삭제</button>`:''}</div>`).join('')}</div><form id="comment-form" class="comment-form"><input name="author" maxlength="16" placeholder="닉네임" aria-label="댓글 닉네임" value="${esc(getDefaultNickname())}" required><input name="body" maxlength="500" placeholder="댓글" aria-label="댓글 내용" required><button class="button coral" aria-label="댓글 등록">${uiIcon('plus',16)}</button></form>`;
       $$('[data-admin-delete-comment]', $('#recipe-detail')).forEach(b => b.onclick = async () => {
         try { await adminApi(`/admin/comments/${encodeURIComponent(b.dataset.adminDeleteComment)}`, { method: 'DELETE' }); toast('댓글 삭제 완료'); await syncCommunity(); await openPost(id); } catch (e) { toast(e.message); }
       });

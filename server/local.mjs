@@ -38,7 +38,14 @@ const server=createServer(async(req,res)=>{
     const path=resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
     if(!path.startsWith(root+sep)){res.writeHead(403);res.end();return;}
     const info=await stat(path);if(!info.isFile()){res.writeHead(404);res.end();return;}
-    res.writeHead(200,{'Content-Type':mime[extname(path)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Cache-Control':'no-cache','Referrer-Policy':'strict-origin-when-cross-origin'});
+    res.writeHead(200,{
+      'Content-Type':mime[extname(path)]||'application/octet-stream',
+      'X-Content-Type-Options':'nosniff',
+      'X-Frame-Options':'SAMEORIGIN',
+      'Content-Security-Policy':"frame-src 'self' https://play.ksool.minibig.pw https://googleads.g.doubleclick.net; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+      'Cache-Control':'no-cache',
+      'Referrer-Policy':'strict-origin-when-cross-origin'
+    });
     res.end(req.method==='HEAD'?undefined:await readFile(path));
   }catch(error){if(error.code==='ENOENT'){res.writeHead(404);res.end('Not found');}else{console.error(error.message);res.writeHead(500);res.end('Server error');}}
 });
