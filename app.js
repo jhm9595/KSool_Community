@@ -1029,7 +1029,8 @@
       unlockFiltersEl.innerHTML = '';
     }
     $('.sort-control').hidden = ['tips','suggestions','rankings','updates','admin'].includes(activeTab);
-    if($('.spoiler-toggle'))$('.spoiler-toggle').hidden = activeTab === 'tips';
+    const resultsHeadingEl = $('#results-heading');
+    if (resultsHeadingEl) resultsHeadingEl.hidden = activeTab === 'recipes';
     if (activeTab === 'admin') {
       $('#result-count').innerHTML = `<b>ADMIN</b> CONSOLE`;
       $('#recipe-grid').innerHTML = adminMarkup();

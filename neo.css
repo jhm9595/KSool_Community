@@ -23,8 +23,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .compact-toolbar{display:flex;gap:12px;align-items:center}.search-row{margin:0;flex:1}.search-box{background:white;border:2px solid var(--ink);border-radius:0;min-height:42px;padding:0 11px;gap:10px;box-shadow:3px 3px 0 #19191915}.search-box input{font-size:12px;padding:10px 0;min-height:40px}.search-box>span:first-child{color:var(--ink);display:flex}.search-box:focus-within{border-color:var(--ink);box-shadow:3px 3px 0 var(--neo-purple)}
 .button.coral{color:var(--ink);background:var(--coral);border:2px solid var(--ink);font-size:11px;font-weight:850;box-shadow:3px 3px 0 var(--ink);min-height:44px;padding:9px 14px;gap:6px}
 .button.coral:hover{background:var(--coral-dark);transform:translate(1px,1px);box-shadow:2px 2px 0 var(--ink)}
-.filter-row{margin-top:11px;gap:12px;flex-wrap:nowrap}.category-filters{gap:6px}.category-filters button{font-size:10px;color:var(--ink);border:1.5px solid var(--ink);background:#fffdf5;font-weight:600;min-height:31px;padding:6px 12px;box-shadow:2px 2px 0 #19191925}.category-filters button.active{background:var(--green);border-color:var(--ink);color:var(--ink);box-shadow:2px 2px 0 var(--ink);font-weight:800}.category-filters button:hover{background:var(--neo-yellow)}
-.sort-control select{color:var(--ink);font-size:10px;padding:5px;background:none;min-height:31px;max-width:130px;border-bottom:1.5px solid var(--ink);font-weight:600}.results-heading{margin:9px 0 10px;min-height:19px}.results-heading p{font-family:ui-monospace,'Consolas',monospace;font-size:9px;letter-spacing:.6px;color:#666357}.results-heading p b{font-size:11px;color:var(--ink);font-weight:900}.board-legend{display:flex;gap:4px;align-items:center;font-size:9px;color:#666357}.board-legend .ui-icon{width:12px;height:12px}.legend-divider{margin:0 7px;color:#bbb6a5}
+.filter-row{margin:11px 0 12px;gap:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap}.category-filters{gap:6px;display:flex;flex-wrap:wrap;align-items:center}.category-filters button{font-size:10px;color:var(--ink);border:1.5px solid var(--ink);background:#fffdf5;font-weight:700;min-height:31px;padding:5px 11px;box-shadow:none}.category-filters button.active{background:var(--green);border-color:var(--ink);color:var(--ink);box-shadow:2px 2px 0 var(--ink);font-weight:850}.category-filters button:hover{background:var(--neo-yellow)}
+.filter-right-controls{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.sort-control{display:inline-flex;align-items:center}.sort-control select{color:var(--ink);font-size:10px;padding:5px 8px;background:#fffdf5;min-height:31px;max-width:130px;border:1.5px solid var(--ink);box-shadow:2px 2px 0 var(--ink);font-weight:800;cursor:pointer}.results-heading{margin:6px 0 10px;min-height:19px}.results-heading p{font-family:ui-monospace,'Consolas',monospace;font-size:9px;letter-spacing:.6px;color:#666357}.results-heading p b{font-size:11px;color:var(--ink);font-weight:900}.board-legend{display:flex;gap:4px;align-items:center;font-size:9px;color:#666357}.board-legend .ui-icon{width:12px;height:12px}.legend-divider{margin:0 7px;color:#bbb6a5}
 .recipe-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-items:stretch}
 .recipe-card{border:2px solid var(--ink);border-radius:0;box-shadow:3px 3px 0 var(--ink);background:white;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column;overflow:visible;min-width:0}
 .recipe-card:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
@@ -100,10 +101,11 @@ body{--game-dock-width:400px}
 .sync-manual-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed #bcb5a0}
 .sync-manual-form input{flex:1;min-width:200px;padding:6px 10px;border:1.5px solid var(--ink);font-size:11px;background:#fff}
 
-.view-mode-toggle{display:inline-flex;align-items:center;margin-left:auto;margin-right:10px;border:1.5px solid var(--ink);background:#fffdf5}
-.view-mode-toggle button{padding:4px 9px;border:0;background:transparent;font-size:10px;font-weight:800;color:var(--ink);cursor:pointer;white-space:nowrap}
+.view-mode-toggle{display:inline-flex;align-items:stretch;border:1.5px solid var(--ink);background:#fffdf5;box-shadow:2px 2px 0 var(--ink);min-height:31px}
+.view-mode-toggle button{padding:4px 10px;border:0;background:transparent;font-size:10px;font-weight:800;color:var(--Muted, #525046);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;min-height:28px}
 .view-mode-toggle button+button{border-left:1.5px solid var(--ink)}
-.view-mode-toggle button.is-active{background:var(--neo-yellow)}
+.view-mode-toggle button.is-active{background:var(--neo-yellow);color:var(--ink);font-weight:900}
+.view-mode-toggle button:hover:not(.is-active){background:#f5f1e3}
 
 .recipe-grid.is-sectioned{display:flex;flex-direction:column;gap:18px}
 .recipe-section-clean{display:flex;flex-direction:column;gap:12px}
@@ -197,11 +199,14 @@ body.game-dock-open .recipe-grid.community-view { display:block; }
   .recipe-section-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .locked-compact-grid{grid-template-columns:1fr}
   .stage-body{padding:10px}
-  .filter-row{flex-wrap:wrap!important;gap:8px!important;margin-top:10px!important}
-  .category-filters,.unlock-filters{flex:1 1 100%!important;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
-  .category-filters::-webkit-scrollbar,.unlock-filters::-webkit-scrollbar{display:none}
-  .category-filters button,.unlock-filters button{flex:0 0 auto;white-space:nowrap}
+  .filter-row{flex-wrap:wrap!important;gap:8px!important;margin:10px 0!important}
+  .category-filters{flex:1 1 100%!important;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+  .category-filters::-webkit-scrollbar{display:none}
+  .category-filters button{flex:0 0 auto;white-space:nowrap}
+  .filter-right-controls{width:100%;justify-content:space-between;margin-left:0}
   .sort-control{margin-left:auto}
+  .sort-control select{min-height:30px!important;padding:4px 8px!important;font-size:10px!important}
+  .view-mode-toggle{min-height:30px}
   .results-heading{margin:8px 0 10px!important;padding-right:0!important;display:flex;align-items:center;justify-content:space-between}
   .rank-table th,.rank-table td{padding:6px 8px;font-size:11px}
   .form-pair{grid-template-columns:1fr!important}
