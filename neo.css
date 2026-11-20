@@ -86,6 +86,8 @@ body{--game-dock-width:400px}
 .lang-select{padding:5px 8px;border:2px solid var(--ink);background:#fffdf5;font-weight:800;font-size:11px;cursor:pointer;min-height:34px;box-shadow:2px 2px 0 var(--ink)}
 .auth-pill{padding:5px 10px;border:2px solid var(--ink);background:#bae6fd;color:var(--ink);font-weight:850;font-size:11px;cursor:pointer;min-height:34px;box-shadow:2px 2px 0 var(--ink);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .auth-pill.is-signed-in{background:var(--green)}
+.auth-pill.auth-logout{background:#fffdf5;color:var(--ink)}
+.auth-pill.auth-logout:hover{background:#ffb6a0}
 .auth-pill:hover{background:var(--neo-yellow)}
 .nav-blog-link{text-decoration:none;color:var(--ink);font-size:12px;font-weight:800;padding:7px 11px;border:2px solid transparent;display:inline-flex;align-items:center;gap:4px;min-height:35px}
 .nav-blog-link:hover{background:var(--neo-yellow);border-color:var(--ink)}

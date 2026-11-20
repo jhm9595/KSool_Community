@@ -58,13 +58,170 @@
   }
   let portalLang = detectInitialLang();
   const PORTAL_UI = {
-    ko: { recipes:'조합', tips:'커뮤니티', suggestions:'추천', rankings:'랭킹', updates:'업데이트', blog:'블로그 ↗', heroTitle:'조합, 한눈에.', search:'조합 · 재료 검색', write:'글쓰기', storyBtn:'🎬 유래 · 레시피 영상 보기', rankTitle:'🏆 인기 조합 & 추천 랭킹', updateTitle:'📢 K-술 업데이트 소식' },
-    en: { recipes:'Recipes', tips:'Community', suggestions:'Combos', rankings:'Rankings', updates:'Updates', blog:'Blog ↗', heroTitle:'K-Drinks at a Glance.', search:'Search recipes or ingredients', write:'Post', storyBtn:'🎬 Story, Origin & Video Guide', rankTitle:'🏆 Top Combos & Rankings', updateTitle:'📢 K-Sool Updates & Patch Notes' },
-    ja: { recipes:'レシピ', tips:'コミュニティ', suggestions:'おすすめ', rankings:'ランキング', updates:'お知らせ', blog:'ブログ ↗', heroTitle:'韓国お酒レシピ一覧', search:'レシピ・材料を検索', write:'投稿', storyBtn:'🎬 由来・作り方動画を見る', rankTitle:'🏆 人気レシピ＆ランキング', updateTitle:'📢 K-酒 アップデート情報' },
-    'zh-CN': { recipes:'配方', tips:'社区', suggestions:'推荐', rankings:'排行榜', updates:'更新公告', blog:'博客 ↗', heroTitle:'韩国调酒配方一览', search:'搜索配方或材料', write:'发帖', storyBtn:'🎬 查看由来与视频教程', rankTitle:'🏆 人气配方排行榜', updateTitle:'📢 K-酒 更新公告' },
-    'zh-TW': { recipes:'配方', tips:'社群', suggestions:'推薦', rankings:'排行榜', updates:'更新公告', blog:'部落格 ↗', heroTitle:'韓國調酒配方一覽', search:'搜尋配方或材料', write:'發文', storyBtn:'🎬 查看由來與影片教學', rankTitle:'🏆 人氣配方排行榜', updateTitle:'📢 K-酒 更新公告' }
+    ko: {
+      brandTitle:'조합소', gameBtn:'K-술', googleSync:'G Google 연동', logout:'로그아웃', loggedOut:'로그아웃되었습니다.', resynced:'Google 계정과 진행도를 다시 동기화했어요.',
+      recipes:'조합', tips:'커뮤니티', suggestions:'추천', rankings:'랭킹', updates:'업데이트', blog:'블로그 ↗',
+      heroTitle:'조합, 한눈에.', search:'조합 · 재료 검색', write:'글쓰기', proposeCombo:'조합 제안',
+      searchTips:'게시글 · 작성자 검색', searchSuggestions:'재료로 추천 조합 검색',
+      storyBtn:'🎬 유래 · 레시피 영상 보기', rankTitle:'🏆 인기 조합 & 추천 랭킹', updateTitle:'📢 K-술 업데이트 소식',
+      quizDex:'🎯 퀴즈 도감', tycoonDex:'🏪 타이쿤 도감', codeInput:'코드 입력', close:'닫기', importBtn:'가져오기',
+      codePlaceholder:'게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드',
+      viewGrouped:'🔓 해금/미해금', viewStage:'🗺️ 스테이지별',
+      sortNumber:'도감 번호순', sortRecommended:'추천 공략순', sortSimple:'재료가 적은 순',
+      unlockedSection:'🔓 해금한 조합', lockedSection:'🔒 아직 해금하지 않은 조합',
+      noUnlocked:'아직 해금된 조합이 없습니다. 게임에서 조합에 성공하거나 상단 Google 연동을 눌러 진행도를 불러오세요.',
+      stageHiddenNotice:'🔒 아직 해금하지 않은 상위 스테이지 {n}개는 스포일러 방지를 위해 숨겨져 있습니다. 게임에서 해금 후 동기화하면 공개됩니다.',
+      lockedModeHint:'🔒 {mode} 모드 해금 시 공개', modeQuiz:'퀴즈', modeTycoon:'타이쿤',
+      orderBadge:'순서대로', countUnit:'개',
+      savedRecipesTitle:'🔖 저장한 조합', savedPostsTitle:'💬 저장한 글',
+      emptySavedTitle:'다시 보고 싶은 발견을 모아두세요', emptySavedDesc:'공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.',
+      emptySearchTitle:'아직 일치하는 발견이 없어요', emptySearchDesc:'다른 검색어나 필터로 찾아보세요.',
+      colKind:'분류', colTitle:'제목', colAuthor:'작성자', colVotes:'추천',
+      kindExp:'새 조합', kindTip:'플레이 팁', kindExpFull:'새 조합 제안', exampleTag:'예시',
+      gameSugBadge:'🎮 게임 추천', userSugBadge:'조합 추천',
+      tycoonRankTitle:'🏆 주점 타이쿤 글로벌 Top 100', tycoonRankSub:'(게임 내 Top 10 · 사이트 전체 100위 조회)',
+      modeTimeAttack:'⏱️ 타임어택', modeInfinite:'♾️ 무한모드',
+      rankSearchPlaceholder:'내 주모 닉네임으로 순위 찾기 (예: 미니빅)',
+      colRank:'순위', colPlayer:'주모', colServed:'서빙', colEarnings:'매출', colCombo:'최대 콤보', colWave:'웨이브',
+      topPostsTitle:'💬 인기 커뮤니티 팁', rankEmpty:'랭킹 데이터를 불러오는 중이거나 아직 등록된 기록이 없습니다.',
+      savedToast:'저장 완료', unsavedToast:'저장 취소', copiedToast:'링크 복사 완료',
+      cats:{ '전체':'전체', '기초 재료':'기초 재료', '과일·편의점':'과일·편의점', '소맥·폭탄주':'소맥·폭탄주', '막걸리':'막걸리', '특산 명주':'특산 명주', '플레이 팁':'플레이 팁', '새 조합 제안':'새 조합 제안', '기초합성':'기초합성' },
+      stagesTycoon:{ 1:'길거리 무알콜 노점', 2:'이모네 포장마차', 3:'골목 전통 주점', 4:'크래프트 비어 펍', 5:'스카이라인 라운지 바', 6:'사이버펑크 미래도시 바' },
+      stagesQuiz:{ 1:'기초 조합 (No.01~18)', 2:'소주·맥주 조합 (No.19~37)', 3:'전통주 조합 (No.38~55)', 4:'비율 조합 (No.56~67)', 5:'황금비율 조합 (No.68~77)', 6:'브랜드·특산 조합 (No.78~90)' }
+    },
+    en: {
+      brandTitle:'Mix Club', gameBtn:'K-Sool', googleSync:'G Google Sync', logout:'Log out', loggedOut:'Signed out.', resynced:'Synced progress with Google.',
+      recipes:'Recipes', tips:'Community', suggestions:'Combos', rankings:'Rankings', updates:'Updates', blog:'Blog ↗',
+      heroTitle:'K-Drinks at a Glance.', search:'Search recipes or ingredients', write:'Post', proposeCombo:'Suggest Combo',
+      searchTips:'Search posts or authors', searchSuggestions:'Search combos by ingredient',
+      storyBtn:'🎬 Story, Origin & Video Guide', rankTitle:'🏆 Top Combos & Rankings', updateTitle:'📢 K-Sool Updates & Patch Notes',
+      quizDex:'🎯 Quiz Dex', tycoonDex:'🏪 Tycoon Dex', codeInput:'Enter Code', close:'Close', importBtn:'Import',
+      codePlaceholder:'Paste share link or KSOOL_SYNC_V1 code from game Settings',
+      viewGrouped:'🔓 Unlocked/Locked', viewStage:'🗺️ By Stage',
+      sortNumber:'By No.', sortRecommended:'Recommended', sortSimple:'Fewest Ingredients',
+      unlockedSection:'🔓 Unlocked Recipes', lockedSection:'🔒 Locked Recipes',
+      noUnlocked:'No unlocked recipes yet. Mix drinks in the game or sync with Google above.',
+      stageHiddenNotice:'🔒 {n} higher stage(s) are hidden to prevent spoilers. Unlock them in the game and sync to reveal.',
+      lockedModeHint:'🔒 Unlock in {mode} mode', modeQuiz:'Quiz', modeTycoon:'Tycoon',
+      orderBadge:'In Order', countUnit:'',
+      savedRecipesTitle:'🔖 Saved Recipes', savedPostsTitle:'💬 Saved Posts',
+      emptySavedTitle:'Save your favorite recipes here', emptySavedDesc:'Tap the bookmark button on any recipe card.',
+      emptySearchTitle:'No matching results', emptySearchDesc:'Try another keyword or filter.',
+      colKind:'Type', colTitle:'Title', colAuthor:'Author', colVotes:'Votes',
+      kindExp:'New Combo', kindTip:'Play Tip', kindExpFull:'New Combo Idea', exampleTag:'Example',
+      gameSugBadge:'🎮 Game Pick', userSugBadge:'User Combo',
+      tycoonRankTitle:'🏆 Bar Tycoon Global Top 100', tycoonRankSub:'(In-game Top 10 · Site shows Top 100)',
+      modeTimeAttack:'⏱️ Time Attack', modeInfinite:'♾️ Endless',
+      rankSearchPlaceholder:'Find your rank by nickname',
+      colRank:'Rank', colPlayer:'Player', colServed:'Served', colEarnings:'Revenue', colCombo:'Max Combo', colWave:'Wave',
+      topPostsTitle:'💬 Top Community Tips', rankEmpty:'Loading rankings or no records yet.',
+      savedToast:'Saved', unsavedToast:'Removed', copiedToast:'Link copied',
+      cats:{ '전체':'All', '기초 재료':'Base', '과일·편의점':'Fruit & Store', '소맥·폭탄주':'Somaek & Bomb', '막걸리':'Makgeolli', '특산 명주':'Specialty', '플레이 팁':'Play Tips', '새 조합 제안':'New Combos', '기초합성':'Base Mix' },
+      stagesTycoon:{ 1:'Street Mocktail Stall', 2:'Auntie Pojangmacha', 3:'Alley Traditional Tavern', 4:'Craft Beer Pub', 5:'Skyline Lounge Bar', 6:'Cyberpunk Future Bar' },
+      stagesQuiz:{ 1:'Base Mixes (No.01~18)', 2:'Soju & Beer (No.19~37)', 3:'Traditional Brews (No.38~55)', 4:'Ratio Mixes (No.56~67)', 5:'Golden Ratios (No.68~77)', 6:'Brands & Specialties (No.78~90)' }
+    },
+    ja: {
+      brandTitle:'調合所', gameBtn:'K-酒', googleSync:'G Google連携', logout:'ログアウト', loggedOut:'ログアウトしました。', resynced:'Googleアカウントと進行度を同期しました。',
+      recipes:'レシピ', tips:'コミュニティ', suggestions:'おすすめ', rankings:'ランキング', updates:'お知らせ', blog:'ブログ ↗',
+      heroTitle:'韓国お酒レシピ一覧', search:'レシピ・材料を検索', write:'投稿', proposeCombo:'調合を提案',
+      searchTips:'投稿・投稿者を検索', searchSuggestions:'材料でおすすめを検索',
+      storyBtn:'🎬 由来・作り方動画を見る', rankTitle:'🏆 人気レシピ＆ランキング', updateTitle:'📢 K-酒 アップデート情報',
+      quizDex:'🎯 クイズ図鑑', tycoonDex:'🏪 タイクーン図鑑', codeInput:'コード入力', close:'閉じる', importBtn:'読み込む',
+      codePlaceholder:'ゲーム設定の共有リンクまたは KSOOL_SYNC_V1 コード',
+      viewGrouped:'🔓 解放/未解放', viewStage:'🗺️ ステージ別',
+      sortNumber:'図鑑番号順', sortRecommended:'おすすめ順', sortSimple:'材料が少ない順',
+      unlockedSection:'🔓 解放済みレシピ', lockedSection:'🔒 未解放のレシピ',
+      noUnlocked:'まだ解放されたレシピがありません。ゲームで調合するか上のGoogle連携で同期してください。',
+      stageHiddenNotice:'🔒 未解放の上位ステージ{n}件はネタバレ防止のため非表示です。ゲームで解放後に同期すると表示されます。',
+      lockedModeHint:'🔒 {mode}モード解放で表示', modeQuiz:'クイズ', modeTycoon:'タイクーン',
+      orderBadge:'順番通り', countUnit:'件',
+      savedRecipesTitle:'🔖 保存したレシピ', savedPostsTitle:'💬 保存した投稿',
+      emptySavedTitle:'お気に入りのレシピを保存しよう', emptySavedDesc:'レシピカードのしおりボタンで保存できます。',
+      emptySearchTitle:'一致する結果がありません', emptySearchDesc:'別のキーワードやフィルターでお試しください。',
+      colKind:'分類', colTitle:'タイトル', colAuthor:'投稿者', colVotes:'いいね',
+      kindExp:'新調合', kindTip:'攻略ヒント', kindExpFull:'新調合の提案', exampleTag:'例',
+      gameSugBadge:'🎮 ゲームおすすめ', userSugBadge:'ユーザー提案',
+      tycoonRankTitle:'🏆 居酒屋タイクーン 世界Top 100', tycoonRankSub:'(ゲーム内Top 10・サイトでは100位まで表示)',
+      modeTimeAttack:'⏱️ タイムアタック', modeInfinite:'♾️ 無限モード',
+      rankSearchPlaceholder:'ニックネームで順位を検索',
+      colRank:'順位', colPlayer:'店主', colServed:'提供', colEarnings:'売上', colCombo:'最大コンボ', colWave:'ウェーブ',
+      topPostsTitle:'💬 人気のコミュニティヒント', rankEmpty:'ランキングを読み込み中、または記録がありません。',
+      savedToast:'保存しました', unsavedToast:'保存を解除しました', copiedToast:'リンクをコピーしました',
+      cats:{ '전체':'すべて', '기초 재료':'基礎材料', '과일·편의점':'フルーツ・コンビニ', '소맥·폭탄주':'爆弾酒', '막걸리':'マッコリ', '특산 명주':'特産銘酒', '플레이 팁':'攻略ヒント', '새 조합 제안':'新調合提案', '기초합성':'基礎調合' },
+      stagesTycoon:{ 1:'路上のノンアル屋台', 2:'おばちゃんの屋台', 3:'路地裏の伝統居酒屋', 4:'クラフトビアパブ', 5:'スカイラインラウンジバー', 6:'サイバーパンク未来バー' },
+      stagesQuiz:{ 1:'基礎調合 (No.01~18)', 2:'焼酎・ビール (No.19~37)', 3:'伝統酒 (No.38~55)', 4:'比率調合 (No.56~67)', 5:'黄金比率 (No.68~77)', 6:'ブランド・特産 (No.78~90)' }
+    },
+    'zh-CN': {
+      brandTitle:'调酒所', gameBtn:'K-酒', googleSync:'G 绑定Google', logout:'退出', loggedOut:'已退出登录。', resynced:'已重新同步 Google 进度。',
+      recipes:'配方', tips:'社区', suggestions:'推荐', rankings:'排行榜', updates:'更新公告', blog:'博客 ↗',
+      heroTitle:'韩国调酒配方一览', search:'搜索配方或材料', write:'发帖', proposeCombo:'推荐组合',
+      searchTips:'搜索帖子或作者', searchSuggestions:'按材料搜索推荐组合',
+      storyBtn:'🎬 查看由来与视频教程', rankTitle:'🏆 人气配方排行榜', updateTitle:'📢 K-酒 更新公告',
+      quizDex:'🎯 问答图鉴', tycoonDex:'🏪 大亨图鉴', codeInput:'输入代码', close:'关闭', importBtn:'导入',
+      codePlaceholder:'粘贴游戏设置中的分享链接或 KSOOL_SYNC_V1 代码',
+      viewGrouped:'🔓 已解锁/未解锁', viewStage:'🗺️ 按阶段',
+      sortNumber:'按图鉴编号', sortRecommended:'按推荐攻略', sortSimple:'按材料最少',
+      unlockedSection:'🔓 已解锁配方', lockedSection:'🔒 尚未解锁的配方',
+      noUnlocked:'暂无已解锁配方。请在游戏内调制或点击上方绑定 Google 同步进度。',
+      stageHiddenNotice:'🔒 为防剧透，已隐藏 {n} 个未解锁的后续阶段。在游戏内解锁并同步后即可显示。',
+      lockedModeHint:'🔒 {mode}模式解锁后公开', modeQuiz:'问答', modeTycoon:'大亨',
+      orderBadge:'按顺序', countUnit:'个',
+      savedRecipesTitle:'🔖 已收藏配方', savedPostsTitle:'💬 已收藏帖子',
+      emptySavedTitle:'在这里收藏想再看的配方', emptySavedDesc:'点击配方卡片上的书签按钮即可收藏。',
+      emptySearchTitle:'没有找到匹配的结果', emptySearchDesc:'请尝试其他关键词或筛选条件。',
+      colKind:'分类', colTitle:'标题', colAuthor:'作者', colVotes:'点赞',
+      kindExp:'新组合', kindTip:'玩法技巧', kindExpFull:'新组合推荐', exampleTag:'示例',
+      gameSugBadge:'🎮 游戏推荐', userSugBadge:'玩家推荐',
+      tycoonRankTitle:'🏆 酒馆大亨全球 Top 100', tycoonRankSub:'(游戏内展示 Top 10 · 本站可查前 100 名)',
+      modeTimeAttack:'⏱️ 限时挑战', modeInfinite:'♾️ 无尽模式',
+      rankSearchPlaceholder:'输入昵称查找我的排名',
+      colRank:'排名', colPlayer:'掌柜', colServed:'上酒', colEarnings:'营收', colCombo:'最高连击', colWave:'波次',
+      topPostsTitle:'💬 热门社区攻略', rankEmpty:'正在加载排行榜或暂无记录。',
+      savedToast:'已收藏', unsavedToast:'已取消收藏', copiedToast:'已复制链接',
+      cats:{ '전체':'全部', '기초 재료':'基础材料', '과일·편의점':'水果·便利店', '소맥·폭탄주':'烧啤·炸弹酒', '막걸리':'马格利', '특산 명주':'特产名酒', '플레이 팁':'玩法技巧', '새 조합 제안':'新组合推荐', '기초합성':'基础合成' },
+      stagesTycoon:{ 1:'街头无醇小摊', 2:'姨母布帐马车', 3:'胡同传统酒馆', 4:'精酿啤酒屋', 5:'天际线酒廊', 6:'赛博朋克未来酒吧' },
+      stagesQuiz:{ 1:'基础组合 (No.01~18)', 2:'烧酒·啤酒 (No.19~37)', 3:'传统酒 (No.38~55)', 4:'比例调酒 (No.56~67)', 5:'黄金比例 (No.68~77)', 6:'品牌·特产 (No.78~90)' }
+    },
+    'zh-TW': {
+      brandTitle:'調酒所', gameBtn:'K-酒', googleSync:'G 綁定Google', logout:'登出', loggedOut:'已登出。', resynced:'已重新同步 Google 進度。',
+      recipes:'配方', tips:'社群', suggestions:'推薦', rankings:'排行榜', updates:'更新公告', blog:'部落格 ↗',
+      heroTitle:'韓國調酒配方一覽', search:'搜尋配方或材料', write:'發文', proposeCombo:'推薦組合',
+      searchTips:'搜尋貼文或作者', searchSuggestions:'依材料搜尋推薦組合',
+      storyBtn:'🎬 查看由來與影片教學', rankTitle:'🏆 人氣配方排行榜', updateTitle:'📢 K-酒 更新公告',
+      quizDex:'🎯 問答圖鑑', tycoonDex:'🏪 大亨圖鑑', codeInput:'輸入代碼', close:'關閉', importBtn:'匯入',
+      codePlaceholder:'貼上遊戲設定中的分享連結或 KSOOL_SYNC_V1 代碼',
+      viewGrouped:'🔓 已解鎖/未解鎖', viewStage:'🗺️ 按階段',
+      sortNumber:'按圖鑑編號', sortRecommended:'按推薦攻略', sortSimple:'按材料最少',
+      unlockedSection:'🔓 已解鎖配方', lockedSection:'🔒 尚未解鎖的配方',
+      noUnlocked:'尚無已解鎖配方。請在遊戲內調製或點擊上方綁定 Google 同步進度。',
+      stageHiddenNotice:'🔒 為防劇透，已隱藏 {n} 個未解鎖的後續階段。在遊戲內解鎖並同步後即可顯示。',
+      lockedModeHint:'🔒 {mode}模式解鎖後公開', modeQuiz:'問答', modeTycoon:'大亨',
+      orderBadge:'按順序', countUnit:'個',
+      savedRecipesTitle:'🔖 已收藏配方', savedPostsTitle:'💬 已收藏貼文',
+      emptySavedTitle:'在這裡收藏想再看的配方', emptySavedDesc:'點擊配方卡片上的書籤按鈕即可收藏。',
+      emptySearchTitle:'沒有找到相符的結果', emptySearchDesc:'請嘗試其他關鍵字或篩選條件。',
+      colKind:'分類', colTitle:'標題', colAuthor:'作者', colVotes:'按讚',
+      kindExp:'新組合', kindTip:'玩法技巧', kindExpFull:'新組合推薦', exampleTag:'範例',
+      gameSugBadge:'🎮 遊戲推薦', userSugBadge:'玩家推薦',
+      tycoonRankTitle:'🏆 酒館大亨全球 Top 100', tycoonRankSub:'(遊戲內顯示 Top 10 · 本站可查前 100 名)',
+      modeTimeAttack:'⏱️ 限時挑戰', modeInfinite:'♾️ 無盡模式',
+      rankSearchPlaceholder:'輸入暱稱尋找我的排名',
+      colRank:'排名', colPlayer:'掌櫃', colServed:'上酒', colEarnings:'營收', colCombo:'最高連擊', colWave:'波次',
+      topPostsTitle:'💬 熱門社群攻略', rankEmpty:'正在載入排行榜或尚無紀錄。',
+      savedToast:'已收藏', unsavedToast:'已取消收藏', copiedToast:'已複製連結',
+      cats:{ '전체':'全部', '기초 재료':'基礎材料', '과일·편의점':'水果·便利店', '소맥·폭탄주':'燒啤·炸彈酒', '막걸리':'馬格利', '특산 명주':'特產名酒', '玩法技巧':'玩法技巧', '플레이 팁':'玩法技巧', '새 조합 제안':'新組合推薦', '기초합성':'基礎合成' },
+      stagesTycoon:{ 1:'街頭無醇小攤', 2:'姨母布帳馬車', 3:'巷弄傳統酒館', 4:'精釀啤酒屋', 5:'天際線酒廊', 6:'賽博龐克未來酒吧' },
+      stagesQuiz:{ 1:'基礎組合 (No.01~18)', 2:'燒酒·啤酒 (No.19~37)', 3:'傳統酒 (No.38~55)', 4:'比例調酒 (No.56~67)', 5:'黃金比例 (No.68~77)', 6:'品牌·特產 (No.78~90)' }
+    }
   };
   const pt = k => (PORTAL_UI[portalLang] && PORTAL_UI[portalLang][k]) || PORTAL_UI.en[k] || k;
+  const catLabel = c => (PORTAL_UI[portalLang]?.cats?.[c]) || (PORTAL_UI.en?.cats?.[c]) || c;
+  const stageTitle = (step) => {
+    const isTycoon = syncedProgress.mode === 'tycoon';
+    const dict = PORTAL_UI[portalLang] || PORTAL_UI.en;
+    const map = isTycoon ? dict.stagesTycoon : dict.stagesQuiz;
+    return (map && map[step]) || `Stage ${step}`;
+  };
   const name = i => {
     const koFallback = i?.display_name || i?.name || 'Unknown';
     if (!i || portalLang === 'ko') return koFallback;
@@ -498,22 +655,23 @@
   }
   function recipeCard(r,index) {
     const saved = bookmarks.has(`r:${r.recipe_id}`);
+    const modeName = syncedProgress.mode === 'tycoon' ? pt('modeTycoon') : pt('modeQuiz');
     if (!isRecipeUnlocked(r.recipe_id)) {
-      return `<article class="recipe-card is-locked" style="--card-color:#ece8dc;"><div class="compact-card-head"><span class="compact-recipe-icon" style="display:grid;place-items:center;width:28px;height:28px;border:1.5px solid var(--ink);background:#fffdf5;font-size:14px;">🔒</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula" style="justify-content:center; padding:8px; color:var(--muted); font-size:11px; font-weight:750; text-align:center;">🔒 ${syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈'} 모드 해금 시 공개</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span></div></article>`;
+      return `<article class="recipe-card is-locked" style="--card-color:#ece8dc;"><div class="compact-card-head"><span class="compact-recipe-icon" style="display:grid;place-items:center;width:28px;height:28px;border:1.5px solid var(--ink);background:#fffdf5;font-size:14px;">🔒</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula" style="justify-content:center; padding:8px; color:var(--muted); font-size:11px; font-weight:750; text-align:center;">${esc(pt('lockedModeHint').replace('{mode}', modeName))}</div><div class="compact-card-footer"><span class="compact-category">${esc(catLabel(r.category))}</span></div></article>`;
     }
-    return `<article class="recipe-card" data-recipe="${r.recipe_id}" style="--card-color:${colors[index%colors.length]};cursor:pointer;"><div class="compact-card-head"><span class="compact-recipe-icon">${icon(r,40)}</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))} ${saved?'저장 취소':'저장'}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula">${r.items.map((i,n)=>`<span class="formula-item">${r.requires_order?`<span class="ingredient-order">${n+1}</span>`:''}<span class="formula-image">${icon(ingredientFor(i),30)}<b>×${i.ratio}</b></span><span class="ingredient-name">${esc(name(ingredientFor(i)))}</span></span>`).join('<span class="formula-plus">+</span>')}</div><div class="compact-card-footer"><span class="compact-category">${esc(r.category)}</span>${r.requires_order?'<span class="order-badge">순서대로</span>':''}<button data-share-recipe="${r.recipe_id}" aria-label="${esc(name(r))} 공유">${uiIcon('share',15)}</button></div></article>`;
+    return `<article class="recipe-card" data-recipe="${r.recipe_id}" style="--card-color:${colors[index%colors.length]};cursor:pointer;"><div class="compact-card-head"><span class="compact-recipe-icon">${icon(r,40)}</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula">${r.items.map((i,n)=>`<span class="formula-item">${r.requires_order?`<span class="ingredient-order">${n+1}</span>`:''}<span class="formula-image">${icon(ingredientFor(i),30)}<b>×${i.ratio}</b></span><span class="ingredient-name">${esc(name(ingredientFor(i)))}</span></span>`).join('<span class="formula-plus">+</span>')}</div><div class="compact-card-footer"><span class="compact-category">${esc(catLabel(r.category))}</span>${r.requires_order?`<span class="order-badge">${esc(pt('orderBadge'))}</span>`:''}<button data-share-recipe="${r.recipe_id}" aria-label="${esc(name(r))}">${uiIcon('share',15)}</button></div></article>`;
   }
   function voteControls(p){
     const target=p.suggestion_key?`s:${p.suggestion_key}`:`p:${p.id}`;
-    return `<span class="vote-controls">${['UP','DOWN'].map(type=>`<button data-vote-target="${esc(target)}" data-vote-type="${type}" aria-label="${type==='UP'?'좋아요':'싫어요'}" aria-pressed="${p.myVote===type}">${uiIcon(type==='UP'?'up':'down',15)}<span>${type==='UP'?(p.upvotes||0):(p.downvotes||0)}</span></button>`).join('')}</span>`;
+    return `<span class="vote-controls">${['UP','DOWN'].map(type=>`<button data-vote-target="${esc(target)}" data-vote-type="${type}" aria-label="${type==='UP'?'👍':'👎'}" aria-pressed="${p.myVote===type}">${uiIcon(type==='UP'?'up':'down',15)}<span>${type==='UP'?(p.upvotes||0):(p.downvotes||0)}</span></button>`).join('')}</span>`;
   }
   function suggestionCard(s,index){
-    const badge = s.fromGame ? '🎮 게임 추천' : '조합 추천';
-    return `<article class="suggestion-card" style="--card-color:${colors[index%colors.length]}"><div class="suggestion-badge">${badge}</div><div class="card-formula">${formula(s.items,true)}</div><div class="suggestion-actions">${voteControls(s)}<button data-copy-combo="${esc(s.suggestion_key)}" aria-label="조합 링크 공유">${uiIcon('share',16)}</button></div></article>`;
+    const badge = s.fromGame ? pt('gameSugBadge') : pt('userSugBadge');
+    return `<article class="suggestion-card" style="--card-color:${colors[index%colors.length]}"><div class="suggestion-badge">${esc(badge)}</div><div class="card-formula">${formula(s.items,true)}</div><div class="suggestion-actions">${voteControls(s)}<button data-copy-combo="${esc(s.suggestion_key)}" aria-label="Share">${uiIcon('share',16)}</button></div></article>`;
   }
   function boardMarkup(rows) {
     if (!rows.length) return '';
-    return `<div class="community-board"><div class="board-head"><span>분류</span><span>제목</span><span>작성자</span><span>추천</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${p.kind === 'experiment' ? '새 조합' : '플레이 팁'}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ' · 예시' : ''}</small></button><span class="board-author">${esc(p.author)}</span>${p.example ? `<span class="board-votes">-</span>` : `<button type="button" class="board-votes ${(p.upvotes || 0) > 0 ? 'has-votes' : ''}" data-vote-target="p:${esc(p.id)}" data-vote-type="UP" aria-label="추천" aria-pressed="${p.myVote === 'UP'}" style="cursor:pointer;">👍 <span>${p.upvotes || 0}</span></button>`}</article>`).join('')}</div>`;
+    return `<div class="community-board"><div class="board-head"><span>${esc(pt('colKind'))}</span><span>${esc(pt('colTitle'))}</span><span>${esc(pt('colAuthor'))}</span><span>${esc(pt('colVotes'))}</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${esc(p.kind === 'experiment' ? pt('kindExp') : pt('kindTip'))}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ` · ${esc(pt('exampleTag'))}` : ''}</small></button><span class="board-author">${esc(p.author)}</span>${p.example ? `<span class="board-votes">-</span>` : `<button type="button" class="board-votes ${(p.upvotes || 0) > 0 ? 'has-votes' : ''}" data-vote-target="p:${esc(p.id)}" data-vote-type="UP" aria-label="${esc(pt('colVotes'))}" aria-pressed="${p.myVote === 'UP'}" style="cursor:pointer;">👍 <span>${p.upvotes || 0}</span></button>`}</article>`).join('')}</div>`;
   }
   function postCard(p) {
     const avail = getAvailableIngredients();
@@ -530,6 +688,12 @@
     document.documentElement.lang = portalLang;
     const sel = $('#portal-lang-select');
     if (sel) sel.value = portalLang;
+    const brandTitleEl = $('#brand-title');
+    if (brandTitleEl) brandTitleEl.textContent = pt('brandTitle');
+    const gameBtnLabel = $('#game-dock-btn-label');
+    if (gameBtnLabel) gameBtnLabel.textContent = pt('gameBtn');
+    const logoutBtn = $('#header-logout-btn');
+    if (logoutBtn) logoutBtn.textContent = pt('logout');
     $$('[data-nav]').forEach(b => {
       const k = b.dataset.nav;
       if (k !== 'saved' && PORTAL_UI[portalLang]?.[k]) b.textContent = pt(k);
@@ -546,12 +710,12 @@
     if (composeBtnEl) {
       composeBtnEl.hidden = !showCommunityActions;
       if (showCommunityActions) {
-        composeBtnEl.innerHTML = `${uiIcon('plus')} ${esc(activeTab === 'suggestions' ? '조합 제안' : pt('write'))}`;
+        composeBtnEl.innerHTML = `${uiIcon('plus')} ${esc(activeTab === 'suggestions' ? pt('proposeCombo') : pt('write'))}`;
       }
     }
     const searchEl = $('#search');
     if (searchEl) {
-      searchEl.placeholder = activeTab === 'tips' ? '게시글 · 작성자 검색' : activeTab === 'suggestions' ? '재료로 추천 조합 검색' : pt('search');
+      searchEl.placeholder = activeTab === 'tips' ? pt('searchTips') : activeTab === 'suggestions' ? pt('searchSuggestions') : pt('search');
     }
   }
   const UPDATE_LOGS = [
@@ -569,39 +733,39 @@
       <div class="rankings-board">
         <section class="neo-panel">
           <div class="neo-panel-head">
-            <h3>🏆 주점 타이쿤 글로벌 Top 100 <small style="font-size:11px;font-weight:700;color:var(--muted);">(게임 내 Top 10 · 사이트 전체 100위 조회)</small></h3>
+            <h3>${esc(pt('tycoonRankTitle'))} <small style="font-size:11px;font-weight:700;color:var(--muted);">${esc(pt('tycoonRankSub'))}</small></h3>
             <div class="rank-mode-tabs">
-              <button type="button" data-rank-mode="TIME_ATTACK" class="${activeRankMode==='TIME_ATTACK'?'is-active':''}">⏱️ 타임어택</button>
-              <button type="button" data-rank-mode="INFINITE" class="${activeRankMode==='INFINITE'?'is-active':''}">♾️ 무한모드</button>
+              <button type="button" data-rank-mode="TIME_ATTACK" class="${activeRankMode==='TIME_ATTACK'?'is-active':''}">${esc(pt('modeTimeAttack'))}</button>
+              <button type="button" data-rank-mode="INFINITE" class="${activeRankMode==='INFINITE'?'is-active':''}">${esc(pt('modeInfinite'))}</button>
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-            <input id="rank-my-search" type="search" value="${esc(rankSearchQuery)}" placeholder="내 주모 닉네임으로 순위 찾기 (예: 미니빅)" style="flex:1;min-width:200px;padding:7px 10px;border:2px solid var(--ink);font-size:12px;background:#fff;">
-            ${myRankRow ? `<div style="padding:6px 12px;border:2px solid var(--ink);background:var(--green);font-size:12px;font-weight:850;">🎯 내 순위: <b>#${myRankIndex + 1}위</b> · ${esc(myRankRow.player_name)} (${myRankRow.served_count}잔 / ${Number(myRankRow.total_earnings || 0).toLocaleString()}냥)</div>` : (findName ? `<span style="font-size:11px;color:var(--muted);">'${esc(findName)}' 기록이 Top 100 내에 없습니다.</span>` : '')}
+            <input id="rank-my-search" type="search" value="${esc(rankSearchQuery)}" placeholder="${esc(pt('rankSearchPlaceholder'))}" style="flex:1;min-width:200px;padding:7px 10px;border:2px solid var(--ink);font-size:12px;background:#fff;">
+            ${myRankRow ? `<div style="padding:6px 12px;border:2px solid var(--ink);background:var(--green);font-size:12px;font-weight:850;">🎯 <b>#${myRankIndex + 1}</b> · ${esc(myRankRow.player_name)} (${myRankRow.served_count} / ${Number(myRankRow.total_earnings || 0).toLocaleString()})</div>` : ''}
           </div>
           ${rankList.length ? `
             <div class="rank-table-wrap" style="max-height:460px;overflow-y:auto;">
               <table class="rank-table">
-                <thead><tr><th>순위</th><th>주모</th><th>서빙</th><th>매출</th><th>최대 콤보</th><th>웨이브</th></tr></thead>
+                <thead><tr><th>${esc(pt('colRank'))}</th><th>${esc(pt('colPlayer'))}</th><th>${esc(pt('colServed'))}</th><th>${esc(pt('colEarnings'))}</th><th>${esc(pt('colCombo'))}</th><th>${esc(pt('colWave'))}</th></tr></thead>
                 <tbody>
                   ${rankList.slice(0, 100).map((row, idx) => {
                     const isMine = findName && String(row.player_name || '').toLowerCase().includes(findName);
                     return `
                     <tr class="${isMine ? 'is-mine-rank' : idx < 3 ? 'is-top3' : ''}" style="${isMine ? 'background:#d5f88a;font-weight:900;' : ''}">
                       <td><span class="rank-badge-num">${idx + 1}</span></td>
-                      <td>${esc(row.badge_emoji || '🍶')} <strong>${esc(row.player_name || '익명주모')}</strong>${isMine ? ' <span style="font-size:10px;border:1px solid var(--ink);background:#fff;padding:1px 4px;">ME</span>' : ''}</td>
-                      <td>${Number(row.served_count || 0)}잔</td>
-                      <td>${Number(row.total_earnings || 0).toLocaleString()}냥</td>
-                      <td>${Number(row.max_combo || 0)}콤보</td>
+                      <td>${esc(row.badge_emoji || '🍶')} <strong>${esc(row.player_name || 'Anonymous')}</strong>${isMine ? ' <span style="font-size:10px;border:1px solid var(--ink);background:#fff;padding:1px 4px;">ME</span>' : ''}</td>
+                      <td>${Number(row.served_count || 0)}</td>
+                      <td>${Number(row.total_earnings || 0).toLocaleString()}</td>
+                      <td>${Number(row.max_combo || 0)}</td>
                       <td>W${Number(row.max_wave || 1)}</td>
                     </tr>`;
                   }).join('')}
                 </tbody>
               </table>
             </div>
-          ` : '<p style="margin:0;color:var(--muted);font-size:12px;">랭킹 데이터를 불러오는 중이거나 아직 등록된 기록이 없습니다.</p>'}
+          ` : `<p style="margin:0;color:var(--muted);font-size:12px;">${esc(pt('rankEmpty'))}</p>`}
         </section>
-        ${topPosts.length ? `<section class="neo-panel"><div class="neo-panel-head"><h3>💬 인기 커뮤니티 팁</h3></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">${topPosts.map(postCard).join('')}</div></section>` : ''}
+        ${topPosts.length ? `<section class="neo-panel"><div class="neo-panel-head"><h3>${esc(pt('topPostsTitle'))}</h3></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">${topPosts.map(postCard).join('')}</div></section>` : ''}
       </div>
     `;
   }
@@ -861,19 +1025,48 @@
   }
   function renderHeaderAuthButton() {
     const btn = $('#header-auth-btn');
+    const logoutBtn = $('#header-logout-btn');
     if (!btn) return;
-    if (!sbClient) { btn.hidden = true; return; }
+    if (!sbClient) { btn.hidden = true; if (logoutBtn) logoutBtn.hidden = true; return; }
     btn.hidden = false;
     if (sbUser) {
       btn.classList.add('is-signed-in');
       btn.textContent = `☁️ ${(sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] || 'Google').slice(0, 10)}`;
-      btn.onclick = () => { syncFromSupabaseUser(); toast('Google 계정과 진행도를 다시 동기화했어요.'); };
+      btn.onclick = () => { syncFromSupabaseUser(); toast(pt('resynced')); };
+      if (logoutBtn) {
+        logoutBtn.hidden = false;
+        logoutBtn.textContent = pt('logout');
+        logoutBtn.onclick = async () => {
+          logoutBtn.disabled = true;
+          try {
+            await sbClient.auth.signOut();
+            sbUser = null;
+            isAdminUser = false;
+            isSuperAdmin = false;
+            adminPermissions = [];
+            adminAccessToken = null;
+            const adminNav = $('#admin-nav-btn');
+            if (adminNav) adminNav.hidden = true;
+            if (activeTab === 'admin') activeTab = 'recipes';
+            syncedProgress = { mode: syncedProgress.mode, quiz: [], tycoon: [], quizIngredients: [], tycoonIngredients: [] };
+            saveSyncedProgress();
+            renderHeaderAuthButton();
+            render();
+            toast(pt('loggedOut'));
+          } catch (e) {
+            toast(e?.message || 'Logout failed');
+          } finally {
+            logoutBtn.disabled = false;
+          }
+        };
+      }
     } else {
       btn.classList.remove('is-signed-in');
-      btn.textContent = 'G Google 연동';
+      btn.textContent = pt('googleSync');
+      if (logoutBtn) logoutBtn.hidden = true;
       btn.onclick = async () => {
         const { error } = await sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getSafeOAuthRedirectUrl() } });
-        if (error) toast(`Google 연동 오류: ${error.message}`);
+        if (error) toast(`Google OAuth error: ${error.message}`);
       };
     }
   }
@@ -890,25 +1083,25 @@
           <div class="sync-cards-grid">
             <button type="button" data-progress-mode="quiz" class="sync-stat-card ${isQuiz ? 'is-active' : ''}" aria-pressed="${isQuiz}">
               <div class="sync-stat-head">
-                <span class="sync-stat-title">🎯 퀴즈 도감</span>
+                <span class="sync-stat-title">${esc(pt('quizDex'))}</span>
                 <span class="sync-stat-count"><b>${quizCount}</b>/${total} <em>(${quizPct}%)</em></span>
               </div>
               <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${quizPct}%"></span></span>
             </button>
             <button type="button" data-progress-mode="tycoon" class="sync-stat-card ${!isQuiz ? 'is-active' : ''}" aria-pressed="${!isQuiz}">
               <div class="sync-stat-head">
-                <span class="sync-stat-title">🏪 타이쿤 도감</span>
+                <span class="sync-stat-title">${esc(pt('tycoonDex'))}</span>
                 <span class="sync-stat-count"><b>${tycoonCount}</b>/${total} <em>(${tycoonPct}%)</em></span>
               </div>
               <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${tycoonPct}%"></span></span>
             </button>
           </div>
-          ${!sbUser ? `<button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${showManualCodeInput ? '닫기' : '코드 입력'}</button>` : ''}
+          ${!sbUser ? `<button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${esc(showManualCodeInput ? pt('close') : pt('codeInput'))}</button>` : ''}
         </div>
         ${(!sbUser && showManualCodeInput) ? `
           <div class="sync-manual-form">
-            <input id="community-sync-input" type="text" placeholder="게임(⚙️ 설정 → 진행도 내보내기)의 공유 링크 또는 KSOOL_SYNC_V1 코드">
-            <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:32px;padding:5px 12px;">가져오기</button>
+            <input id="community-sync-input" type="text" placeholder="${esc(pt('codePlaceholder'))}">
+            <button type="button" id="community-sync-import-btn" class="button coral" style="min-height:32px;padding:5px 12px;">${esc(pt('importBtn'))}</button>
           </div>
         ` : ''}
       </div>
@@ -952,16 +1145,16 @@
     const locked = matches.filter(r => !isRecipeUnlocked(r.recipe_id));
     let html = '';
     html += `<section class="recipe-section-clean">
-      <div class="recipe-section-head"><h3>🔓 해금한 조합</h3><span class="recipe-section-count">${unlocked.length}</span></div>
+      <div class="recipe-section-head"><h3>${esc(pt('unlockedSection'))}</h3><span class="recipe-section-count">${unlocked.length}</span></div>
       ${unlocked.length
         ? `<div class="recipe-section-grid">${unlocked.map((r, i) => recipeCard(r, i)).join('')}</div>`
-        : `<p style="margin:8px 0 0;font-size:12px;color:var(--muted);">아직 해금된 조합이 없습니다. 게임에서 조합에 성공하거나 상단 <b>Google 연동</b>을 눌러 진행도를 불러오세요.</p>`}
+        : `<p style="margin:8px 0 0;font-size:12px;color:var(--muted);">${esc(pt('noUnlocked'))}</p>`}
     </section>`;
     if (locked.length) {
       const openByDefault = unlocked.length === 0 || Boolean(query.trim());
       const isOpen = isSectionOpen('locked', openByDefault);
       html += `<details class="stage-accordion" data-section-id="locked" ${isOpen ? 'open' : ''}>
-        <summary><span class="stage-code">LOCKED</span><span class="stage-title">🔒 아직 해금하지 않은 조합</span><span class="stage-progress">${locked.length}개</span></summary>
+        <summary><span class="stage-code">LOCKED</span><span class="stage-title">${esc(pt('lockedSection'))}</span><span class="stage-progress">${locked.length}${esc(pt('countUnit'))}</span></summary>
         <div class="stage-body"><div class="locked-compact-grid">${locked.map(lockedCompactRow).join('')}</div></div>
       </details>`;
     }
@@ -1000,7 +1193,7 @@
         hiddenStageCount += 1;
         continue;
       }
-      const meta = STAGE_META[step] || { code: `STAGE ${step}`, title: `단계 ${step}` };
+      const meta = STAGE_META[step] || { code: `STAGE ${step}`, title: `Stage ${step}` };
       const unlocked = list.filter(r => isRecipeUnlocked(r.recipe_id));
       const locked = list.filter(r => !isRecipeUnlocked(r.recipe_id));
       const defaultOpen = Boolean(query.trim()) || (unlocked.length > 0 && unlocked.length < list.length) || (step === 1 && unlocked.length === 0);
@@ -1009,7 +1202,7 @@
         <details class="stage-accordion" data-section-id="stage-${step}" ${isOpen ? 'open' : ''}>
           <summary>
             <span class="stage-code">${esc(meta.code)}</span>
-            <span class="stage-title">${esc(meta.title)}</span>
+            <span class="stage-title">${esc(stageTitle(step))}</span>
             <span class="stage-progress">${unlocked.length} / ${list.length}</span>
           </summary>
           <div class="stage-body">
@@ -1020,7 +1213,7 @@
       `);
     }
     if (hiddenStageCount > 0) {
-      sections.push(`<div class="stage-locked-notice" style="padding:12px 14px;border:2px dashed var(--ink);background:var(--paper-soft);font-size:12px;font-weight:700;color:var(--muted);">🔒 아직 해금하지 않은 상위 스테이지 ${hiddenStageCount}개는 스포일러 방지를 위해 숨겨져 있습니다. 게임에서 해금 후 동기화하면 공개됩니다.</div>`);
+      sections.push(`<div class="stage-locked-notice" style="padding:12px 14px;border:2px dashed var(--ink);background:var(--paper-soft);font-size:12px;font-weight:700;color:var(--muted);">${esc(pt('stageHiddenNotice').replace('{n}', String(hiddenStageCount)))}</div>`);
     }
     return sections.join('');
   }
@@ -1047,13 +1240,13 @@
       ? allPosts().filter(p => bookmarks.has(`t:${p.id}`) && `${p.title} ${p.body} ${p.author}`.toLowerCase().includes(query.toLowerCase()))
       : [];
     const savedHtml = [
-      matches.length ? `<section class="recipe-section-clean"><div class="recipe-section-head"><h3>🔖 저장한 조합</h3><span class="recipe-section-count">${matches.length}</span></div><div class="recipe-section-grid">${matches.map((r, i) => recipeCard(r, i)).join('')}</div></section>` : '',
-      postsMatches.length ? `<section class="recipe-section-clean" style="margin-top:16px;"><div class="recipe-section-head"><h3>💬 저장한 글</h3><span class="recipe-section-count">${postsMatches.length}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">${postsMatches.map(postCard).join('')}</div></section>` : ''
+      matches.length ? `<section class="recipe-section-clean"><div class="recipe-section-head"><h3>${esc(pt('savedRecipesTitle'))}</h3><span class="recipe-section-count">${matches.length}</span></div><div class="recipe-section-grid">${matches.map((r, i) => recipeCard(r, i)).join('')}</div></section>` : '',
+      postsMatches.length ? `<section class="recipe-section-clean" style="margin-top:16px;"><div class="recipe-section-head"><h3>${esc(pt('savedPostsTitle'))}</h3><span class="recipe-section-count">${postsMatches.length}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">${postsMatches.map(postCard).join('')}</div></section>` : ''
     ].filter(Boolean).join('');
     const markup = activeTab === 'recipes'
       ? (matches.length ? (activeViewMode === 'stage' ? renderStageRecipes(matches) : renderGroupedRecipes(matches)) : '')
       : savedHtml;
-    grid.innerHTML = markup || `<div class="empty-state"><span>✧</span><h3>${activeTab==='saved' ? '다시 보고 싶은 발견을 모아두세요' : '아직 일치하는 발견이 없어요'}</h3><p>${activeTab==='saved' ? '공략 카드의 책갈피 버튼을 눌러 저장할 수 있어요.' : '다른 검색어나 필터로 찾아보세요.'}</p></div>`;
+    grid.innerHTML = markup || `<div class="empty-state"><span>✧</span><h3>${esc(activeTab==='saved' ? pt('emptySavedTitle') : pt('emptySearchTitle'))}</h3><p>${esc(activeTab==='saved' ? pt('emptySavedDesc') : pt('emptySearchDesc'))}</p></div>`;
     bindCardActions(grid);
     $$('details[data-section-id]', grid).forEach(d => {
       d.addEventListener('toggle', () => sectionOpenState.set(d.dataset.sectionId, d.open));
@@ -1123,10 +1316,10 @@
     if (activeTab === 'tips') {
       const cats = ['전체', '플레이 팁', '새 조합 제안'];
       root.innerHTML = `
-        ${searchToolbarMarkup('게시글 · 작성자 검색', true, pt('write'))}
+        ${searchToolbarMarkup(pt('searchTips'), true, pt('write'))}
         <div class="catalog-shell">
           <div class="catalog-tabs-bar">
-            <div id="category-filters" class="category-filters">${cats.map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('')}</div>
+            <div id="category-filters" class="category-filters">${cats.map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(catLabel(c))}</button>`).join('')}</div>
           </div>
           <div class="catalog-body">
             <div id="recipe-grid" class="recipe-grid community-view"></div>
@@ -1140,7 +1333,7 @@
     }
     if (activeTab === 'suggestions') {
       root.innerHTML = `
-        ${searchToolbarMarkup('재료로 추천 조합 검색', true, '조합 제안')}
+        ${searchToolbarMarkup(pt('searchSuggestions'), true, pt('proposeCombo'))}
         <div class="catalog-body" style="margin-top:12px;">
           <div id="recipe-grid" class="recipe-grid suggestions-view"></div>
         </div>
@@ -1156,14 +1349,14 @@
       ${searchToolbarMarkup(pt('search'), false)}
       <div class="catalog-shell">
         <div class="catalog-tabs-bar">
-          <div id="category-filters" class="category-filters">${cats.map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(c)}</button>`).join('')}</div>
+          <div id="category-filters" class="category-filters">${cats.map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(catLabel(c))}</button>`).join('')}</div>
           ${activeTab === 'recipes' ? `
             <div class="filter-right-controls">
               <div id="recipe-view-toggle" class="view-mode-toggle">
-                <button type="button" data-view-mode="grouped" class="${activeViewMode==='grouped'?'is-active':''}">🔓 해금/미해금</button>
-                <button type="button" data-view-mode="stage" class="${activeViewMode==='stage'?'is-active':''}">🗺️ 스테이지별</button>
+                <button type="button" data-view-mode="grouped" class="${activeViewMode==='grouped'?'is-active':''}">${esc(pt('viewGrouped'))}</button>
+                <button type="button" data-view-mode="stage" class="${activeViewMode==='stage'?'is-active':''}">${esc(pt('viewStage'))}</button>
               </div>
-              <label class="sort-control"><span class="visually-hidden">정렬 기준</span><select id="sort"><option value="number" ${sort==='number'?'selected':''}>도감 번호순</option><option value="recommended" ${sort==='recommended'?'selected':''}>추천 공략순</option><option value="simple" ${sort==='simple'?'selected':''}>재료가 적은 순</option></select></label>
+              <label class="sort-control"><span class="visually-hidden">Sort</span><select id="sort"><option value="number" ${sort==='number'?'selected':''}>${esc(pt('sortNumber'))}</option><option value="recommended" ${sort==='recommended'?'selected':''}>${esc(pt('sortRecommended'))}</option><option value="simple" ${sort==='simple'?'selected':''}>${esc(pt('sortSimple'))}</option></select></label>
             </div>
           ` : ''}
         </div>
@@ -1201,7 +1394,7 @@
       const ok=persist();render();
       b.classList.toggle('is-saved',!saved);b.setAttribute('aria-pressed',String(!saved));
       if(root.id==='recipe-detail' && key.startsWith('r:'))b.classList.toggle('is-saved',!saved);
-      if (ok) toast(saved ? '저장 취소' : '저장 완료');
+      if (ok) toast(saved ? pt('unsavedToast') : pt('savedToast'));
     });
     $$('[data-share-post]',root).forEach(b => b.onclick = () => sharePost(b.dataset.sharePost));
   }
