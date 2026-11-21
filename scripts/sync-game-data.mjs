@@ -32,6 +32,7 @@ for (const file of ['src/js/core/ProgressionEngine.js', 'src/js/core/RecipeBook.
 const book = new context.window.KSool.RecipeBook();
 book.load(bundle);
 bundle.recipes = book.getAllRecipes();
+bundle.free_starter_ids = book.progression?.freeStarterLeafIds || [202, 206, 205, 701, 301];
 
 await writeFile(resolve(target, 'assets/game-data.js'), `window.GAME_DATA = ${JSON.stringify(bundle)};`, 'utf8');
 await writeFile(

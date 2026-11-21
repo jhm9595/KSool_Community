@@ -2310,6 +2310,14 @@ const SPRITE_DATA_HD = {
       }
 
       const key = this.resolveKey(item);
+      const getAriaLabel = (sprite) => {
+        const base = sprite.name || key || '';
+        const i18n = window.KSool?.i18n;
+        const localized = (item && typeof item === 'object' && i18n?.resolveEntityName)
+          ? i18n.resolveEntityName(item, base)
+          : base;
+        return String(localized).replace(/"/g, '&quot;');
+      };
 
       // 2. [도트형태 모드] - 16x16 순수 레트로 클래식 도트
       if (activeTheme === 'dot') {
@@ -2317,7 +2325,7 @@ const SPRITE_DATA_HD = {
           const sprite = SPRITE_DATA_DOT[key];
           return '<svg class="k-pixel-icon k-theme-dot' + cls + '" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" ' +
                  'style="shape-rendering:crispEdges;image-rendering:pixelated;vertical-align:middle;flex-shrink:0' + extraStyle + '" ' +
-                 'aria-label="' + (sprite.name || key) + '">' +
+                 'aria-label="' + getAriaLabel(sprite) + '">' +
                  sprite.innerSvg +
                  '</svg>';
         }
@@ -2331,7 +2339,7 @@ const SPRITE_DATA_HD = {
           const isHdClass = (key && SPRITE_DATA_HD[key]) ? ' k-theme-hd' : ' k-theme-dot-fallback';
           return '<svg class="k-pixel-icon' + isHdClass + cls + '" viewBox="' + vb + '" width="' + size + '" height="' + size + '" ' +
                  'style="shape-rendering:crispEdges;image-rendering:pixelated;vertical-align:middle;flex-shrink:0' + extraStyle + '" ' +
-                 'aria-label="' + (sprite.name || key) + '">' +
+                 'aria-label="' + getAriaLabel(sprite) + '">' +
                  sprite.innerSvg +
                  '</svg>';
         }

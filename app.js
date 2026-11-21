@@ -220,7 +220,14 @@
     const isTycoon = syncedProgress.mode === 'tycoon';
     const dict = PORTAL_UI[portalLang] || PORTAL_UI.en;
     const map = isTycoon ? dict.stagesTycoon : dict.stagesQuiz;
-    return (map && map[step]) || `Stage ${step}`;
+    const raw = (map && map[step]) || `Stage ${step}`;
+    if (isTycoon) return raw;
+    const base = raw.replace(/\s*\(No\.[^)]+\)/, '');
+    const nums = data.recipes.filter(r => (Number(r.step_id) || 1) === step).map(r => Number(r.recipe_number)).filter(n => n > 0);
+    if (!nums.length) return base;
+    const min = String(Math.min(...nums)).padStart(2, '0');
+    const max = String(Math.max(...nums)).padStart(2, '0');
+    return `${base} (No.${min}~${max})`;
   };
   const name = i => {
     const koFallback = i?.display_name || i?.name || 'Unknown';
@@ -249,7 +256,7 @@
   const bookmarks = new Set(Array.isArray(stored.bookmarks) ? stored.bookmarks.filter(i => typeof i === 'string') : []);
   const helpful = new Set(Array.isArray(stored.helpful) ? stored.helpful.filter(i => typeof i === 'string') : []);
   const progressStorageKey = 'ksool-community-progress-v1';
-  const FREE_STARTER_INGREDIENTS = [202, 206, 205, 701, 301]; // 물, 눈, 공기, 설탕, 레몬
+  const FREE_STARTER_INGREDIENTS = Array.isArray(data.free_starter_ids) && data.free_starter_ids.length ? data.free_starter_ids : [202, 206, 205, 701, 301];
   const normalizeRecIds = (arr) => (Array.isArray(arr) ? [...new Set(arr.map(v => Number(String(v).replace(/^rec:/, ''))).filter(n => byId.has(n)))] : []);
   const normalizeIngIds = (arr) => (Array.isArray(arr) ? arr.map(v => Number(String(v).replace(/^ing:/, ''))).filter(n => Number.isInteger(n) && n > 0) : []);
   function decodeSyncInput(rawInput) {
