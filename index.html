@@ -58,8 +58,10 @@
           <option value="zh-CN">简体中文</option>
           <option value="zh-TW">繁體中文</option>
         </select>
-        <button type="button" id="header-auth-btn" class="auth-pill" aria-label="Google 계정 연동">G 연동</button>
-        <button type="button" id="header-logout-btn" class="auth-pill auth-logout" hidden>로그아웃</button>
+        <div class="auth-group" id="header-auth-group">
+          <button type="button" id="header-auth-btn" class="auth-pill" aria-label="Google 계정 연동">G 연동</button>
+          <button type="button" id="header-logout-btn" class="auth-logout-btn" title="로그아웃" aria-label="로그아웃" hidden>✕</button>
+        </div>
         <button class="game-link" id="toggle-game-dock" aria-controls="game-dock" aria-expanded="false"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg><span id="game-dock-btn-label">K-술</span></button>
       </div>
     </div>

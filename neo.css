@@ -70,7 +70,7 @@ dialog{border:3px solid var(--ink);border-radius:0;background:#fffdf5;box-shadow
 /* The embedded game is remote; the original game project is never written. */
 body{--game-dock-width:400px}
 .game-link{cursor:pointer;display:flex;align-items:center;gap:8px}
-.game-link[aria-expanded=true]{background:#c6f35c;color:#191919;box-shadow:3px 3px 0 #191919}
+.game-link[aria-expanded=true]{background:#191919;color:#ff784f;box-shadow:3px 3px 0 #ff784f}
 .game-dock[hidden]{display:none}
 .game-dock{position:fixed;z-index:5;right:17px;top:83px;bottom:16px;width:var(--game-dock-width);display:flex;flex-direction:column;min-height:0;border:2px solid #191919;background:#191919;box-shadow:5px 5px 0 #191919}
 .game-dock-toolbar{display:flex;align-items:center;gap:8px;background:#c6f35c;border-bottom:2px solid #191919;padding:3px 8px;min-height:39px;flex-shrink:0}
@@ -93,11 +93,12 @@ body{--game-dock-width:400px}
 /* Neo-brutalist portal enhancements */
 .header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .lang-select{padding:5px 8px;border:2px solid var(--ink);background:#fffdf5;font-weight:800;font-size:11px;cursor:pointer;min-height:34px;box-shadow:2px 2px 0 var(--ink)}
-.auth-pill{padding:5px 10px;border:2px solid var(--ink);background:#bae6fd;color:var(--ink);font-weight:850;font-size:11px;cursor:pointer;min-height:34px;box-shadow:2px 2px 0 var(--ink);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.auth-pill.is-signed-in{background:var(--green)}
-.auth-pill.auth-logout{background:#fffdf5;color:var(--ink)}
-.auth-pill.auth-logout:hover{background:#ffb6a0}
-.auth-pill:hover{background:var(--neo-yellow)}
+.auth-group{display:inline-flex;align-items:stretch;border:2px solid var(--ink);background:#bae6fd;box-shadow:2px 2px 0 var(--ink);min-height:34px}
+.auth-group.is-signed-in{background:var(--green)}
+.auth-pill{padding:5px 10px;border:0;background:transparent;color:var(--ink);font-weight:850;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.auth-pill:hover{background:rgba(255,255,255,.35)}
+.auth-logout-btn{padding:0 9px;border:0;border-left:2px solid var(--ink);background:transparent;color:var(--ink);font-weight:900;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.auth-logout-btn:hover{background:#ffb6a0}
 .nav-blog-link{text-decoration:none;color:var(--ink);font-size:12px;font-weight:800;padding:7px 11px;border:2px solid transparent;display:inline-flex;align-items:center;gap:4px;min-height:35px;white-space:nowrap;flex-shrink:0}
 .nav-blog-link:hover{background:var(--neo-yellow);border-color:var(--ink)}
 

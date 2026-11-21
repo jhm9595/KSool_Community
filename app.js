@@ -702,7 +702,10 @@
     const gameBtnLabel = $('#game-dock-btn-label');
     if (gameBtnLabel) gameBtnLabel.textContent = pt('gameBtn');
     const logoutBtn = $('#header-logout-btn');
-    if (logoutBtn) logoutBtn.textContent = pt('logout');
+    if (logoutBtn) {
+      logoutBtn.title = pt('logout');
+      logoutBtn.setAttribute('aria-label', pt('logout'));
+    }
     $$('[data-nav]').forEach(b => {
       const k = b.dataset.nav;
       if (k !== 'saved' && PORTAL_UI[portalLang]?.[k]) b.textContent = pt(k);
@@ -1036,18 +1039,22 @@
     });
   }
   function renderHeaderAuthButton() {
+    const group = $('#header-auth-group');
     const btn = $('#header-auth-btn');
     const logoutBtn = $('#header-logout-btn');
     if (!btn) return;
-    if (!sbClient) { btn.hidden = true; if (logoutBtn) logoutBtn.hidden = true; return; }
+    if (!sbClient) { if (group) group.hidden = true; btn.hidden = true; if (logoutBtn) logoutBtn.hidden = true; return; }
+    if (group) group.hidden = false;
     btn.hidden = false;
     if (sbUser) {
+      if (group) group.classList.add('is-signed-in');
       btn.classList.add('is-signed-in');
       btn.textContent = `☁️ ${(sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] || 'Google').slice(0, 10)}`;
       btn.onclick = () => { syncFromSupabaseUser(); toast(pt('resynced')); };
       if (logoutBtn) {
         logoutBtn.hidden = false;
-        logoutBtn.textContent = pt('logout');
+        logoutBtn.title = pt('logout');
+        logoutBtn.setAttribute('aria-label', pt('logout'));
         logoutBtn.onclick = async () => {
           logoutBtn.disabled = true;
           try {
@@ -1073,6 +1080,7 @@
         };
       }
     } else {
+      if (group) group.classList.remove('is-signed-in');
       btn.classList.remove('is-signed-in');
       btn.textContent = pt('googleSync');
       if (logoutBtn) logoutBtn.hidden = true;
