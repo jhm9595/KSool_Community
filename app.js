@@ -653,13 +653,22 @@
     }
     return result;
   }
+  function cardColorForCategory(cat) {
+    const c = String(cat || '');
+    if (c === '기초합성') return '#efeadd';
+    if (c.includes('편의점')) return '#e2f3e7';
+    if (c.includes('소맥') || c.includes('폭탄')) return '#fde7dc';
+    if (c.includes('막걸리')) return '#e3effb';
+    if (c.includes('특산') || c.includes('명주')) return '#ede8fa';
+    return '#efeadd';
+  }
   function recipeCard(r,index) {
     const saved = bookmarks.has(`r:${r.recipe_id}`);
     const modeName = syncedProgress.mode === 'tycoon' ? pt('modeTycoon') : pt('modeQuiz');
     if (!isRecipeUnlocked(r.recipe_id)) {
       return `<article class="recipe-card is-locked" style="--card-color:#ece8dc;"><div class="compact-card-head"><span class="compact-recipe-icon" style="display:grid;place-items:center;width:28px;height:28px;border:1.5px solid var(--ink);background:#fffdf5;font-size:14px;">🔒</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula" style="justify-content:center; padding:8px; color:var(--muted); font-size:11px; font-weight:750; text-align:center;">${esc(pt('lockedModeHint').replace('{mode}', modeName))}</div><div class="compact-card-footer"><span class="compact-category">${esc(catLabel(r.category))}</span></div></article>`;
     }
-    return `<article class="recipe-card" data-recipe="${r.recipe_id}" style="--card-color:${colors[index%colors.length]};cursor:pointer;"><div class="compact-card-head"><span class="compact-recipe-icon">${icon(r,40)}</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula">${r.items.map((i,n)=>`<span class="formula-item">${r.requires_order?`<span class="ingredient-order">${n+1}</span>`:''}<span class="formula-image">${icon(ingredientFor(i),30)}<b>×${i.ratio}</b></span><span class="ingredient-name">${esc(name(ingredientFor(i)))}</span></span>`).join('<span class="formula-plus">+</span>')}</div><div class="compact-card-footer"><span class="compact-category">${esc(catLabel(r.category))}</span>${r.requires_order?`<span class="order-badge">${esc(pt('orderBadge'))}</span>`:''}<button data-share-recipe="${r.recipe_id}" aria-label="${esc(name(r))}">${uiIcon('share',15)}</button></div></article>`;
+    return `<article class="recipe-card" data-recipe="${r.recipe_id}" style="--card-color:${cardColorForCategory(r.category)};cursor:pointer;"><div class="compact-card-head"><span class="compact-recipe-icon">${icon(r,40)}</span><div class="compact-card-title"><span class="card-number">${esc(r.formatted_number)}</span><h3>${esc(name(r))}</h3></div><button class="bookmark ${saved?'is-saved':''}" data-bookmark="r:${r.recipe_id}" aria-label="${esc(name(r))}" aria-pressed="${saved}">${uiIcon('bookmark',16)}</button></div><div class="inline-formula">${r.items.map((i,n)=>`<span class="formula-item">${r.requires_order?`<span class="ingredient-order">${n+1}</span>`:''}<span class="formula-image">${icon(ingredientFor(i),30)}<b>×${i.ratio}</b></span><span class="ingredient-name">${esc(name(ingredientFor(i)))}</span></span>`).join('<span class="formula-plus">+</span>')}</div><div class="compact-card-footer"><span class="compact-category">${esc(catLabel(r.category))}</span>${r.requires_order?`<span class="order-badge">${esc(pt('orderBadge'))}</span>`:''}<button data-share-recipe="${r.recipe_id}" aria-label="${esc(name(r))}">${uiIcon('share',15)}</button></div></article>`;
   }
   function voteControls(p){
     const target=p.suggestion_key?`s:${p.suggestion_key}`:`p:${p.id}`;
