@@ -719,6 +719,8 @@
     });
     const blogLink = $('.nav-blog-link');
     if (blogLink) blogLink.textContent = pt('blog');
+    const bannerEl = $('.compact-banner');
+    if (bannerEl) bannerEl.hidden = activeTab !== 'recipes';
     const h1 = $('.compact-banner h1');
     if (h1) h1.textContent = pt('heroTitle');
     const toolbarEl = $('.compact-toolbar');
