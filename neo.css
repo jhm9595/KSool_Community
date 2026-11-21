@@ -15,7 +15,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .header nav button span{color:var(--ink);background:none;padding:0;border-radius:0;font-weight:700;font-size:10px}
 .game-link{background:var(--coral);border:2px solid var(--ink);color:var(--ink);font-weight:850;min-height:36px;gap:8px;padding:5px 12px;font-size:11px;box-shadow:2px 2px 0 var(--ink)}
 .page{max-width:1120px;margin:0 auto;padding:15px 20px 0}
-.compact-banner{display:flex;align-items:center;gap:25px;border:2px solid var(--ink);background:var(--neo-yellow);padding:15px 22px;min-height:93px;box-shadow:4px 4px 0 var(--ink);position:relative;overflow:hidden}
+.compact-banner{display:flex;align-items:center;gap:25px;border:2px solid var(--ink);background:#e0f2fe;padding:15px 22px;min-height:93px;box-shadow:4px 4px 0 var(--ink);position:relative;overflow:hidden}
 .compact-banner>div:first-child{display:flex;align-items:center;gap:22px}.banner-kicker{font-size:9px;letter-spacing:1.2px;font-weight:850;max-width:75px;line-height:1.6}
 .compact-banner h1{font-size:35px;line-height:1;letter-spacing:-2px;font-weight:950}
 .banner-icons{margin-left:auto;display:flex;align-items:center;gap:18px;transform:rotate(-3deg)}.banner-icons>span{background:#fffdf5;border:2px solid var(--ink);width:52px;height:52px;display:grid;place-items:center;box-shadow:3px 3px 0 var(--ink)}.banner-icons>span:last-child{background:#c6f35c}.banner-icons b{font-size:21px;font-weight:900}
@@ -96,7 +96,7 @@ body{--game-dock-width:400px}
 .auth-pill.auth-logout{background:#fffdf5;color:var(--ink)}
 .auth-pill.auth-logout:hover{background:#ffb6a0}
 .auth-pill:hover{background:var(--neo-yellow)}
-.nav-blog-link{text-decoration:none;color:var(--ink);font-size:12px;font-weight:800;padding:7px 11px;border:2px solid transparent;display:inline-flex;align-items:center;gap:4px;min-height:35px}
+.nav-blog-link{text-decoration:none;color:var(--ink);font-size:12px;font-weight:800;padding:7px 11px;border:2px solid transparent;display:inline-flex;align-items:center;gap:4px;min-height:35px;white-space:nowrap;flex-shrink:0}
 .nav-blog-link:hover{background:var(--neo-yellow);border-color:var(--ink)}
 
 .progress-sync-bar{margin:0 0 14px;padding:0;border:0;background:transparent}
@@ -140,7 +140,7 @@ body{--game-dock-width:400px}
 .stage-accordion{border:1.5px solid var(--ink);background:#fffdf5}
 .stage-accordion summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:#faf7ed;font-weight:850;font-size:13px}
 .stage-accordion summary::-webkit-details-marker{display:none}
-.stage-accordion[open] summary{border-bottom:1.5px solid var(--ink);background:var(--neo-yellow)}
+.stage-accordion[open] summary{border-bottom:1.5px solid var(--ink);background:#e9e4f8}
 .stage-code{font-family:ui-monospace,'Consolas',monospace;font-size:10px;font-weight:900;padding:2px 6px;background:var(--ink);color:#fff}
 .stage-title{flex:1;min-width:130px}
 .stage-progress{font-family:ui-monospace,'Consolas',monospace;font-size:11px;font-weight:800}
