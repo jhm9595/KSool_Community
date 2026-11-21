@@ -380,6 +380,12 @@
     syncedProgress.quiz = normalizeRecIds(row.quiz_state?.unlockedRecipeIds ?? row.quiz_unlocked);
     syncedProgress.tycoonIngredients = normalizeIngIds([...(row.tycoon_state?.unlockedIngredientIds || []), ...(row.tycoon_state?.purchasedIngredientIds || [])]);
     syncedProgress.quizIngredients = normalizeIngIds([...(row.quiz_state?.unlockedIngredientIds || []), ...(row.quiz_state?.purchasedIngredientIds || [])]);
+    syncedProgress.tycoonImages = normalizeRecIds(row.tycoon_state?.unlockedImageRecipeIds);
+    syncedProgress.quizImages = normalizeRecIds(row.quiz_state?.unlockedImageRecipeIds);
+    syncedProgress.tycoonDescs = normalizeRecIds(row.tycoon_state?.unlockedDescRecipeIds);
+    syncedProgress.quizDescs = normalizeRecIds(row.quiz_state?.unlockedDescRecipeIds);
+    syncedProgress.tycoonHints = (row.tycoon_state?.hintProgressByRecipe && typeof row.tycoon_state.hintProgressByRecipe === 'object') ? row.tycoon_state.hintProgressByRecipe : {};
+    syncedProgress.quizHints = (row.quiz_state?.hintProgressByRecipe && typeof row.quiz_state.hintProgressByRecipe === 'object') ? row.quiz_state.hintProgressByRecipe : {};
     saveSyncedProgress();
   }
 
@@ -480,6 +486,23 @@
   const isRecipeUnlocked = (recipeId) => {
     const list = syncedProgress.mode === 'tycoon' ? syncedProgress.tycoon : syncedProgress.quiz;
     return list.includes(Number(recipeId));
+  };
+  const isImageUnlocked = (recipeId) => {
+    if (isRecipeUnlocked(recipeId)) return true;
+    const list = syncedProgress.mode === 'tycoon' ? syncedProgress.tycoonImages : syncedProgress.quizImages;
+    return Array.isArray(list) && list.includes(Number(recipeId));
+  };
+  const isDescUnlocked = (recipeId) => {
+    if (isRecipeUnlocked(recipeId)) return true;
+    const list = syncedProgress.mode === 'tycoon' ? syncedProgress.tycoonDescs : syncedProgress.quizDescs;
+    return Array.isArray(list) && list.includes(Number(recipeId));
+  };
+  const getBaseballHintStage = (recipeId) => {
+    if (isRecipeUnlocked(recipeId)) return 3;
+    const map = syncedProgress.mode === 'tycoon' ? syncedProgress.tycoonHints : syncedProgress.quizHints;
+    const st = map && map[String(Number(recipeId))];
+    const arr = Array.isArray(st?.stageCleared) ? st.stageCleared : [];
+    return arr.filter(Boolean).length;
   };
   const isItemsUnlocked = (items, availableSet = getAvailableIngredients()) => {
     return Array.isArray(items) && items.every(it => availableSet.has(Number(it.ingredient_id)));
@@ -1181,7 +1204,15 @@
     }
   }
   function lockedCompactRow(r) {
-    return `<div class="locked-compact-row"><span class="locked-compact-num">${esc(r.formatted_number)}</span><span class="locked-compact-name">🔒 ${esc(name(r))}</span></div>`;
+    const imgOk = isImageUnlocked(r.recipe_id);
+    const descOk = isDescUnlocked(r.recipe_id);
+    const bb = getBaseballHintStage(r.recipe_id);
+    const badges = [
+      imgOk ? '🖼️' : '',
+      descOk ? '📝' : '',
+      bb > 0 ? `⚾${bb}/3` : ''
+    ].filter(Boolean).join(' ');
+    return `<button type="button" class="locked-compact-row" data-recipe="${r.recipe_id}" style="cursor:pointer;text-align:left;width:100%;"><span class="locked-compact-num">${esc(r.formatted_number)}</span><span class="locked-compact-name">${imgOk ? icon(r, 18) : '🔒'} ${esc(name(r))}</span>${badges ? `<small style="margin-left:auto;font-size:10px;font-weight:800;color:var(--ink);">${badges}</small>` : ''}</button>`;
   }
   function renderGroupedRecipes(matches) {
     const unlocked = matches.filter(r => isRecipeUnlocked(r.recipe_id));
@@ -1464,17 +1495,29 @@
     const storyMap = gameLinks.stories?.[`rec:${id}`] || {};
     const storyUrl = safeHttpsUrl(storyMap[portalLang] || storyMap.en || storyMap.ko || '');
     const storyHtml = storyUrl
-      ? `<a class="button coral" href="${esc(storyUrl)}" target="_blank" rel="noopener noreferrer" style="width:100%; justify-content:center; margin-top:8px; text-decoration:none;">${esc(pt('storyBtn'))} ↗</a>`
+      ? `<a class="button sky" href="${esc(storyUrl)}" target="_blank" rel="noopener noreferrer" style="width:100%; justify-content:center; margin-top:10px; text-decoration:none;">${esc(pt('storyBtn'))} ↗</a>`
       : '';
     if (!isRecipeUnlocked(id)) {
-      const modeName = syncedProgress.mode === 'tycoon' ? '타이쿤' : '퀴즈';
-      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:70px;height:70px;background:#e4e4e7;font-size:2rem;">🔒</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="neo-panel" style="background:#fff9d6; margin:12px 0; font-size:12px; line-height:1.6;"><b>🔒 미해금 레시피입니다.</b><br>현재 선택한 <b>${modeName}</b> 모드에서 아직 해금하지 않아 재료·비율이 비공개 처리되었습니다.<br>오른쪽(또는 상단) <b>play.ksool.minibig.pw</b> 게임에서 조합에 성공한 뒤 Google 계정을 연동하면 자동으로 공개됩니다!</div>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 게임하러 가기 ${uiIcon('arrowUpRight',16)}</a><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">관련 커뮤니티 팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
+      const modeName = syncedProgress.mode === 'tycoon' ? pt('modeTycoon') : pt('modeQuiz');
+      const imgOk = isImageUnlocked(id);
+      const descOk = isDescUnlocked(id);
+      const bbStage = getBaseballHintStage(id);
+      const partialHints = [
+        imgOk ? '🖼️ 그림 해금' : '',
+        descOk ? '📝 설명 해금' : '',
+        bbStage > 0 ? `⚾ 야구 힌트 ${bbStage}/3` : ''
+      ].filter(Boolean);
+      const partialFormulaHtml = bbStage >= 2
+        ? `<div class="detail-formula">${r.items.map((i, idx) => `<span class="detail-ingredient">${r.requires_order ? `<span class="detail-step">${idx + 1}</span>` : ''}${icon(ingredientFor(i), 26)}<span class="detail-ing-name">${esc(name(ingredientFor(i)))}</span>${bbStage >= 3 ? `<b class="detail-ratio">×${i.ratio}</b>` : `<b class="detail-ratio">?</b>`}</span>`).join('<span class="detail-plus">＋</span>')}</div>`
+        : (bbStage === 1 ? `<p class="detail-note" style="margin:6px 0;">⚾ 1단계 힌트: 총 <b>${r.items.length}종류</b>의 재료가 들어갑니다.</p>` : '');
+      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:72px;height:72px;background:${imgOk ? cardColorForCategory(r.category) : '#e4e4e7'};font-size:2rem;">${imgOk ? icon(r, 56) : '🔒'}</div><div><small>${esc(r.formatted_number)} · ${esc(catLabel(r.category))}</small><h2>${esc(name(r))}</h2>${partialHints.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${partialHints.map(h => `<span style="font-size:10px;font-weight:850;padding:2px 6px;border:1.5px solid var(--ink);background:var(--green);">${h}</span>`).join('')}</div>` : ''}</div></div>${descOk ? `<div class="neo-panel" style="background:#fef3c7;margin:10px 0;padding:10px 12px;font-size:12px;line-height:1.6;"><b>📝 해금된 설명 힌트</b><br>${esc(r.unlock_hint || r.description)}</div>` : ''}${partialFormulaHtml}<div class="neo-panel" style="background:#f3f0e7; margin:10px 0; padding:10px 12px; font-size:12px; line-height:1.6;"><b>🔒 ${bbStage >= 3 ? '게임에서 직접 조합하면 도감이 완성됩니다!' : '미해금 레시피입니다.'}</b><br>${esc(modeName)} 모드에서 조합에 성공하거나 힌트를 더 열면 이 화면에 반영됩니다.</div>${storyHtml}<div class="detail-actions"><a class="button purple" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 K-술 플레이 ${uiIcon('arrowUpRight',16)}</a><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">관련 커뮤니티 팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
       bindCardActions($('#recipe-detail'));
       $('#write-related').onclick=()=>openCompose(id);
       openDialog($('#recipe-dialog'));
       return;
     }
-    $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon">${icon(r,70)}</div><div><small>${esc(r.formatted_number)} · ${esc(r.category)}</small><h2>${esc(name(r))}</h2></div></div><div class="detail-formula">${r.items.map((i,index)=>`<span class="detail-ingredient">${r.requires_order?`${index+1}. `:''}${icon(ingredientFor(i),30)} ${esc(name(ingredientFor(i)))} <b>×${i.ratio}</b></span>`).join('<span>＋</span>')}</div>${r.requires_order?'<p class="detail-note">표시된 순서대로.</p>':''}<details class="hint-details"><summary>힌트</summary><p>${esc(r.unlock_hint || r.description)}</p></details>${storyHtml}<div class="detail-actions"><a class="button dark" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">K-술 플레이 ${uiIcon('arrowUpRight',16)}</a><button data-bookmark="r:${id}" aria-label="공략 저장" aria-pressed="${bookmarks.has(`r:${id}`)}">${uiIcon('bookmark',18)}</button><button id="share-recipe" aria-label="공략 링크 공유">${uiIcon('share',18)}</button><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
+    const detailDesc = r.description && r.description !== r.unlock_hint ? `<p class="detail-description">${esc(r.description)}</p>` : '';
+    $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="background:${cardColorForCategory(r.category)};">${icon(r,64)}</div><div><small>${esc(r.formatted_number)} · ${esc(catLabel(r.category))}</small><h2>${esc(name(r))}</h2></div></div>${detailDesc}<div class="detail-formula">${r.items.map((i,index)=>`<span class="detail-ingredient">${r.requires_order?`<span class="detail-step">${index+1}</span>`:''}${icon(ingredientFor(i),28)}<span class="detail-ing-name">${esc(name(ingredientFor(i)))}</span><b class="detail-ratio">×${i.ratio}</b></span>`).join('<span class="detail-plus">＋</span>')}</div>${r.requires_order?`<p class="detail-note">${esc(pt('orderBadge'))}</p>`:''}${storyHtml}<div class="detail-actions"><a class="button purple" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 K-술 플레이 ${uiIcon('arrowUpRight',16)}</a><button data-bookmark="r:${id}" aria-label="공략 저장" aria-pressed="${bookmarks.has(`r:${id}`)}">${uiIcon('bookmark',18)}</button><button id="share-recipe" aria-label="공략 링크 공유">${uiIcon('share',18)}</button><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
     bindCardActions($('#recipe-detail'));
     $('#share-recipe').onclick=()=>shareLink(new URL(`#recipe=${id}`,location.href).href,`${name(r)} 조합 공략 · 조합소`);
     $('#write-related').onclick=()=>openCompose(id);
