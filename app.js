@@ -655,12 +655,12 @@
   }
   function cardColorForCategory(cat) {
     const c = String(cat || '');
-    if (c === '기초합성') return '#efeadd';
+    if (c === '기초합성') return '#fef3c7';
     if (c.includes('편의점')) return '#e2f3e7';
     if (c.includes('소맥') || c.includes('폭탄')) return '#fde7dc';
     if (c.includes('막걸리')) return '#e3effb';
     if (c.includes('특산') || c.includes('명주')) return '#ede8fa';
-    return '#efeadd';
+    return '#fef3c7';
   }
   function recipeCard(r,index) {
     const saved = bookmarks.has(`r:${r.recipe_id}`);
