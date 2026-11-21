@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -749,11 +749,11 @@
         'zh-TW': '新增8款便利商店與咖啡特調 & 攻略站全面升級（共98種）'
       },
       body: {
-        ko: '에스프레소·블루레모네이드·아이스 카페라떼·바나나우유 커피라떼·바나나우유 커피주·블루 크림소다주·알갱이 젤리 소주·배유자 소주 등 8종 신규 레시피가 추가되어 총 98종 도감으로 확장되었습니다. 이온음료·커피 조합 트리를 정비했고, 공략 사이트에는 Google 진행도 동기화, 미해금 스테이지 스포일러 보호, 주점 타이쿤 글로벌 Top 100 랭킹, 전체 5개 국어 UI가 적용되었습니다.',
-        en: 'Added 8 new recipes (98 total): Espresso, Blue Pouch Lemonade, Iced Cafe Latte, Banana Milk Coffee Latte, Banana Milk Coffee Cocktail, Blue Cream Soda Soju, Peach Jelly Soju, and Pear Yuja Soju. Refined the ion-drink & coffee crafting trees, and upgraded the community portal with Google progress sync, stage spoiler protection, Global Top 100 Tycoon rankings, and full 5-language UI.',
-        ja: 'エスプレッソ、ブルーレモネード、アイスカフェラテなど新作8種を追加し全98種の図鑑に拡張しました。イオン飲料・コーヒー調合ツリーを整理し、攻略サイトにはGoogle進行度同期、未解放ステージのネタバレ保護、居酒屋タイクーン世界Top 100ランキング、5言語UIを実装しました。',
-        'zh-CN': '新增意式浓缩咖啡、蓝柠檬冰袋饮、冰拿铁等8款配方，图鉴扩展至98种。优化了离子饮品与咖啡调酒树，并为攻略站上线了 Google 进度同步、未解锁阶段防剧透、酒馆大亨全球 Top 100 排行榜及完整5语言界面。',
-        'zh-TW': '新增義式濃縮咖啡、藍檸檬冰袋飲、冰拿鐵等8款配方，圖鑑擴展至98種。最佳化了離子飲品與咖啡調酒樹，並為攻略站上線了 Google 進度同步、未解鎖階段防劇透、酒館大亨全球 Top 100 排行榜及完整5語言介面。'
+        ko: '• 신규 레시피 8종 추가 (총 98종 도감)\n  - 에스프레소 · 블루레모네이드 · 아이스 카페라떼 · 바나나우유 커피라떼 · 바나나우유 커피주 · 블루 크림소다주 · 알갱이 젤리 소주 · 배유자 소주\n• 조합 트리 & 도감 순서 정비\n  - 이온음료 2종(땀흘리스웨트 / 파워풀에이드) 및 에스프레소 기반 파생 조합 분리\n• 공략 사이트 개편\n  - Google 진행도 동기화 · 미해금 스테이지 스포일러 보호 · 타이쿤 글로벌 Top 100 랭킹 · 전체 5개 국어 UI 지원',
+        en: '• 8 New Recipes (98 Total)\n  - Espresso, Blue Pouch Lemonade, Iced Cafe Latte, Banana Milk Coffee Latte, Banana Milk Coffee Cocktail, Blue Cream Soda Soju, Peach Jelly Soju, Pear Yuja Soju\n• Crafting Tree Refinement\n  - Separated ion-drink & espresso crafting paths for clearer progression\n• Portal Upgrade\n  - Google progress sync, stage spoiler protection, Global Top 100 Tycoon rankings, and full 5-language UI',
+        ja: '• 新作レシピ8種追加（全98種）\n  - エスプレッソ、ブルーレモネード、アイスカフェラテ、バナナミルクコーヒー系など\n• 調合ツリー＆図鑑順序を整理\n  - イオン飲料2種およびエスプレッソ派生ルートを分離\n• 攻略サイト刷新\n  - Google進行度同期・未解放ステージのネタバレ保護・タイクーン世界Top 100・5言語UI対応',
+        'zh-CN': '• 新增8款配方（共98种）\n  - 意式浓缩咖啡、蓝柠檬冰袋饮、冰拿铁、香蕉牛奶咖啡等\n• 优化调酒树与图鉴顺序\n  - 区分两款离子饮品及意式浓缩衍生路线\n• 攻略站全面升级\n  - 上线 Google 进度同步、未解锁阶段防剧透、全球 Top 100 排行榜与5语言界面',
+        'zh-TW': '• 新增8款配方（共98種）\n  - 義式濃縮咖啡、藍檸檬冰袋飲、冰拿鐵、香蕉牛奶咖啡等\n• 最佳化調酒樹與圖鑑順序\n  - 區分兩款離子飲品及義式濃縮衍生路線\n• 攻略站全面升級\n  - 上線 Google 進度同步、未解鎖階段防劇透、全球 Top 100 排行榜與5語言介面'
       }
     },
     { version: 'v2.4', date: '2026-11-14', title: { ko: '글로벌 다국어 & 문화 가이드 확장', en: 'Global Languages & Korean Drinking Game Guides', ja: '多言語対応＆飲み会ゲーム文化ガイド追加', 'zh-CN': '多语言支持与韩国酒桌游戏文化指南', 'zh-TW': '多語言支援與韓國酒桌遊戲文化指南' }, body: { ko: '영어·일본어·중국어(간체/번체) 지원, 미니게임 우측 상단 문화/도구 설명(i), 레시피별 스토리·제휴 링크 구조가 추가되었습니다.', en: 'Added English, Japanese, Simplified & Traditional Chinese support, top-right info guides for all 10 party mini-games, and recipe story/video links.' } },
@@ -821,7 +821,7 @@
         ${UPDATE_LOGS.map(u => {
           const title = u.title[portalLang] || u.title.en || u.title.ko;
           const body = u.body[portalLang] || u.body.en || u.body.ko;
-          return `<article class="neo-panel"><div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><span style="background:var(--ink); color:#fff; padding:2px 8px; font-size:11px; font-weight:800;">${esc(u.version)}</span><small style="color:var(--muted);">${esc(u.date)}</small></div><h4 style="margin:0 0 6px; font-size:15px; font-weight:850;">${esc(title)}</h4><p style="margin:0; font-size:12px; line-height:1.6;">${esc(body)}</p></article>`;
+          return `<article class="neo-panel"><div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><span style="background:var(--ink); color:#fff; padding:2px 8px; font-size:11px; font-weight:800;">${esc(u.version)}</span><small style="color:var(--muted);">${esc(u.date)}</small></div><h4 style="margin:0 0 6px; font-size:15px; font-weight:850;">${esc(title)}</h4><p style="margin:0; font-size:12px; line-height:1.7; white-space:pre-wrap;">${esc(body)}</p></article>`;
         }).join('')}
       </div>
     `;
