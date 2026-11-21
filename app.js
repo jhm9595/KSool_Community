@@ -1091,23 +1091,25 @@
     const tycoonPct = Math.round((tycoonCount / total) * 100);
     return `
       <div id="progress-sync-bar" class="progress-sync-bar">
-        <div class="sync-cards-grid">
-          <button type="button" data-progress-mode="quiz" class="sync-stat-card ${isQuiz ? 'is-active' : ''}" aria-pressed="${isQuiz}">
-            <div class="sync-stat-head">
-              <span class="sync-stat-title">${esc(pt('quizDex'))}</span>
-              <span class="sync-stat-count"><b>${quizCount}</b>/${total} <em>(${quizPct}%)</em></span>
-            </div>
-            <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${quizPct}%"></span></span>
-          </button>
-          <button type="button" data-progress-mode="tycoon" class="sync-stat-card ${!isQuiz ? 'is-active' : ''}" aria-pressed="${!isQuiz}">
-            <div class="sync-stat-head">
-              <span class="sync-stat-title">${esc(pt('tycoonDex'))}</span>
-              <span class="sync-stat-count"><b>${tycoonCount}</b>/${total} <em>(${tycoonPct}%)</em></span>
-            </div>
-            <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${tycoonPct}%"></span></span>
-          </button>
+        <div class="sync-cards-row">
+          <div class="sync-cards-grid">
+            <button type="button" data-progress-mode="quiz" class="sync-stat-card ${isQuiz ? 'is-active' : ''}" aria-pressed="${isQuiz}">
+              <div class="sync-stat-head">
+                <span class="sync-stat-title">${esc(pt('quizDex'))}</span>
+                <span class="sync-stat-count"><b>${quizCount}</b>/${total} <em>(${quizPct}%)</em></span>
+              </div>
+              <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${quizPct}%"></span></span>
+            </button>
+            <button type="button" data-progress-mode="tycoon" class="sync-stat-card ${!isQuiz ? 'is-active' : ''}" aria-pressed="${!isQuiz}">
+              <div class="sync-stat-head">
+                <span class="sync-stat-title">${esc(pt('tycoonDex'))}</span>
+                <span class="sync-stat-count"><b>${tycoonCount}</b>/${total} <em>(${tycoonPct}%)</em></span>
+              </div>
+              <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${tycoonPct}%"></span></span>
+            </button>
+          </div>
+          ${!sbUser ? `<button type="button" id="toggle-manual-code-btn" class="sync-code-icon-btn ${showManualCodeInput ? 'is-open' : ''}" title="${esc(pt('codeInput'))}" aria-label="${esc(pt('codeInput'))}" aria-expanded="${showManualCodeInput}">${showManualCodeInput ? '✕' : '🔑'}</button>` : ''}
         </div>
-        ${!sbUser ? `<div class="sync-code-row"><button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${esc(showManualCodeInput ? pt('close') : pt('codeInput'))}</button></div>` : ''}
         ${(!sbUser && showManualCodeInput) ? `
           <div class="sync-manual-form">
             <input id="community-sync-input" type="text" placeholder="${esc(pt('codePlaceholder'))}">

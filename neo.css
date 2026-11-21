@@ -29,7 +29,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .recipes-filter-bar .filter-right-controls{padding-bottom:0}
 .recipes-filter-bar .view-mode-toggle{min-height:42px}
 .recipes-filter-bar .sort-control select{min-height:42px}
-.sync-code-row{display:flex;justify-content:flex-end;margin-top:6px}
+.sync-cards-row{display:flex;align-items:stretch;gap:10px}
+.sync-code-icon-btn{width:46px;flex-shrink:0;display:grid;place-items:center;border:2px solid var(--ink);background:#fffdf5;color:var(--ink);font-size:16px;font-weight:900;cursor:pointer;box-shadow:2px 2px 0 var(--ink);transition:background .12s ease}
+.sync-code-icon-btn:hover,.sync-code-icon-btn.is-open{background:#e0f2fe}
 .catalog-shell{margin-top:12px}
 .catalog-tabs-bar{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .category-filters{gap:4px;display:flex;flex-wrap:wrap;align-items:flex-end}
