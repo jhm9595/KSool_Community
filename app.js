@@ -810,12 +810,8 @@
     const customList = dbUpdates.map(u => `<article class="neo-panel"><div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><span style="background:var(--coral); color:var(--ink); border:1.5px solid var(--ink); padding:2px 8px; font-size:11px; font-weight:800;">${esc(u.version)}</span><small style="color:var(--muted);">${esc(u.date)}</small></div><h4 style="margin:0 0 6px; font-size:15px; font-weight:850;">${esc(u.title)}</h4><p style="margin:0; font-size:12px; line-height:1.6; white-space:pre-wrap;">${esc(u.body)}</p></article>`).join('');
     return `
       <div class="updates-board" style="grid-column:1/-1; display:flex; flex-direction:column; gap:14px;">
-        <div class="neo-panel" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-          <div>
-            <h3 style="margin:0 0 4px; font-size:16px; font-weight:900;">${esc(pt('updateTitle'))}</h3>
-            <p style="margin:0; font-size:12px; color:var(--muted);">K-Sool Official Blog &amp; Video Guides</p>
-          </div>
-          <a href="https://ksool.blogspot.com/" target="_blank" rel="noopener noreferrer" class="button coral" style="text-decoration:none;">📖 ksool.blogspot.com ↗</a>
+        <div class="neo-panel" style="padding:12px 16px;">
+          <h3 style="margin:0; font-size:16px; font-weight:900;">${esc(pt('updateTitle'))}</h3>
         </div>
         ${customList}
         ${UPDATE_LOGS.map(u => {
