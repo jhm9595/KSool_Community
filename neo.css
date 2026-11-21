@@ -13,7 +13,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .header nav button.nav-active{color:var(--ink);background:var(--neo-yellow);border-color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
 .header nav button.nav-active:after{display:none}
 .header nav button span{color:var(--ink);background:none;padding:0;border-radius:0;font-weight:700;font-size:10px}
-.game-link{background:var(--coral);border:2px solid var(--ink);color:var(--ink);font-weight:850;min-height:36px;gap:8px;padding:5px 12px;font-size:11px;box-shadow:2px 2px 0 var(--ink)}
+.game-link{background:var(--coral);border:2px solid var(--ink);color:var(--ink);font-weight:850;height:36px;min-height:36px;box-sizing:border-box;gap:8px;padding:0 12px;font-size:11px;box-shadow:2px 2px 0 var(--ink)}
 .page{max-width:1120px;margin:0 auto;padding:15px 20px 0}
 .compact-banner{display:flex;align-items:center;gap:25px;border:2px solid var(--ink);background:#e0f2fe;padding:15px 22px;min-height:93px;box-shadow:4px 4px 0 var(--ink);position:relative;overflow:hidden}
 .compact-banner>div:first-child{display:flex;align-items:center;gap:22px}.banner-kicker{font-size:9px;letter-spacing:1.2px;font-weight:850;max-width:75px;line-height:1.6}
@@ -93,11 +93,13 @@ body{--game-dock-width:400px}
 /* Neo-brutalist portal enhancements */
 .header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .lang-select{padding:5px 8px;border:2px solid var(--ink);background:#fffdf5;font-weight:800;font-size:11px;cursor:pointer;min-height:34px;box-shadow:2px 2px 0 var(--ink)}
-.auth-group{display:inline-flex;align-items:stretch;border:2px solid var(--ink);background:#bae6fd;box-shadow:2px 2px 0 var(--ink);min-height:34px}
+.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.header-actions .lang-select{height:36px;min-height:36px;box-sizing:border-box}
+.auth-group{display:inline-flex;align-items:stretch;border:2px solid var(--ink);background:#bae6fd;box-shadow:2px 2px 0 var(--ink);height:36px;min-height:36px;box-sizing:border-box}
 .auth-group.is-signed-in{background:var(--green)}
-.auth-pill{padding:5px 10px;border:0;background:transparent;color:var(--ink);font-weight:850;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.auth-pill{padding:0 10px;border:0;background:transparent;color:var(--ink);font-weight:850;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;min-height:0;height:100%}
 .auth-pill:hover{background:rgba(255,255,255,.35)}
-.auth-logout-btn{padding:0 9px;border:0;border-left:2px solid var(--ink);background:transparent;color:var(--ink);font-weight:900;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.auth-logout-btn{padding:0 9px;border:0;border-left:2px solid var(--ink);background:transparent;color:var(--ink);font-weight:900;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-height:0;height:100%}
 .auth-logout-btn:hover{background:#ffb6a0}
 .nav-blog-link{text-decoration:none;color:var(--ink);font-size:12px;font-weight:800;padding:7px 11px;border:2px solid transparent;display:inline-flex;align-items:center;gap:4px;min-height:35px;white-space:nowrap;flex-shrink:0}
 .nav-blog-link:hover{background:var(--neo-yellow);border-color:var(--ink)}
