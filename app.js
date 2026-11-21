@@ -687,7 +687,7 @@
   }
   function boardMarkup(rows) {
     if (!rows.length) return '';
-    return `<div class="community-board"><div class="board-head"><span>${esc(pt('colKind'))}</span><span>${esc(pt('colTitle'))}</span><span>${esc(pt('colAuthor'))}</span><span>${esc(pt('colVotes'))}</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${esc(p.kind === 'experiment' ? pt('kindExp') : pt('kindTip'))}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ` · ${esc(pt('exampleTag'))}` : ''}</small></button><span class="board-author">${esc(p.author)}</span>${p.example ? `<span class="board-votes">-</span>` : `<button type="button" class="board-votes ${(p.upvotes || 0) > 0 ? 'has-votes' : ''}" data-vote-target="p:${esc(p.id)}" data-vote-type="UP" aria-label="${esc(pt('colVotes'))}" aria-pressed="${p.myVote === 'UP'}" style="cursor:pointer;">👍 <span>${p.upvotes || 0}</span></button>`}</article>`).join('')}</div>`;
+    return `<div class="community-board"><div class="board-head"><span>${esc(pt('colKind'))}</span><span>${esc(pt('colTitle'))}</span><span>${esc(pt('colAuthor'))}</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${esc(p.kind === 'experiment' ? pt('kindExp') : pt('kindTip'))}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ` · ${esc(pt('exampleTag'))}` : ''}</small></button><span class="board-author">${esc(p.author)}</span></article>`).join('')}</div>`;
   }
   function postCard(p) {
     const avail = getAvailableIngredients();
