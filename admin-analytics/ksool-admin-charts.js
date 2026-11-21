@@ -1,0 +1,432 @@
+const DEFAULT_ENDPOINT = 'https://jyjxvwxlwkoedxwkkysj.supabase.co/functions/v1/ga-report';
+
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const DONUT_COLORS = ['#ffdc59', '#ff784f', '#c6f35c', '#93c5fd', '#c4b5f7', '#fda4af'];
+
+class KSoolAdminCharts extends HTMLElement {
+  static get observedAttributes() {
+    return ['endpoint', 'token'];
+  }
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this.range = '28d';
+    this.hostScope = 'all';
+    this.loading = false;
+    this.setupError = null;
+    this.errorMsg = null;
+    this.updatedAt = null;
+    this.reports = {};
+    this._loadedKey = '';
+  }
+
+  connectedCallback() {
+    this.render();
+    this.loadAll(false);
+  }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    if (oldVal === newVal) return;
+    if (name === 'token' && newVal && this.isConnected) {
+      this.loadAll(false);
+    }
+  }
+
+  getEndpoint() {
+    return this.getAttribute('endpoint') || DEFAULT_ENDPOINT;
+  }
+
+  getToken() {
+    return this.getAttribute('token') || this.dataset.token || '';
+  }
+
+  async fetchReport(report, forceRefresh = false) {
+    const token = this.getToken();
+    if (!token) throw new Error('AUTH_TOKEN_MISSING');
+    const res = await fetch(this.getEndpoint(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        report,
+        range: this.range,
+        hostScope: this.hostScope,
+        forceRefresh,
+      }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json.ok === false) {
+      const err = new Error(json.message || json.error || `HTTP ${res.status}`);
+      err.code = json.error || `HTTP_${res.status}`;
+      throw err;
+    }
+    if (json.updatedAt) this.updatedAt = json.updatedAt;
+    return json.data;
+  }
+
+  async loadAll(forceRefresh = false) {
+    const token = this.getToken();
+    if (!token) {
+      this.render();
+      return;
+    }
+    const key = `${this.range}:${this.hostScope}:${forceRefresh ? Date.now() : 'std'}`;
+    if (!forceRefresh && this._loadedKey === key && Object.keys(this.reports).length) return;
+    this._loadedKey = key;
+    this.loading = true;
+    this.setupError = null;
+    this.errorMsg = null;
+    this.render();
+
+    const names = ['realtime', 'overview', 'sources', 'game_modes', 'funnel_and_levels', 'party_games', 'conversions'];
+    try {
+      const results = await Promise.all(names.map((n) => this.fetchReport(n, forceRefresh)));
+      names.forEach((n, idx) => { this.reports[n] = results[idx]; });
+    } catch (e) {
+      if (e.code === 'GA_SERVICE_ACCOUNT_JSON_NOT_SET') {
+        this.setupError = e.message;
+      } else {
+        this.errorMsg = e.message || 'GA4 통계를 불러오지 못했습니다.';
+      }
+    } finally {
+      this.loading = false;
+      this.render();
+    }
+  }
+
+  deltaBadge(val, suffix = '%') {
+    const num = Number(val || 0);
+    const cls = num > 0 ? 'up' : num < 0 ? 'down' : 'flat';
+    const arrow = num > 0 ? '▲' : num < 0 ? '▼' : '–';
+    return `<span class="delta ${cls}">${arrow} ${num > 0 ? '+' : ''}${num}${suffix}</span>`;
+  }
+
+  renderDualLineSvg(series) {
+    if (!series || !series.length) return '<p class="muted">표시할 일별 방문자 데이터가 없습니다.</p>';
+    const w = 680;
+    const h = 210;
+    const padL = 40;
+    const padR = 16;
+    const padT = 18;
+    const padB = 28;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+    const maxVal = Math.max(10, ...series.flatMap((d) => [d.gameUsers || 0, d.siteUsers || 0]));
+    const xFor = (i) => (series.length === 1 ? padL + plotW / 2 : padL + (i / (series.length - 1)) * plotW);
+    const yFor = (v) => padT + plotH - (v / maxVal) * plotH;
+    const pathFor = (key) => series.map((d, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(d[key] || 0).toFixed(1)}`).join(' ');
+
+    const ticks = [0, 0.5, 1].map((t) => {
+      const val = Math.round(maxVal * t);
+      const y = yFor(val).toFixed(1);
+      return `<line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="#d6d0c0" stroke-dasharray="3 3"/><text x="${padL - 6}" y="${Number(y) + 4}" text-anchor="end" font-size="10" fill="#666357">${val}</text>`;
+    }).join('');
+
+    const stepX = Math.max(1, Math.ceil(series.length / 7));
+    const xLabels = series.map((d, i) => {
+      if (i % stepX !== 0 && i !== series.length - 1) return '';
+      return `<text x="${xFor(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="10" fill="#666357">${esc(d.date.slice(5))}</text>`;
+    }).join('');
+
+    return `
+      <div class="legend-row">
+        <span><i class="dot" style="background:#2563eb"></i>게임 (play.ksool)</span>
+        <span><i class="dot" style="background:#16a34a"></i>커뮤니티 (ksool)</span>
+      </div>
+      <svg viewBox="0 0 ${w} ${h}" class="line-svg" role="img" aria-label="일별 사이트 vs 게임 방문자 추이">
+        ${ticks}
+        ${xLabels}
+        <path d="${pathFor('gameUsers')}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/>
+        <path d="${pathFor('siteUsers')}" fill="none" stroke="#16a34a" stroke-width="3" stroke-linejoin="round"/>
+        ${series.map((d, i) => `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(d.gameUsers || 0).toFixed(1)}" r="3.5" fill="#2563eb" stroke="#191919" stroke-width="1"><title>${esc(d.date)} 게임: ${d.gameUsers}명</title></circle><circle cx="${xFor(i).toFixed(1)}" cy="${yFor(d.siteUsers || 0).toFixed(1)}" r="3.5" fill="#16a34a" stroke="#191919" stroke-width="1"><title>${esc(d.date)} 사이트: ${d.siteUsers}명</title></circle>`).join('')}
+      </svg>
+    `;
+  }
+
+  renderDonutSvg(modes) {
+    if (!modes || !modes.length) return '<p class="muted">플레이 데이터가 아직 없습니다.</p>';
+    const total = modes.reduce((s, m) => s + (m.plays || 0), 0) || 1;
+    let acc = 0;
+    const r = 56;
+    const cx = 74;
+    const cy = 74;
+    const circ = 2 * Math.PI * r;
+    const segments = modes.map((m, idx) => {
+      const len = (m.plays / total) * circ;
+      const dash = `${len.toFixed(2)} ${(circ - len).toFixed(2)}`;
+      const offset = (-acc).toFixed(2);
+      acc += len;
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${DONUT_COLORS[idx % DONUT_COLORS.length]}" stroke-width="24" stroke-dasharray="${dash}" stroke-dashoffset="${offset}" transform="rotate(-90 ${cx} ${cy})"><title>${esc(m.label)}: ${m.plays}회 (${m.sharePct}%)</title></circle>`;
+    }).join('');
+
+    return `
+      <div class="donut-wrap">
+        <svg viewBox="0 0 148 148" class="donut-svg" role="img" aria-label="인기 모드 점유율">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#ece8dc" stroke-width="24"/>
+          ${segments}
+          <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="16" font-weight="900" fill="#191919">${total.toLocaleString()}</text>
+          <text x="${cx}" y="${cy + 13}" text-anchor="middle" font-size="9" font-weight="700" fill="#666357">총 플레이</text>
+        </svg>
+        <div class="donut-list">
+          ${modes.map((m, idx) => `
+            <div class="donut-item">
+              <span class="donut-name"><i class="dot" style="background:${DONUT_COLORS[idx % DONUT_COLORS.length]}"></i>${esc(m.label)}</span>
+              <span class="donut-meta"><b>${m.sharePct}%</b> · ${m.plays.toLocaleString()}회 · ${esc(m.avgDurationFormatted)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  render() {
+    const rt = this.reports.realtime || {};
+    const ov = this.reports.overview || {};
+    const kpis = ov.kpis || {};
+    const src = this.reports.sources?.sources || [];
+    const gm = this.reports.game_modes?.modes || [];
+    const fn = this.reports.funnel_and_levels || {};
+    const pg = this.reports.party_games?.partyGames || [];
+    const cv = this.reports.conversions || {};
+    const ad = cv.adSummary || {};
+    const out = cv.outboundClicks || {};
+    const soc = cv.socialAndAccount || {};
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host { display:block; font-family:inherit; color:#191919; }
+        * { box-sizing:border-box; }
+        .ga-shell { display:flex; flex-direction:column; gap:14px; }
+        .ga-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 14px; border:2px solid #191919; background:#e0f2fe; box-shadow:3px 3px 0 #191919; }
+        .ga-title { font-size:14px; font-weight:900; display:flex; align-items:center; gap:8px; }
+        .ga-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .seg { display:inline-flex; border:1.5px solid #191919; background:#fffdf5; }
+        .seg button { border:0; background:transparent; padding:5px 10px; font-size:11px; font-weight:800; cursor:pointer; color:#191919; }
+        .seg button+button { border-left:1.5px solid #191919; }
+        .seg button.is-active { background:#ffdc59; }
+        .btn { padding:6px 11px; border:1.5px solid #191919; background:#c6f35c; font-size:11px; font-weight:850; cursor:pointer; box-shadow:2px 2px 0 #191919; }
+        .btn:disabled { opacity:.6; cursor:wait; }
+        .muted { color:#666357; font-size:12px; margin:0; }
+        .banner-warn { padding:16px; border:2px solid #191919; background:#fff3cd; box-shadow:3px 3px 0 #191919; font-size:12px; line-height:1.65; }
+        .banner-err { padding:14px; border:2px solid #191919; background:#ffb6a0; font-size:12px; font-weight:750; }
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:10px; }
+        .kpi-card { border:2px solid #191919; background:#fffdf5; padding:12px; box-shadow:3px 3px 0 #191919; display:flex; flex-direction:column; gap:5px; }
+        .kpi-card.is-live { background:#d5f88a; }
+        .kpi-label { font-size:11px; font-weight:800; color:#525046; }
+        .kpi-val { font-size:22px; font-weight:950; letter-spacing:-0.5px; }
+        .delta { font-size:11px; font-weight:850; }
+        .delta.up { color:#15803d; }
+        .delta.down { color:#b91c1c; }
+        .delta.flat { color:#666357; }
+        .panel { border:2px solid #191919; background:#fffdf5; padding:14px; box-shadow:3px 3px 0 #191919; }
+        .panel h4 { margin:0 0 10px; font-size:14px; font-weight:900; }
+        .grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; }
+        .legend-row { display:flex; gap:14px; font-size:11px; font-weight:800; margin-bottom:6px; flex-wrap:wrap; }
+        .dot { display:inline-block; width:10px; height:10px; border:1px solid #191919; margin-right:5px; vertical-align:middle; }
+        .line-svg { width:100%; height:auto; display:block; }
+        .hbar-list { display:flex; flex-direction:column; gap:8px; }
+        .hbar-row { display:flex; flex-direction:column; gap:3px; font-size:11px; }
+        .hbar-head { display:flex; justify-content:space-between; gap:8px; font-weight:800; }
+        .hbar-track { height:12px; border:1.5px solid #191919; background:#efeadd; overflow:hidden; display:flex; }
+        .hbar-fill { height:100%; background:#ffdc59; }
+        .donut-wrap { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+        .donut-svg { width:148px; height:148px; flex-shrink:0; }
+        .donut-list { flex:1; min-width:200px; display:flex; flex-direction:column; gap:7px; }
+        .donut-item { display:flex; justify-content:space-between; gap:8px; font-size:11px; padding:4px 6px; border:1px solid #d6d0c0; background:#faf7ed; }
+        .donut-name { font-weight:850; }
+        .donut-meta { font-family:ui-monospace,Consolas,monospace; color:#45443d; white-space:nowrap; }
+        .tbl { width:100%; border-collapse:collapse; font-size:11px; margin-top:10px; }
+        .tbl th,.tbl td { border:1px solid #191919; padding:5px 7px; text-align:left; }
+        .tbl th { background:#f3f0e7; font-weight:900; }
+        .warn-badge { display:inline-block; margin-left:6px; padding:1px 6px; border:1px solid #191919; background:#ffb6a0; font-size:10px; font-weight:900; }
+        .stack-win { background:#4ade80; height:100%; }
+        .stack-lose { background:#f87171; height:100%; }
+        .stack-quit { background:#cbd5e1; height:100%; }
+        .mini-cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+        .mini-card { border:1.5px solid #191919; background:#faf7ed; padding:8px 10px; }
+        .mini-card b { display:block; font-size:17px; font-weight:950; margin-top:2px; }
+        .mini-card small { font-size:10px; font-weight:800; color:#525046; }
+      </style>
+
+      <div class="ga-shell">
+        <div class="ga-toolbar">
+          <div class="ga-title">
+            <span>📊 사이트 + 게임 통합 GA4 통계 (블로그 제외)</span>
+            ${this.updatedAt ? `<span class="muted">· 갱신 ${esc(new Date(this.updatedAt).toLocaleTimeString('ko-KR'))}</span>` : ''}
+          </div>
+          <div class="ga-controls">
+            <div class="seg" role="group" aria-label="대상 범위">
+              <button type="button" data-scope="all" class="${this.hostScope === 'all' ? 'is-active' : ''}">전체(사이트+게임)</button>
+              <button type="button" data-scope="game" class="${this.hostScope === 'game' ? 'is-active' : ''}">게임만</button>
+              <button type="button" data-scope="site" class="${this.hostScope === 'site' ? 'is-active' : ''}">사이트만</button>
+            </div>
+            <div class="seg" role="group" aria-label="조회 기간">
+              <button type="button" data-range="7d" class="${this.range === '7d' ? 'is-active' : ''}">7일</button>
+              <button type="button" data-range="28d" class="${this.range === '28d' ? 'is-active' : ''}">28일</button>
+              <button type="button" data-range="90d" class="${this.range === '90d' ? 'is-active' : ''}">90일</button>
+            </div>
+            <button type="button" id="ga-refresh-btn" class="btn" ${this.loading ? 'disabled' : ''}>${this.loading ? '불러오는 중...' : '↻ 새로고침'}</button>
+          </div>
+        </div>
+
+        ${this.setupError ? `
+          <div class="banner-warn">
+            <strong>🔧 GA4 서비스 계정 연동 대기 중</strong><br>
+            ${esc(this.setupError)}<br>
+            <small>1) Google Cloud Console에서 Analytics Data API 활성화 후 서비스 계정 JSON 키 발급 → 2) GA4 속성(<code>564332931</code>)에 뷰어 권한 추가 → 3) Supabase Secrets에 <code>GA_SERVICE_ACCOUNT_JSON</code> 등록 후 새로고침하세요.</small>
+          </div>
+        ` : ''}
+        ${this.errorMsg ? `<div class="banner-err">⚠️ ${esc(this.errorMsg)}</div>` : ''}
+
+        <!-- 위젯 1: 상단 KPI 5개 -->
+        <div class="kpi-grid">
+          <div class="kpi-card is-live">
+            <span class="kpi-label">🟢 실시간 접속자 (30분)</span>
+            <span class="kpi-val">${Number(rt.activeUsersNow || 0).toLocaleString()}명</span>
+            <span class="muted">${(rt.topScreens || []).slice(0, 2).map((s) => `${esc(s.title.slice(0, 14))}(${s.users})`).join(' · ') || '대기 중'}</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">순 방문자 수</span>
+            <span class="kpi-val">${Number(kpis.activeUsers?.value || 0).toLocaleString()}명</span>
+            ${this.deltaBadge(kpis.activeUsers?.deltaPct)}
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">재방문자 비율</span>
+            <span class="kpi-val">${kpis.returningRatePct?.value ?? 0}%</span>
+            ${this.deltaBadge(kpis.returningRatePct?.deltaPct, '%p')}
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">1인당 평균 체류시간</span>
+            <span class="kpi-val">${esc(kpis.avgEngagementSec?.formatted || '0초')}</span>
+            ${this.deltaBadge(kpis.avgEngagementSec?.deltaPct)}
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">사이트 vs 게임 비율</span>
+            <span class="kpi-val" style="font-size:16px;">사이트 ${kpis.hostShare?.sitePct ?? 0}% : 게임 ${kpis.hostShare?.gamePct ?? 0}%</span>
+            <div class="hbar-track"><div class="hbar-fill" style="width:${kpis.hostShare?.sitePct ?? 0}%;background:#16a34a"></div><div class="hbar-fill" style="width:${kpis.hostShare?.gamePct ?? 0}%;background:#2563eb"></div></div>
+          </div>
+        </div>
+
+        <!-- 위젯 2: 사이트 vs 게임 추이 -->
+        <section class="panel">
+          <h4>📈 방문자가 매일 늘고 있나? (사이트 vs 게임 추이)</h4>
+          ${this.renderDualLineSvg(ov.dailySeries || [])}
+        </section>
+
+        <div class="grid-2">
+          <!-- 위젯 3: 유입 경로 -->
+          <section class="panel">
+            <h4>🧭 사람들이 어디서 알고 찾아왔나?</h4>
+            ${src.length ? `
+              <div class="hbar-list">
+                ${src.slice(0, 6).map((s) => {
+                  const maxU = Math.max(1, src[0]?.users || 1);
+                  return `<div class="hbar-row"><div class="hbar-head"><span>${esc(s.label)}${s.campaign ? ` <small>(${esc(s.campaign)})</small>` : ''}</span><span>${s.users.toLocaleString()}명 (참여 ${s.engagementRatePct}%)</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${Math.round((s.users / maxU) * 100)}%"></div></div></div>`;
+                }).join('')}
+              </div>
+              <table class="tbl"><thead><tr><th>유입원</th><th>방문</th><th>게임비중</th><th>체류</th></tr></thead><tbody>
+                ${src.slice(0, 8).map((s) => `<tr><td>${esc(s.label)}</td><td>${s.users}</td><td>${s.gameSharePct}%</td><td>${esc(s.avgDurationFormatted)}</td></tr>`).join('')}
+              </tbody></table>
+            ` : '<p class="muted">유입 경로 데이터가 아직 없습니다.</p>'}
+          </section>
+
+          <!-- 위젯 4: 인기 게임 모드 -->
+          <section class="panel">
+            <h4>🎮 게임에 들어와서 어느 모드를 가장 많이 하나?</h4>
+            ${this.renderDonutSvg(gm)}
+          </section>
+        </div>
+
+        <!-- 위젯 5: 온보딩 퍼널 & 단계별 막힘 구간 -->
+        <section class="panel">
+          <h4>🪜 튜토리얼부터 몇 단계까지 깨고 어디서 포기하나?</h4>
+          <div class="grid-2">
+            <div>
+              <p class="muted" style="margin-bottom:8px;font-weight:800;">초반 온보딩 통과율</p>
+              ${(fn.onboardingFunnel || []).length ? `
+                <div class="hbar-list">
+                  ${(fn.onboardingFunnel || []).map((f) => `
+                    <div class="hbar-row">
+                      <div class="hbar-head"><span>${esc(f.step)}</span><span>${f.users.toLocaleString()}명 (${f.rateFromStartPct}%${f.dropOffPct > 0 ? ` · 이탈 -${f.dropOffPct}%` : ''})</span></div>
+                      <div class="hbar-track"><div class="hbar-fill" style="width:${f.rateFromStartPct}%;background:#93c5fd"></div></div>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : '<p class="muted">온보딩 퍼널 데이터가 아직 없습니다.</p>'}
+            </div>
+            <div>
+              <p class="muted" style="margin-bottom:8px;font-weight:800;">단계별 클리어(🟢) / 실패(🔴) / 중도포기(⚪)</p>
+              ${(fn.stageBreakdown || []).length ? `
+                <div class="hbar-list">
+                  ${(fn.stageBreakdown || []).slice(0, 12).map((s) => {
+                    const tot = Math.max(1, s.winCount + s.loseCount + s.quitCount);
+                    const wPct = Math.round((s.winCount / tot) * 100);
+                    const lPct = Math.round((s.loseCount / tot) * 100);
+                    const qPct = Math.max(0, 100 - wPct - lPct);
+                    return `
+                      <div class="hbar-row">
+                        <div class="hbar-head">
+                          <span>${esc(s.gameModeLabel)} · ${esc(s.levelLabel)}${s.warningBadge ? `<span class="warn-badge">${esc(s.warningBadge)}</span>` : ''}</span>
+                          <span>클리어 ${s.clearRatePct}% (${esc(s.avgDurationFormatted)})</span>
+                        </div>
+                        <div class="hbar-track"><div class="stack-win" style="width:${wPct}%"></div><div class="stack-lose" style="width:${lPct}%"></div><div class="stack-quit" style="width:${qPct}%"></div></div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : '<p class="muted">단계별 클리어 데이터가 아직 없습니다.</p>'}
+            </div>
+          </div>
+        </section>
+
+        <div class="grid-2">
+          <!-- 위젯 6: 술자리 파티 미니게임 10종 순위 -->
+          <section class="panel">
+            <h4>🍻 술자리 파티 미니게임 10종 인기 순위</h4>
+            ${pg.length ? `
+              <div class="hbar-list">
+                ${pg.map((g, i) => {
+                  const maxP = Math.max(1, pg[0]?.plays || 1);
+                  return `<div class="hbar-row"><div class="hbar-head"><span>#${i + 1} ${esc(g.label)}</span><span>${g.plays.toLocaleString()}판 · ${g.users}명 · ${esc(g.avgDurationFormatted)} (완주 ${g.completionRatePct}%)</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${Math.round((g.plays / maxP) * 100)}%;background:#ff784f"></div></div></div>`;
+                }).join('')}
+              </div>
+            ` : '<p class="muted">술자리 미니게임 플레이 데이터가 아직 없습니다.</p>'}
+          </section>
+
+          <!-- 위젯 7: 보상형 광고 · 제휴/스토리 · 공유 · 로그인 -->
+          <section class="panel">
+            <h4>💰 광고 시청 · 스토리/제휴 클릭 · 공유 &amp; 로그인 전환</h4>
+            <div class="mini-cards" style="margin-bottom:10px;">
+              <div class="mini-card"><small>보상형 광고 완료율</small><b>${ad.completionRatePct ?? 0}% (${ad.completes ?? 0}/${ad.starts ?? 0})</b></div>
+              <div class="mini-card"><small>유래/영상 &amp; 제휴 클릭</small><b>스토리 ${out.storyLinkClicks ?? 0} · 제휴 ${out.affiliateBuyClicks ?? 0}</b></div>
+              <div class="mini-card"><small>친구 SOS / 레시피 공유</small><b>${soc.shareCount ?? 0}회</b></div>
+              <div class="mini-card"><small>구글 로그인 / 가입 · 해금</small><b>가입 ${soc.googleSignUps ?? 0} · 로그인 ${soc.googleLogins ?? 0} · 해금 ${soc.recipeUnlocks ?? 0}</b></div>
+            </div>
+            ${(ad.byPlacement || []).length ? `
+              <div class="hbar-list">
+                ${(ad.byPlacement || []).map((a) => `<div class="hbar-row"><div class="hbar-head"><span>${esc(a.label)}</span><span>${a.completes}/${a.starts} (${a.ratePct}%)</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${a.ratePct}%;background:#c6f35c"></div></div></div>`).join('')}
+              </div>
+            ` : '<p class="muted">광고 및 전환 이벤트가 아직 수집되지 않았습니다.</p>'}
+          </section>
+        </div>
+      </div>
+    `;
+
+    this.shadowRoot.querySelectorAll('[data-scope]').forEach((b) => {
+      b.onclick = () => { this.hostScope = b.dataset.scope; this.loadAll(false); };
+    });
+    this.shadowRoot.querySelectorAll('[data-range]').forEach((b) => {
+      b.onclick = () => { this.range = b.dataset.range; this.loadAll(false); };
+    });
+    const refBtn = this.shadowRoot.getElementById('ga-refresh-btn');
+    if (refBtn) refBtn.onclick = () => this.loadAll(true);
+  }
+}
+
+if (!customElements.get('ksool-admin-charts')) {
+  customElements.define('ksool-admin-charts', KSoolAdminCharts);
+}

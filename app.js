@@ -797,6 +797,7 @@
       canAdmin('posts') ? { id: 'reports', label: `🚨 신고/글 (${adminData.reports.length})` } : null,
       canAdmin('suggestions') ? { id: 'suggestions', label: `🧪 추천 조합 (${adminData.gameSuggestions.length + adminData.suggestions.length})` } : null,
       canAdmin('updates') ? { id: 'updates', label: `📢 공지 관리 (${adminData.updates.length})` } : null,
+      isSuperAdmin ? { id: 'analytics', label: '📊 GA4 통계' } : null,
       isSuperAdmin ? { id: 'roles', label: `👥 운영자 권한 (${adminData.roles.length})` } : null
     ].filter(Boolean);
     let bodyHtml = '';
@@ -904,6 +905,8 @@
           </div>
         </section>
       `;
+    } else if (activeAdminTab === 'analytics' && isSuperAdmin) {
+      bodyHtml = `<ksool-admin-charts endpoint="https://jyjxvwxlwkoedxwkkysj.supabase.co/functions/v1/ga-report" token="${esc(adminAccessToken || '')}"></ksool-admin-charts>`;
     } else if (activeAdminTab === 'roles' && isSuperAdmin) {
       bodyHtml = `
         <section class="neo-panel">
