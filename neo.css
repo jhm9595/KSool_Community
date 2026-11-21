@@ -23,6 +23,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .compact-toolbar{display:flex;gap:12px;align-items:center}.search-row{margin:0;flex:1}.search-box{background:white;border:2px solid var(--ink);border-radius:0;min-height:42px;padding:0 11px;gap:10px;box-shadow:3px 3px 0 #19191915}.search-box input{font-size:12px;padding:10px 0;min-height:40px}.search-box>span:first-child{color:var(--ink);display:flex}.search-box:focus-within{border-color:var(--ink);box-shadow:3px 3px 0 var(--neo-purple)}
 .button.coral{color:var(--ink);background:var(--coral);border:2px solid var(--ink);font-size:11px;font-weight:850;box-shadow:3px 3px 0 var(--ink);min-height:44px;padding:9px 14px;gap:6px}
 .button.coral:hover{background:var(--coral-dark);transform:translate(1px,1px);box-shadow:2px 2px 0 var(--ink)}
+.recipes-filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.recipes-filter-bar .search-row{flex:1;min-width:220px}
+.recipes-filter-bar .filter-right-controls{padding-bottom:0}
+.recipes-filter-bar .view-mode-toggle{min-height:42px}
+.recipes-filter-bar .sort-control select{min-height:42px}
+.sync-code-row{display:flex;justify-content:flex-end;margin-top:6px}
 .catalog-shell{margin-top:12px}
 .catalog-tabs-bar{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .category-filters{gap:4px;display:flex;flex-wrap:wrap;align-items:flex-end}

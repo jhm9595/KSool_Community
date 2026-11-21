@@ -1079,25 +1079,23 @@
     const tycoonPct = Math.round((tycoonCount / total) * 100);
     return `
       <div id="progress-sync-bar" class="progress-sync-bar">
-        <div class="sync-cards-row">
-          <div class="sync-cards-grid">
-            <button type="button" data-progress-mode="quiz" class="sync-stat-card ${isQuiz ? 'is-active' : ''}" aria-pressed="${isQuiz}">
-              <div class="sync-stat-head">
-                <span class="sync-stat-title">${esc(pt('quizDex'))}</span>
-                <span class="sync-stat-count"><b>${quizCount}</b>/${total} <em>(${quizPct}%)</em></span>
-              </div>
-              <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${quizPct}%"></span></span>
-            </button>
-            <button type="button" data-progress-mode="tycoon" class="sync-stat-card ${!isQuiz ? 'is-active' : ''}" aria-pressed="${!isQuiz}">
-              <div class="sync-stat-head">
-                <span class="sync-stat-title">${esc(pt('tycoonDex'))}</span>
-                <span class="sync-stat-count"><b>${tycoonCount}</b>/${total} <em>(${tycoonPct}%)</em></span>
-              </div>
-              <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${tycoonPct}%"></span></span>
-            </button>
-          </div>
-          ${!sbUser ? `<button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${esc(showManualCodeInput ? pt('close') : pt('codeInput'))}</button>` : ''}
+        <div class="sync-cards-grid">
+          <button type="button" data-progress-mode="quiz" class="sync-stat-card ${isQuiz ? 'is-active' : ''}" aria-pressed="${isQuiz}">
+            <div class="sync-stat-head">
+              <span class="sync-stat-title">${esc(pt('quizDex'))}</span>
+              <span class="sync-stat-count"><b>${quizCount}</b>/${total} <em>(${quizPct}%)</em></span>
+            </div>
+            <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${quizPct}%"></span></span>
+          </button>
+          <button type="button" data-progress-mode="tycoon" class="sync-stat-card ${!isQuiz ? 'is-active' : ''}" aria-pressed="${!isQuiz}">
+            <div class="sync-stat-head">
+              <span class="sync-stat-title">${esc(pt('tycoonDex'))}</span>
+              <span class="sync-stat-count"><b>${tycoonCount}</b>/${total} <em>(${tycoonPct}%)</em></span>
+            </div>
+            <span class="sync-stat-meter" aria-hidden="true"><span class="sync-stat-fill" style="width:${tycoonPct}%"></span></span>
+          </button>
         </div>
+        ${!sbUser ? `<div class="sync-code-row"><button type="button" id="toggle-manual-code-btn" class="sync-code-link" aria-expanded="${showManualCodeInput}">${esc(showManualCodeInput ? pt('close') : pt('codeInput'))}</button></div>` : ''}
         ${(!sbUser && showManualCodeInput) ? `
           <div class="sync-manual-form">
             <input id="community-sync-input" type="text" placeholder="${esc(pt('codePlaceholder'))}">
@@ -1346,22 +1344,24 @@
     // Default: 'recipes' or 'saved'
     const cats = ['전체', '기초 재료', '과일·편의점', '소맥·폭탄주', '막걸리', '특산 명주'];
     root.innerHTML = `
-      ${searchToolbarMarkup(pt('search'), false)}
+      ${progressSyncMarkup()}
+      <div class="recipes-filter-bar">
+        <div class="search-row"><label class="search-box">${uiIcon('search',18)}<span class="visually-hidden">${esc(pt('search'))}</span><input id="search" type="search" value="${esc(query)}" placeholder="${esc(pt('search'))}" autocomplete="off"></label></div>
+        ${activeTab === 'recipes' ? `
+          <div class="filter-right-controls">
+            <div id="recipe-view-toggle" class="view-mode-toggle">
+              <button type="button" data-view-mode="grouped" class="${activeViewMode==='grouped'?'is-active':''}">${esc(pt('viewGrouped'))}</button>
+              <button type="button" data-view-mode="stage" class="${activeViewMode==='stage'?'is-active':''}">${esc(pt('viewStage'))}</button>
+            </div>
+            <label class="sort-control"><span class="visually-hidden">Sort</span><select id="sort"><option value="number" ${sort==='number'?'selected':''}>${esc(pt('sortNumber'))}</option><option value="recommended" ${sort==='recommended'?'selected':''}>${esc(pt('sortRecommended'))}</option><option value="simple" ${sort==='simple'?'selected':''}>${esc(pt('sortSimple'))}</option></select></label>
+          </div>
+        ` : ''}
+      </div>
       <div class="catalog-shell">
         <div class="catalog-tabs-bar">
           <div id="category-filters" class="category-filters">${cats.map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(catLabel(c))}</button>`).join('')}</div>
-          ${activeTab === 'recipes' ? `
-            <div class="filter-right-controls">
-              <div id="recipe-view-toggle" class="view-mode-toggle">
-                <button type="button" data-view-mode="grouped" class="${activeViewMode==='grouped'?'is-active':''}">${esc(pt('viewGrouped'))}</button>
-                <button type="button" data-view-mode="stage" class="${activeViewMode==='stage'?'is-active':''}">${esc(pt('viewStage'))}</button>
-              </div>
-              <label class="sort-control"><span class="visually-hidden">Sort</span><select id="sort"><option value="number" ${sort==='number'?'selected':''}>${esc(pt('sortNumber'))}</option><option value="recommended" ${sort==='recommended'?'selected':''}>${esc(pt('sortRecommended'))}</option><option value="simple" ${sort==='simple'?'selected':''}>${esc(pt('sortSimple'))}</option></select></label>
-            </div>
-          ` : ''}
         </div>
         <div class="catalog-body">
-          ${progressSyncMarkup()}
           <div id="recipe-grid" class="recipe-grid ${['recipes','saved'].includes(activeTab)?'is-sectioned':''}"></div>
         </div>
       </div>
