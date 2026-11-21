@@ -3,6 +3,7 @@
 body{background:var(--paper)}
 button,a,input,select,textarea{border-radius:0!important}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #8360eb;outline-offset:3px}
+[hidden]{display:none!important}
 .ui-icon{display:block;flex-shrink:0}
 .header{background:#fffdf5;border-bottom:3px solid var(--ink)}
 .header-inner{max-width:1120px;margin:0 auto;padding:11px 20px;gap:28px;min-height:66px}
