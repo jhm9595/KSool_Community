@@ -738,6 +738,24 @@
     }
   }
   const UPDATE_LOGS = [
+    {
+      version: 'v2.5',
+      date: '2026-11-21',
+      title: {
+        ko: '신규 편의점·커피 꿀조합 8종 추가 & 공략 포털 개편 (총 98종)',
+        en: '8 New Store & Coffee Combos + Portal Upgrade (98 Recipes)',
+        ja: 'コンビニ・コーヒー系の新作8種追加＆攻略ポータル刷新（全98種）',
+        'zh-CN': '新增8款便利店与咖啡特调 & 攻略站全面升级（共98种）',
+        'zh-TW': '新增8款便利商店與咖啡特調 & 攻略站全面升級（共98種）'
+      },
+      body: {
+        ko: '에스프레소·블루레모네이드·아이스 카페라떼·바나나우유 커피라떼·바나나우유 커피주·블루 크림소다주·알갱이 젤리 소주·배유자 소주 등 8종 신규 레시피가 추가되어 총 98종 도감으로 확장되었습니다. 이온음료·커피 조합 트리를 정비했고, 공략 사이트에는 Google 진행도 동기화, 미해금 스테이지 스포일러 보호, 주점 타이쿤 글로벌 Top 100 랭킹, 전체 5개 국어 UI가 적용되었습니다.',
+        en: 'Added 8 new recipes (98 total): Espresso, Blue Pouch Lemonade, Iced Cafe Latte, Banana Milk Coffee Latte, Banana Milk Coffee Cocktail, Blue Cream Soda Soju, Peach Jelly Soju, and Pear Yuja Soju. Refined the ion-drink & coffee crafting trees, and upgraded the community portal with Google progress sync, stage spoiler protection, Global Top 100 Tycoon rankings, and full 5-language UI.',
+        ja: 'エスプレッソ、ブルーレモネード、アイスカフェラテなど新作8種を追加し全98種の図鑑に拡張しました。イオン飲料・コーヒー調合ツリーを整理し、攻略サイトにはGoogle進行度同期、未解放ステージのネタバレ保護、居酒屋タイクーン世界Top 100ランキング、5言語UIを実装しました。',
+        'zh-CN': '新增意式浓缩咖啡、蓝柠檬冰袋饮、冰拿铁等8款配方，图鉴扩展至98种。优化了离子饮品与咖啡调酒树，并为攻略站上线了 Google 进度同步、未解锁阶段防剧透、酒馆大亨全球 Top 100 排行榜及完整5语言界面。',
+        'zh-TW': '新增義式濃縮咖啡、藍檸檬冰袋飲、冰拿鐵等8款配方，圖鑑擴展至98種。最佳化了離子飲品與咖啡調酒樹，並為攻略站上線了 Google 進度同步、未解鎖階段防劇透、酒館大亨全球 Top 100 排行榜及完整5語言介面。'
+      }
+    },
     { version: 'v2.4', date: '2026-11-14', title: { ko: '글로벌 다국어 & 문화 가이드 확장', en: 'Global Languages & Korean Drinking Game Guides', ja: '多言語対応＆飲み会ゲーム文化ガイド追加', 'zh-CN': '多语言支持与韩国酒桌游戏文化指南', 'zh-TW': '多語言支援與韓國酒桌遊戲文化指南' }, body: { ko: '영어·일본어·중국어(간체/번체) 지원, 미니게임 우측 상단 문화/도구 설명(i), 레시피별 스토리·제휴 링크 구조가 추가되었습니다.', en: 'Added English, Japanese, Simplified & Traditional Chinese support, top-right info guides for all 10 party mini-games, and recipe story/video links.' } },
     { version: 'v2.3', date: '2026-11-14', title: { ko: '조합 퀴즈 전용 문제 선택 팝업 개편', en: 'Dedicated Mix Quiz Stage Selector', ja: '調合クイズ専用のステージ選択ポップアップ', 'zh-CN': '调酒问答专属关卡选择弹窗', 'zh-TW': '調酒問答專屬關卡選擇彈窗' }, body: { ko: '84개 퀴즈 진행도 바, 도전 가능/완료 필터, 다음 미해결 원클릭 점프를 지원합니다.', en: 'Track your 84-recipe quiz progress with filter pills and one-tap jump to the next unsolved puzzle.' } },
     { version: 'v2.2', date: '2026-11-12', title: { ko: '친구 SOS 풀이 독립 페이지 출시', en: 'Friend SOS Standalone Solver', ja: 'フレンドSOS独立ページ公開', 'zh-CN': '好友求助独立解题页面上线', 'zh-TW': '好友求助獨立解題頁面上線' }, body: { ko: '링크만으로 친구의 막힌 술 조합 퀴즈를 도와줄 수 있는 초경량 SOS 풀이 화면이 추가되었습니다.', en: 'Share a compact link so friends can help solve tricky drink ratios without spoilers.' } }
