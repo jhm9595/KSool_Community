@@ -793,3 +793,23 @@ dialog.is-closing {
   font-weight: 650;
   line-height: 1.5;
 }
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  min-height: 15px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+form label:has(input[type="checkbox"]),
+form label:has(input[type="radio"]) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  cursor: pointer;
+}
