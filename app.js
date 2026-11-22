@@ -731,6 +731,17 @@
     if (brandTitleEl) brandTitleEl.textContent = pt('brandTitle');
     const gameBtnLabel = $('#game-dock-btn-label');
     if (gameBtnLabel) gameBtnLabel.textContent = pt('gameBtn');
+    const gameToggleBtn = $('#toggle-game-dock');
+    const gameDockEl = $('#game-dock');
+    if (gameToggleBtn) {
+      const isAdminTab = activeTab === 'admin';
+      gameToggleBtn.hidden = isAdminTab;
+      if (isAdminTab && gameDockEl && !gameDockEl.hidden) {
+        gameDockEl.hidden = true;
+        document.body.classList.remove('game-dock-open');
+        gameToggleBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
     const logoutBtn = $('#header-logout-btn');
     if (logoutBtn) {
       logoutBtn.title = pt('logout');
