@@ -321,6 +321,25 @@ export async function handleApi(req,env){
         partners=partners.filter(p=>p.locales.includes(langParam));
       }
       result=json({partners});
+    }else if(req.method==='GET'&&path==='/api/part2-notify/stats'){
+      const row=await stmt(env,'SELECT COUNT(*) AS cnt FROM part2_waitlist').first();
+      result=json({totalCount:Number(row?.cnt||0)});
+    }else if(req.method==='POST'&&path==='/api/part2-notify'){
+      await limit(req,env,'part2_notify',15);
+      const b=await readBody(req);
+      const email=str(b.email,5,120,'이메일').toLowerCase();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw problem('올바른 이메일 주소를 입력하세요');
+      const nickname=typeof b.nickname==='string'?b.nickname.trim().slice(0,24):'';
+      const interest=['both','anju','dessert'].includes(b.interest)?b.interest:'both';
+      const lang=normalizeLang(b.lang);
+      const existing=await stmt(env,'SELECT id FROM part2_waitlist WHERE email=?',email).first();
+      if(existing){
+        await stmt(env,'UPDATE part2_waitlist SET nickname=?,interest=?,lang=? WHERE email=?',nickname,interest,lang,email).run();
+      }else{
+        await stmt(env,'INSERT INTO part2_waitlist(id,email,nickname,interest,lang,created_at) VALUES(?,?,?,?,?,?)',crypto.randomUUID(),email,nickname,interest,lang,now()).run();
+      }
+      const row=await stmt(env,'SELECT COUNT(*) AS cnt FROM part2_waitlist').first();
+      result=json({ok:true,alreadyRegistered:Boolean(existing),totalCount:Number(row?.cnt||0)},existing?200:201);
     }else if(req.method==='GET'&&path==='/api/admin/me'){
       const user=await verifyAdminUser(req,env);
       result=json({isAdmin:Boolean(user),isSuperAdmin:Boolean(user?.isSuperAdmin),permissions:user?.permissions||[],email:user?.email||null});

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K-술 2탄 (K-안주 · K-디저트) 사전 알림 신청 — 조합소</title>
+  <meta name="description" content="K-술 달고나 100% 달성 기념! K-안주 · K-디저트 2탄 출시 사전 알림을 신청하세요.">
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="neo.css">
+  <style>
+    .p2-wrap { max-width: 720px; margin: 28px auto 40px; padding: 0 16px; display: flex; flex-direction: column; gap: 18px; }
+    .p2-hero { border: 3px solid var(--ink); background: #fff3cd; padding: 24px 22px; box-shadow: 6px 6px 0 var(--ink); }
+    .p2-badge { display: inline-block; padding: 4px 10px; border: 2px solid var(--ink); background: var(--neo-yellow); font-size: 11px; font-weight: 900; margin-bottom: 10px; box-shadow: 2px 2px 0 var(--ink); }
+    .p2-hero h1 { margin: 0 0 10px; font-size: 28px; font-weight: 950; letter-spacing: -1px; line-height: 1.25; }
+    .p2-hero p { margin: 0; font-size: 14px; line-height: 1.7; color: var(--ink); }
+    .p2-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .p2-card { border: 2px solid var(--ink); background: #fffdf5; padding: 14px; box-shadow: 3px 3px 0 var(--ink); }
+    .p2-card h3 { margin: 0 0 6px; font-size: 15px; font-weight: 900; }
+    .p2-card p { margin: 0; font-size: 12px; line-height: 1.6; color: #45443d; }
+    .p2-form-panel { border: 3px solid var(--ink); background: #fffdf5; padding: 20px; box-shadow: 5px 5px 0 var(--ink); }
+    .p2-form { display: grid; gap: 12px; }
+    .p2-form label { display: grid; gap: 5px; font-size: 12px; font-weight: 850; }
+    .p2-form input, .p2-form select { padding: 10px 12px; border: 2px solid var(--ink); background: #fff; font-size: 13px; font-family: inherit; }
+    .p2-status { padding: 11px 13px; border: 2px solid var(--ink); background: var(--green); font-size: 13px; font-weight: 850; line-height: 1.5; }
+    .p2-status.is-err { background: #ffb6a0; }
+    .p2-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .p2-link-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border: 2px solid var(--ink); background: #fffdf5; color: var(--ink); font-size: 12px; font-weight: 900; text-decoration: none; box-shadow: 3px 3px 0 var(--ink); }
+    .p2-link-btn:hover { background: var(--neo-yellow); transform: translate(-1px, -1px); }
+    .p2-link-btn.is-purple { background: var(--neo-purple); }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="K-술 조합소 홈"><img src="assets/app_logo.png" alt="K-술" class="brand-logo-img"><strong id="p2-brand">조합소</strong></a>
+      <div class="header-actions" style="margin-left:auto;">
+        <select id="p2-lang-select" aria-label="Language" class="lang-select">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+          <option value="zh-CN">简体中文</option>
+          <option value="zh-TW">繁體中文</option>
+          <option value="fr">Français</option>
+        </select>
+        <a href="/" class="p2-link-btn" style="padding:5px 10px;box-shadow:2px 2px 0 var(--ink);" id="p2-home-top">← 조합소 홈</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="p2-wrap">
+    <section class="p2-hero">
+      <span class="p2-badge" id="p2-badge">🍬 달고나 100% 완성 특별 보상 · PART 2 PRE-REGISTER</span>
+      <h1 id="p2-title">K-술 2탄: K-안주 &amp; K-디저트 출시 사전 알림</h1>
+      <p id="p2-subtitle">달고나 100% 완성을 축하합니다! 한국의 술자리와 찰떡궁합을 이루는 <b>K-안주</b>와 <b>K-디저트</b> 연금술 2탄이 준비 중입니다. 출시 소식을 가장 먼저 받아보세요.</p>
+    </section>
+
+    <section class="p2-cards">
+      <article class="p2-card">
+        <h3 id="p2-c1-t">🥘 K-안주 조합</h3>
+        <p id="p2-c1-d">김치전, 떡볶이, 닭발, 번데기, 어묵탕까지 술과 함께 곁들이는 한국 대표 안주 레시피</p>
+      </article>
+      <article class="p2-card">
+        <h3 id="p2-c2-t">🍧 K-디저트 &amp; 해장</h3>
+        <p id="p2-c2-d">달고나, 붕어빵, 팥빙수, 꿀물 해장 루트까지 달콤한 K-푸드 연금술 확장팩</p>
+      </article>
+      <article class="p2-card">
+        <h3 id="p2-c3-t">🔔 무료 출시 알림</h3>
+        <p id="p2-c3-d">사전 알림을 신청하시면 2탄 오픈 당일 가장 먼저 플레이 링크를 받아보실 수 있습니다.</p>
+      </article>
+    </section>
+
+    <section class="p2-form-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <h2 style="margin:0;font-size:18px;font-weight:950;" id="p2-form-title">📩 사전 알림 신청하기</h2>
+        <span style="font-size:12px;font-weight:850;padding:3px 9px;border:1.5px solid var(--ink);background:#e0f2fe;" id="p2-count-pill">현재 0명 신청 중</span>
+      </div>
+      <form id="p2-form" class="p2-form">
+        <label>
+          <span id="p2-lbl-email">이메일 주소 (필수)</span>
+          <input type="email" name="email" placeholder="example@gmail.com" maxlength="120" required>
+        </label>
+        <div class="form-pair">
+          <label>
+            <span id="p2-lbl-nick">닉네임 (선택)</span>
+            <input type="text" name="nickname" placeholder="예: 달고나장인" maxlength="24">
+          </label>
+          <label>
+            <span id="p2-lbl-interest">기대되는 테마</span>
+            <select name="interest" id="p2-interest">
+              <option value="both">🥘 K-안주 + 🍧 K-디저트 모두</option>
+              <option value="anju">🥘 K-안주</option>
+              <option value="dessert">🍧 K-디저트</option>
+            </select>
+          </label>
+        </div>
+        <div id="p2-status" class="p2-status" hidden></div>
+        <button type="submit" class="button coral" id="p2-submit-btn" style="justify-self:start;min-height:42px;padding:10px 20px;font-size:13px;">🔔 사전 알림 신청하기</button>
+      </form>
+    </section>
+
+    <div class="p2-actions">
+      <a href="https://play.ksool.minibig.pw/" class="p2-link-btn is-purple" id="p2-play-btn">🎮 K-술 게임으로 돌아가기 ↗</a>
+      <a href="/" class="p2-link-btn" id="p2-portal-btn">📖 조합소 도감 보러가기</a>
+      <a href="https://ksool.blogspot.com/" target="_blank" rel="noopener noreferrer" class="p2-link-btn" id="p2-blog-btn">📝 공식 블로그 ↗</a>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const COPY = {
+        ko: {
+          brand:'조합소', home:'← 조합소 홈', badge:'🍬 달고나 100% 완성 특별 보상 · PART 2 PRE-REGISTER',
+          title:'K-술 2탄: K-안주 & K-디저트 출시 사전 알림',
+          subtitle:'달고나 100% 완성을 축하합니다! 한국의 술자리와 찰떡궁합을 이루는 K-안주와 K-디저트 연금술 2탄이 준비 중입니다. 출시 소식을 가장 먼저 받아보세요.',
+          c1t:'🥘 K-안주 조합', c1d:'김치전, 떡볶이, 닭발, 어묵탕까지 술과 함께 곁들이는 한국 대표 안주 레시피',
+          c2t:'🍧 K-디저트 & 해장', c2d:'달고나, 붕어빵, 팥빙수, 꿀물 해장 루트까지 달콤한 K-푸드 연금술 확장팩',
+          c3t:'🔔 무료 출시 알림', c3d:'사전 알림을 신청하시면 2탄 오픈 당일 가장 먼저 플레이 링크를 받아보실 수 있습니다.',
+          formTitle:'📩 사전 알림 신청하기', count:'현재 {n}명 신청 중',
+          email:'이메일 주소 (필수)', nick:'닉네임 (선택)', interest:'기대되는 테마',
+          both:'🥘 K-안주 + 🍧 K-디저트 모두', anju:'🥘 K-안주', dessert:'🍧 K-디저트',
+          submit:'🔔 사전 알림 신청하기', play:'🎮 K-술 게임으로 돌아가기 ↗', portal:'📖 조합소 도감 보러가기', blog:'📝 공식 블로그 ↗',
+          okNew:'✅ 2탄 사전 알림 신청이 완료되었습니다! 출시일에 가장 먼저 안내해 드릴게요.',
+          okDup:'✅ 이미 사전 알림이 등록된 이메일입니다! 관심 테마가 최신으로 업데이트되었습니다.'
+        },
+        en: {
+          brand:'Mix Club', home:'← Mix Club Home', badge:'🍬 100% DALGONA REWARD · PART 2 PRE-REGISTER',
+          title:'K-Sool Part 2: K-Anju & K-Dessert Notify',
+          subtitle:'Congrats on 100% Dalgona completion! Part 2 featuring Korean bar snacks (K-Anju) and sweet K-Desserts is in development. Be the first to know when it launches.',
+          c1t:'🥘 K-Anju Pairings', c1d:'Kimchi pancakes, tteokbokki, spicy street dishes & classic Korean drinking snacks.',
+          c2t:'🍧 K-Desserts & Hangover', c2d:'Dalgona, bungeoppang, patbingsu and sweet Korean dessert alchemy.',
+          c3t:'🔔 Launch Notification', c3d:'Leave your email to get the playable link on day one.',
+          formTitle:'📩 Get Notified at Launch', count:'{n} registered',
+          email:'Email Address (Required)', nick:'Nickname (Optional)', interest:'Favorite Theme',
+          both:'🥘 K-Anju + 🍧 K-Dessert', anju:'🥘 K-Anju', dessert:'🍧 K-Dessert',
+          submit:'🔔 Notify Me on Launch', play:'🎮 Back to K-Sool Game ↗', portal:'📖 Browse Recipe Dex', blog:'📝 Official Blog ↗',
+          okNew:'✅ You are on the Part 2 launch list! We will notify you as soon as it goes live.',
+          okDup:'✅ This email is already registered! Your preference has been updated.'
+        },
+        ja: {
+          brand:'調合所', home:'← 調合所ホーム', badge:'🍬 ダルゴナ100%達成特典 · PART 2 PRE-REGISTER',
+          title:'K-酒 第2弾：K-おつまみ & K-スイーツ事前通知',
+          subtitle:'ダルゴナ100%達成おめでとうございます！韓国のお酒と相性抜群のK-おつまみ＆K-スイーツ編を準備中です。リリース通知をいち早く受け取りましょう。',
+          c1t:'🥘 K-おつまみ調合', c1d:'キムチチヂミ、トッポッキ、おでん鍋など韓国居酒屋の定番メニュー',
+          c2t:'🍧 K-スイーツ＆酔い覚まし', c2d:'ダルゴナ、たい焼き、パッピンスなど甘いK-フード錬金術',
+          c3t:'🔔 リリース通知', c3d:'事前登録で公開当日にいち早くプレイリンクをお届けします。',
+          formTitle:'📩 事前通知を申し込む', count:'現在 {n}名 登録中',
+          email:'メールアドレス（必須）', nick:'ニックネーム（任意）', interest:'気になるテーマ',
+          both:'🥘 K-おつまみ + 🍧 K-スイーツ', anju:'🥘 K-おつまみ', dessert:'🍧 K-スイーツ',
+          submit:'🔔 事前通知に登録する', play:'🎮 ゲームに戻る ↗', portal:'📖 調合所図鑑を見る', blog:'📝 公式ブログ ↗',
+          okNew:'✅ 第2弾の事前通知登録が完了しました！公開日にご連絡いたします。',
+          okDup:'✅ すでに登録済みのメールアドレスです。設定を更新しました。'
+        },
+        'zh-CN': {
+          brand:'调酒所', home:'← 调酒所首页', badge:'🍬 碰糖100%达成奖励 · PART 2 PRE-REGISTER',
+          title:'K-酒 第2弹：K-下酒菜 & K-甜点 抢先预约',
+          subtitle:'恭喜达成碰糖100%！搭配韩国美酒的经典韩式下酒菜与甜点炼金术第2弹正在开发中，立即预约获取上线通知。',
+          c1t:'🥘 K-下酒菜配方', c1d:'泡菜饼、炒年糕、鱼饼汤等韩国酒桌经典美食组合',
+          c2t:'🍧 K-甜点与解酒', c2d:'碰糖、鲫鱼饼、红豆刨冰等甜蜜韩式甜点扩展',
+          c3t:'🔔 上线通知', c3d:'预约成功后将在上线当天第一时间收到通知。',
+          formTitle:'📩 预约上线通知', count:'已有 {n} 人预约',
+          email:'电子邮箱（必填）', nick:'昵称（选填）', interest:'期待的主题',
+          both:'🥘 K-下酒菜 + 🍧 K-甜点', anju:'🥘 K-下酒菜', dessert:'🍧 K-甜点',
+          submit:'🔔 立即预约通知', play:'🎮 返回游戏 ↗', portal:'📖 查看调酒图鉴', blog:'📝 官方博客 ↗',
+          okNew:'✅ 第2弹上线通知预约成功！上线后将第一时间通知您。',
+          okDup:'✅ 该邮箱已预约！已为您更新偏好设置。'
+        },
+        'zh-TW': {
+          brand:'調酒所', home:'← 調酒所首頁', badge:'🍬 椪糖100%達成獎勵 · PART 2 PRE-REGISTER',
+          title:'K-酒 第2彈：K-下酒菜 & K-甜點 搶先預約',
+          subtitle:'恭喜達成椪糖100%！搭配韓國美酒的經典韓式下酒菜與甜點鍊金術第2彈正在開發中，立即預約獲取上線通知。',
+          c1t:'🥘 K-下酒菜配方', c1d:'泡菜煎餅、辣炒年糕、魚板湯等韓國酒桌經典美食組合',
+          c2t:'🍧 K-甜點與解酒', c2d:'椪糖、鯛魚燒、紅豆刨冰等甜蜜韓式甜點擴充',
+          c3t:'🔔 上線通知', c3d:'預約成功後將在上線當天第一時間收到通知。',
+          formTitle:'📩 預約上線通知', count:'已有 {n} 人預約',
+          email:'電子信箱（必填）', nick:'暱稱（選填）', interest:'期待的主題',
+          both:'🥘 K-下酒菜 + 🍧 K-甜點', anju:'🥘 K-下酒菜', dessert:'🍧 K-甜點',
+          submit:'🔔 立即預約通知', play:'🎮 返回遊戲 ↗', portal:'📖 查看調酒圖鑑', blog:'📝 官方部落格 ↗',
+          okNew:'✅ 第2彈上線通知預約成功！上線後將第一時間通知您。',
+          okDup:'✅ 此信箱已預約！已為您更新偏好設定。'
+        },
+        fr: {
+          brand:'Mix Club', home:'← Accueil Mix Club', badge:'🍬 RÉCOMPENSE DALGONA 100% · PART 2',
+          title:'K-Sool Partie 2 : K-Anju & K-Desserts',
+          subtitle:'Félicitations pour les 100% Dalgona ! La partie 2 dédiée aux plats coréens (K-Anju) et desserts arrive bientôt.',
+          c1t:'🥘 Accords K-Anju', c1d:'Galettes au kimchi, tteokbokki et classiques des tavernes coréennes.',
+          c2t:'🍧 K-Desserts', c2d:'Dalgona, bungeoppang, patbingsu et douceurs coréennes.',
+          c3t:'🔔 Alerte de sortie', c3d:'Inscrivez-vous pour recevoir le lien dès le lancement.',
+          formTitle:'📩 Être prévenu au lancement', count:'{n} inscrits',
+          email:'Adresse e-mail (Requis)', nick:'Pseudo (Optionnel)', interest:'Thème préféré',
+          both:'🥘 K-Anju + 🍧 K-Desserts', anju:'🥘 K-Anju', dessert:'🍧 K-Desserts',
+          submit:'🔔 M’avertir à la sortie', play:'🎮 Retour au jeu ↗', portal:'📖 Voir les recettes', blog:'📝 Blog officiel ↗',
+          okNew:'✅ Inscription confirmée pour la Partie 2 !',
+          okDup:'✅ E-mail déjà inscrit ! Préférences mises à jour.'
+        }
+      };
+      const SUPPORTED = ['ko','en','ja','zh-CN','zh-TW','fr'];
+      const qp = new URLSearchParams(location.search).get('lang');
+      let lang = SUPPORTED.includes(qp) ? qp : (localStorage.getItem('ksool_lang_v1') || (navigator.language.startsWith('ko') ? 'ko' : navigator.language.startsWith('ja') ? 'ja' : navigator.language.startsWith('fr') ? 'fr' : 'en'));
+      if (!SUPPORTED.includes(lang)) lang = 'en';
+      let totalCount = 0;
+
+      function applyLang() {
+        const t = COPY[lang] || COPY.en;
+        document.documentElement.lang = lang;
+        document.getElementById('p2-lang-select').value = lang;
+        document.getElementById('p2-brand').textContent = t.brand;
+        document.getElementById('p2-home-top').textContent = t.home;
+        document.getElementById('p2-badge').textContent = t.badge;
+        document.getElementById('p2-title').textContent = t.title;
+        document.getElementById('p2-subtitle').textContent = t.subtitle;
+        document.getElementById('p2-c1-t').textContent = t.c1t;
+        document.getElementById('p2-c1-d').textContent = t.c1d;
+        document.getElementById('p2-c2-t').textContent = t.c2t;
+        document.getElementById('p2-c2-d').textContent = t.c2d;
+        document.getElementById('p2-c3-t').textContent = t.c3t;
+        document.getElementById('p2-c3-d').textContent = t.c3d;
+        document.getElementById('p2-form-title').textContent = t.formTitle;
+        document.getElementById('p2-count-pill').textContent = t.count.replace('{n}', String(totalCount));
+        document.getElementById('p2-lbl-email').textContent = t.email;
+        document.getElementById('p2-lbl-nick').textContent = t.nick;
+        document.getElementById('p2-lbl-interest').textContent = t.interest;
+        const sel = document.getElementById('p2-interest');
+        sel.options[0].textContent = t.both;
+        sel.options[1].textContent = t.anju;
+        sel.options[2].textContent = t.dessert;
+        document.getElementById('p2-submit-btn').textContent = t.submit;
+        document.getElementById('p2-play-btn').textContent = t.play;
+        document.getElementById('p2-portal-btn').textContent = t.portal;
+        document.getElementById('p2-blog-btn').textContent = t.blog;
+      }
+
+      document.getElementById('p2-lang-select').onchange = (e) => {
+        if (SUPPORTED.includes(e.target.value)) {
+          lang = e.target.value;
+          try { localStorage.setItem('ksool_lang_v1', lang); } catch (_) {}
+          applyLang();
+        }
+      };
+
+      fetch('/api/part2-notify/stats')
+        .then(r => r.json())
+        .then(d => { if (typeof d?.totalCount === 'number') { totalCount = d.totalCount; applyLang(); } })
+        .catch(() => {});
+
+      applyLang();
+
+      document.getElementById('p2-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const f = new FormData(form);
+        const btn = document.getElementById('p2-submit-btn');
+        const statusEl = document.getElementById('p2-status');
+        btn.disabled = true;
+        statusEl.hidden = true;
+        statusEl.classList.remove('is-err');
+        try {
+          const res = await fetch('/api/part2-notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: String(f.get('email') || '').trim(),
+              nickname: String(f.get('nickname') || '').trim(),
+              interest: String(f.get('interest') || 'both'),
+              lang
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || '오류가 발생했습니다.');
+          if (typeof data.totalCount === 'number') totalCount = data.totalCount;
+          applyLang();
+          const t = COPY[lang] || COPY.en;
+          statusEl.textContent = data.alreadyRegistered ? t.okDup : t.okNew;
+          statusEl.hidden = false;
+        } catch (err) {
+          statusEl.textContent = err.message || '신청에 실패했습니다.';
+          statusEl.classList.add('is-err');
+          statusEl.hidden = false;
+        } finally {
+          btn.disabled = false;
+        }
+      };
+    })();
+  </script>
+</body>
+</html>

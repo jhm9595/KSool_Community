@@ -128,6 +128,30 @@ test('admin RBAC, prompt generator, and game-rule validation work end-to-end', a
     const frAff = await (await call(env, '/api/affiliates?lang=fr')).json();
     assert.ok(frAff.partners.some(p => p.id === 'amazon-fr'));
     assert.ok(!frAff.partners.some(p => p.id === 'coupang'));
+    const amazonFr = frAff.partners.find(p => p.id === 'amazon-fr');
+    assert.ok(!amazonFr.url.includes('ksool-20') && !amazonFr.url.includes('ksool-22'));
+
+    const enAff = await (await call(env, '/api/affiliates?lang=en')).json();
+    const amazonUs = enAff.partners.find(p => p.id === 'amazon-us');
+    assert.equal(amazonUs.url, 'https://www.amazon.com/gp/bestsellers/?tag=ksool-20');
+    assert.equal(amazonUs.disclosure.en, 'As an Amazon Associate I earn from qualifying purchases.');
+
+    const jaAff = await (await call(env, '/api/affiliates?lang=ja')).json();
+    const amazonJp = jaAff.partners.find(p => p.id === 'amazon-jp');
+    assert.equal(amazonJp.url, 'https://www.amazon.co.jp/gp/bestsellers/?tag=ksool-22');
+    assert.equal(amazonJp.disclosure.ja, 'Amazonのアソシエイトとして、適格販売により収入を得ています。');
+
+    const p2Res1 = await call(env, '/api/part2-notify', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'Dalgona@example.com', nickname: '달고나', interest: 'both', lang: 'ko' })
+    });
+    assert.equal(p2Res1.status, 201);
+    const p2Body1 = await p2Res1.json();
+    assert.equal(p2Body1.alreadyRegistered, false);
+    assert.equal(p2Body1.totalCount, 1);
+
+    const p2Stats = await (await call(env, '/api/part2-notify/stats')).json();
+    assert.equal(p2Stats.totalCount, 1);
 
     const toggleOff = await call(env, '/api/admin/affiliates/coupang', {
       method: 'PUT',

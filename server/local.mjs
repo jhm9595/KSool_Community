@@ -35,7 +35,8 @@ const server=createServer(async(req,res)=>{
       res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));return;
     }
     if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}
-    const path=resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
+    const cleanPathname = decodeURIComponent(url.pathname === '/' ? '/index.html' : (url.pathname === '/part2-notify' || url.pathname === '/part2-notify/') ? '/part2-notify.html' : url.pathname);
+    const path=resolve(root,'.'+cleanPathname);
     if(!path.startsWith(root+sep)){res.writeHead(403);res.end();return;}
     const info=await stat(path);if(!info.isFile()){res.writeHead(404);res.end();return;}
     res.writeHead(200,{

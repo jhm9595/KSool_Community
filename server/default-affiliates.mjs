@@ -51,7 +51,7 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
     order: 30,
     locales: ['en'],
     icon: '📦',
-    url: 'https://www.amazon.com/s?k=korean+soju+glass+barware',
+    url: 'https://www.amazon.com/gp/bestsellers/?tag=ksool-20',
     name: {
       en: 'Amazon US',
       ko: '아마존 US'
@@ -61,11 +61,11 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
       ko: '제휴'
     },
     desc: {
-      en: 'Soju glasses, cocktail shakers & Korean home-bar essentials',
-      ko: '소주잔, 칵테일 쉐이커 및 홈바 용품'
+      en: 'Amazon Bestsellers · Home-bar glassware, ice makers & cocktail essentials',
+      ko: '아마존 베스트셀러 · 홈바 글라스·제빙기·칵테일 용품'
     },
     disclosure: {
-      en: 'As an Amazon Associate, this site earns from qualifying purchases.'
+      en: 'As an Amazon Associate I earn from qualifying purchases.'
     }
   },
   {
@@ -74,7 +74,7 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
     order: 40,
     locales: ['ja'],
     icon: '📦',
-    url: 'https://www.amazon.co.jp/s?k=%E9%9F%93%E5%9B%BD+%E3%82%B0%E3%83%A9%E3%82%B9+%E3%82%AB%E3%82%AF%E3%83%86%E3%83%AB',
+    url: 'https://www.amazon.co.jp/gp/bestsellers/?tag=ksool-22',
     name: {
       ja: 'Amazon.co.jp',
       en: 'Amazon JP'
@@ -84,11 +84,11 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
       en: 'Associate'
     },
     desc: {
-      ja: '韓国グラス・カクテルシェイカー・宅飲みおつまみアイテム',
-      en: 'Korean glassware, cocktail shakers & home-bar picks'
+      ja: 'Amazon 売れ筋ランキング · 宅飲みグラス・シェイカー・おつまみアイテム',
+      en: 'Amazon JP Bestsellers · Glassware, shakers & home-bar picks'
     },
     disclosure: {
-      ja: 'Amazonのアソシエイトとして、当サイトは適格販売により収入を得ています。'
+      ja: 'Amazonのアソシエイトとして、適格販売により収入を得ています。'
     }
   },
   {
@@ -173,28 +173,28 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
     id: 'amazon-global',
     enabled: true,
     order: 80,
-    locales: ['en', 'zh-CN', 'zh-TW'],
+    locales: ['zh-CN', 'zh-TW'],
     icon: '🌐',
-    url: 'https://www.amazon.com/s?k=korean+drinking+glass+cocktail+kit',
+    url: 'https://www.amazon.com/gp/bestsellers/?tag=ksool-20',
     name: {
       en: 'Amazon Global',
       'zh-CN': '亚马逊海外购',
       'zh-TW': 'Amazon 全球購'
     },
     badge: {
-      en: 'Global',
+      en: 'Associate',
       'zh-CN': '全球购',
       'zh-TW': '全球購'
     },
     desc: {
-      en: 'International shipping for Korean bar tools and cocktail kits',
-      'zh-CN': '支持跨境直邮的韩式调酒套装与特色酒具推荐',
-      'zh-TW': '支援跨境直郵的韓式調酒套裝與特色酒具推薦'
+      en: 'Amazon Bestsellers & international shipping for home-bar essentials',
+      'zh-CN': 'Amazon 畅销榜单 · 支持跨境直邮的调酒套装与特色酒具',
+      'zh-TW': 'Amazon 熱銷榜單 · 支援跨境直郵的調酒套裝與特色酒具'
     },
     disclosure: {
-      en: 'As an Amazon Associate, this site earns from qualifying purchases.',
-      'zh-CN': '作为亚马逊联盟成员，本站可通过符合条件的购买获得推广佣金。',
-      'zh-TW': '作為 Amazon 聯盟成員，本站可透過符合條件的購買獲得推廣佣金。'
+      en: 'As an Amazon Associate I earn from qualifying purchases.',
+      'zh-CN': 'As an Amazon Associate I earn from qualifying purchases.',
+      'zh-TW': 'As an Amazon Associate I earn from qualifying purchases.'
     }
   }
 ];
