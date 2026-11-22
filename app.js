@@ -59,7 +59,7 @@
   let portalLang = detectInitialLang();
   const PORTAL_UI = {
     ko: {
-      brandTitle:'조합소', gameBtn:'K-술', googleSync:'G Google 연동', logout:'로그아웃', loggedOut:'로그아웃되었습니다.', resynced:'Google 계정과 진행도를 다시 동기화했어요.',
+      brandTitle:'조합소', gameBtn:'K-술', googleSync:'G Google 연동', loginBtn:'👤 로그인', loginModalTitle:'로그인 · 진행도 연동', loginModalDesc:'게임과 동일한 계정으로 로그인하면 해금 도감과 힌트 진행도가 자동 동기화됩니다.', googleBtn:'Google로 계속하기', moreProvidersNote:'추후 다른 로그인 수단이 추가되면 이곳에 함께 표시됩니다.', logout:'로그아웃', loggedOut:'로그아웃되었습니다.', resynced:'Google 계정과 진행도를 다시 동기화했어요.',
       recipes:'조합', tips:'커뮤니티', suggestions:'추천', rankings:'랭킹', updates:'업데이트', blog:'블로그 ↗',
       heroTitle:'조합, 한눈에.', search:'조합 · 재료 검색', write:'글쓰기', proposeCombo:'조합 제안',
       searchTips:'게시글 · 작성자 검색', searchSuggestions:'재료로 추천 조합 검색',
@@ -90,7 +90,7 @@
       stagesQuiz:{ 1:'기초 조합 (No.01~18)', 2:'소주·맥주 조합 (No.19~37)', 3:'전통주 조합 (No.38~55)', 4:'비율 조합 (No.56~67)', 5:'황금비율 조합 (No.68~77)', 6:'브랜드·특산 조합 (No.78~90)' }
     },
     en: {
-      brandTitle:'Mix Club', gameBtn:'K-Sool', googleSync:'G Google Sync', logout:'Log out', loggedOut:'Signed out.', resynced:'Synced progress with Google.',
+      brandTitle:'Mix Club', gameBtn:'K-Sool', googleSync:'G Google Sync', loginBtn:'👤 Sign in', loginModalTitle:'Sign In & Sync', loginModalDesc:'Sign in with your game account to sync unlocked recipes and hint progress.', googleBtn:'Continue with Google', moreProvidersNote:'Additional sign-in providers will appear here when added.', logout:'Log out', loggedOut:'Signed out.', resynced:'Synced progress with Google.',
       recipes:'Recipes', tips:'Community', suggestions:'Combos', rankings:'Rankings', updates:'Updates', blog:'Blog ↗',
       heroTitle:'K-Drinks at a Glance.', search:'Search recipes or ingredients', write:'Post', proposeCombo:'Suggest Combo',
       searchTips:'Search posts or authors', searchSuggestions:'Search combos by ingredient',
@@ -121,7 +121,7 @@
       stagesQuiz:{ 1:'Base Mixes (No.01~18)', 2:'Soju & Beer (No.19~37)', 3:'Traditional Brews (No.38~55)', 4:'Ratio Mixes (No.56~67)', 5:'Golden Ratios (No.68~77)', 6:'Brands & Specialties (No.78~90)' }
     },
     ja: {
-      brandTitle:'調合所', gameBtn:'K-酒', googleSync:'G Google連携', logout:'ログアウト', loggedOut:'ログアウトしました。', resynced:'Googleアカウントと進行度を同期しました。',
+      brandTitle:'調合所', gameBtn:'K-酒', googleSync:'G Google連携', loginBtn:'👤 ログイン', loginModalTitle:'ログイン・進捗連携', loginModalDesc:'ゲームと同じアカウントでログインすると図鑑とヒントの進捗が自動同期されます。', googleBtn:'Googleで続ける', moreProvidersNote:'今後ほかのログイン方法が追加されるとここに表示されます。', logout:'ログアウト', loggedOut:'ログアウトしました。', resynced:'Googleアカウントと進行度を同期しました。',
       recipes:'レシピ', tips:'コミュニティ', suggestions:'おすすめ', rankings:'ランキング', updates:'お知らせ', blog:'ブログ ↗',
       heroTitle:'韓国お酒レシピ一覧', search:'レシピ・材料を検索', write:'投稿', proposeCombo:'調合を提案',
       searchTips:'投稿・投稿者を検索', searchSuggestions:'材料でおすすめを検索',
@@ -152,7 +152,7 @@
       stagesQuiz:{ 1:'基礎調合 (No.01~18)', 2:'焼酎・ビール (No.19~37)', 3:'伝統酒 (No.38~55)', 4:'比率調合 (No.56~67)', 5:'黄金比率 (No.68~77)', 6:'ブランド・特産 (No.78~90)' }
     },
     'zh-CN': {
-      brandTitle:'调酒所', gameBtn:'K-酒', googleSync:'G 绑定Google', logout:'退出', loggedOut:'已退出登录。', resynced:'已重新同步 Google 进度。',
+      brandTitle:'调酒所', gameBtn:'K-酒', googleSync:'G 绑定Google', loginBtn:'👤 登录', loginModalTitle:'登录与进度同步', loginModalDesc:'使用与游戏相同的账号登录，即可自动同步图鉴与提示进度。', googleBtn:'使用 Google 继续', moreProvidersNote:'后续新增的其他登录方式也将在此展示。', logout:'退出', loggedOut:'已退出登录。', resynced:'已重新同步 Google 进度。',
       recipes:'配方', tips:'社区', suggestions:'推荐', rankings:'排行榜', updates:'更新公告', blog:'博客 ↗',
       heroTitle:'韩国调酒配方一览', search:'搜索配方或材料', write:'发帖', proposeCombo:'推荐组合',
       searchTips:'搜索帖子或作者', searchSuggestions:'按材料搜索推荐组合',
@@ -183,7 +183,7 @@
       stagesQuiz:{ 1:'基础组合 (No.01~18)', 2:'烧酒·啤酒 (No.19~37)', 3:'传统酒 (No.38~55)', 4:'比例调酒 (No.56~67)', 5:'黄金比例 (No.68~77)', 6:'品牌·特产 (No.78~90)' }
     },
     'zh-TW': {
-      brandTitle:'調酒所', gameBtn:'K-酒', googleSync:'G 綁定Google', logout:'登出', loggedOut:'已登出。', resynced:'已重新同步 Google 進度。',
+      brandTitle:'調酒所', gameBtn:'K-酒', googleSync:'G 綁定Google', loginBtn:'👤 登入', loginModalTitle:'登入與進度同步', loginModalDesc:'使用與遊戲相同的帳號登入，即可自動同步圖鑑與提示進度。', googleBtn:'使用 Google 繼續', moreProvidersNote:'後續新增的其他登入方式也將在此顯示。', logout:'登出', loggedOut:'已登出。', resynced:'已重新同步 Google 進度。',
       recipes:'配方', tips:'社群', suggestions:'推薦', rankings:'排行榜', updates:'更新公告', blog:'部落格 ↗',
       heroTitle:'韓國調酒配方一覽', search:'搜尋配方或材料', write:'發文', proposeCombo:'推薦組合',
       searchTips:'搜尋貼文或作者', searchSuggestions:'依材料搜尋推薦組合',
@@ -1084,6 +1084,42 @@
       try { await adminApi(`/admin/roles/${encodeURIComponent(b.dataset.adminDeleteRole)}`, { method: 'DELETE' }); toast('권한 회수 완료'); await loadAdminData(); } catch (e) { toast(e.message); }
     });
   }
+  const AUTH_PROVIDERS = [
+    {
+      id: 'google',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.8-5H1.2v3.1C3.2 21.3 7.3 24 12 24z"/><path fill="#FBBC05" d="M5.2 14.2c-.2-.7-.4-1.4-.4-2.2s.1-1.5.4-2.2V6.7H1.2C.4 8.3 0 10.1 0 12s.4 3.7 1.2 5.3l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4C17.9 1.2 15.2 0 12 0 7.3 0 3.2 2.7 1.2 6.7l4 3.1c1-2.9 3.7-5 6.8-5z"/></svg>',
+      labelKey: 'googleBtn',
+      cls: 'is-google'
+    }
+  ];
+  function openAuthDialog() {
+    const dialog = $('#auth-dialog');
+    const body = $('#auth-dialog-body');
+    if (!dialog || !body || !sbClient) return;
+    body.innerHTML = `
+      <h2 style="margin:0 0 8px;font-size:21px;font-weight:950;">${esc(pt('loginModalTitle'))}</h2>
+      <p style="margin:0 0 12px;font-size:12px;line-height:1.6;color:var(--muted);">${esc(pt('loginModalDesc'))}</p>
+      <div class="auth-provider-list">
+        ${AUTH_PROVIDERS.map(p => `<button type="button" class="auth-provider-btn ${esc(p.cls)}" data-auth-provider="${esc(p.id)}">${p.icon}<span>${esc(pt(p.labelKey))}</span></button>`).join('')}
+      </div>
+      <p style="margin:10px 0 0;font-size:11px;color:var(--muted);text-align:center;">${esc(pt('moreProvidersNote'))}</p>
+    `;
+    $$('[data-auth-provider]', body).forEach(b => {
+      b.onclick = async () => {
+        b.disabled = true;
+        try {
+          const { error } = await sbClient.auth.signInWithOAuth({
+            provider: b.dataset.authProvider,
+            options: { redirectTo: getSafeOAuthRedirectUrl() }
+          });
+          if (error) toast(`${b.dataset.authProvider} OAuth error: ${error.message}`);
+        } finally {
+          b.disabled = false;
+        }
+      };
+    });
+    openDialog(dialog);
+  }
   function renderHeaderAuthButton() {
     const group = $('#header-auth-group');
     const btn = $('#header-auth-btn');
@@ -1128,12 +1164,9 @@
     } else {
       if (group) group.classList.remove('is-signed-in');
       btn.classList.remove('is-signed-in');
-      btn.textContent = pt('googleSync');
+      btn.textContent = pt('loginBtn');
       if (logoutBtn) logoutBtn.hidden = true;
-      btn.onclick = async () => {
-        const { error } = await sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getSafeOAuthRedirectUrl() } });
-        if (error) toast(`Google OAuth error: ${error.message}`);
-      };
+      btn.onclick = () => openAuthDialog();
     }
   }
   function progressSyncMarkup() {

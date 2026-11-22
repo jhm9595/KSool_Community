@@ -275,4 +275,8 @@ body.game-dock-open .recipe-grid.community-view { display:block; }
 .detail-plus{font-weight:900;font-size:14px;color:var(--muted)}
 .button.purple{background:var(--neo-purple)!important;color:var(--ink)!important;border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);font-weight:900}
 .button.sky{background:#bae6fd!important;color:var(--ink)!important;border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);font-weight:850}
+.auth-provider-list{display:flex;flex-direction:column;gap:10px;margin:14px 0 8px}
+.auth-provider-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px 14px;border:2px solid var(--ink);background:#fffdf5;color:var(--ink);font-size:13px;font-weight:900;cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:transform .1s ease,background .12s ease}
+.auth-provider-btn:hover{background:var(--neo-yellow);transform:translate(-1px,-1px)}
+.auth-provider-btn.is-google{background:#ffffff}
 @media(max-width:650px){.admin-update-row{grid-template-columns:1fr}.brand-logo-img{height:30px;padding:2px 5px}.brand strong{font-size:20px!important}}

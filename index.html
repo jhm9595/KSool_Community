@@ -59,7 +59,7 @@
           <option value="zh-TW">繁體中文</option>
         </select>
         <div class="auth-group" id="header-auth-group">
-          <button type="button" id="header-auth-btn" class="auth-pill" aria-label="Google 계정 연동">G 연동</button>
+          <button type="button" id="header-auth-btn" class="auth-pill" aria-label="로그인 및 계정 연동">👤 로그인</button>
           <button type="button" id="header-logout-btn" class="auth-logout-btn" title="로그아웃" aria-label="로그아웃" hidden>✕</button>
         </div>
         <button class="game-link" id="toggle-game-dock" aria-controls="game-dock" aria-expanded="false"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg><span id="game-dock-btn-label">K-술</span></button>
@@ -82,6 +82,7 @@
   </aside>
   <dialog id="recipe-dialog" class="recipe-dialog"><button class="dialog-close" aria-label="공략 닫기">✕</button><div id="recipe-detail"></div></dialog>
   <dialog id="compose-dialog" class="compose-dialog"><button class="dialog-close" aria-label="글쓰기 닫기">✕</button><h2>글쓰기</h2><form id="compose-form"><div class="form-pair"><label>글 종류<select name="kind" id="post-kind"><option value="tip">플레이 팁</option><option value="experiment">새 조합 제안</option></select></label><label>닉네임<input name="author" maxlength="16" placeholder="예: 얼음한조각" required></label></div><label>제목<input name="title" maxlength="70" placeholder="한 줄 제목" required></label><label>연결할 공식 조합<select name="recipe" id="post-recipe"><option value="">선택하지 않음</option></select></label><div id="experiment-fields" hidden><label>재료와 비율 <small>2종류 이상 선택하세요.</small></label><div id="composition-rows"></div><button id="add-composition-row" type="button" class="add-row">＋ 재료 추가</button></div><label>내용<textarea name="body" maxlength="1500" rows="5" placeholder="핵심만 짧게" required></textarea></label><div id="compose-error" role="alert"></div><button type="submit" class="button coral submit-button">저장</button></form></dialog>
+  <dialog id="auth-dialog" class="compose-dialog" style="max-width:390px;"><button class="dialog-close" aria-label="닫기">✕</button><div id="auth-dialog-body"></div></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
