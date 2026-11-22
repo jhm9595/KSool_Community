@@ -426,9 +426,32 @@ dialog.is-closing {
   animation: neoDialogOut .18s cubic-bezier(.4,0,.2,1) forwards;
 }
 
-.stage-accordion[open] > .stage-body,
 .hint-details[open] > p {
   animation: neoCollapseIn .22s cubic-bezier(.22,1,.36,1);
+}
+
+.stage-accordion {
+  overflow: hidden;
+  transition: box-shadow .2s ease;
+}
+.stage-accordion[open]:not(.is-closing) {
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.stage-accordion.is-closing summary {
+  background: #faf7ed;
+  border-bottom-color: transparent;
+}
+.stage-accordion summary::after {
+  content: '▾';
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--ink);
+  margin-left: 4px;
+  transition: transform .24s cubic-bezier(.22,1,.36,1);
+  display: inline-block;
+}
+.stage-accordion[open]:not(.is-closing) summary::after {
+  transform: rotate(180deg);
 }
 
 .header nav button,

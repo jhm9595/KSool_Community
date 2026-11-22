@@ -1389,7 +1389,58 @@
     grid.innerHTML = markup || `<div class="empty-state"><span>✧</span><h3>${esc(activeTab==='saved' ? pt('emptySavedTitle') : pt('emptySearchTitle'))}</h3><p>${esc(activeTab==='saved' ? pt('emptySavedDesc') : pt('emptySearchDesc'))}</p></div>`;
     bindCardActions(grid);
     $$('details[data-section-id]', grid).forEach(d => {
-      d.addEventListener('toggle', () => sectionOpenState.set(d.dataset.sectionId, d.open));
+      const summary = $('summary', d);
+      const body = $('.stage-body', d);
+      if (!summary || !body || typeof body.animate !== 'function') {
+        d.addEventListener('toggle', () => sectionOpenState.set(d.dataset.sectionId, d.open));
+        return;
+      }
+      summary.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (d._anim) d._anim.cancel();
+        const pad = window.innerWidth <= 960 ? '10px' : '12px';
+        if (d.open && !d.classList.contains('is-closing')) {
+          sectionOpenState.set(d.dataset.sectionId, false);
+          d.classList.add('is-closing');
+          const startH = body.offsetHeight;
+          body.style.overflow = 'hidden';
+          const anim = body.animate([
+            { height: `${startH}px`, paddingTop: pad, paddingBottom: pad, opacity: 1 },
+            { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 }
+          ], { duration: 240, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+          d._anim = anim;
+          anim.onfinish = () => {
+            d.open = false;
+            d.classList.remove('is-closing');
+            body.style.overflow = '';
+            d._anim = null;
+          };
+          anim.oncancel = () => {
+            d.classList.remove('is-closing');
+            body.style.overflow = '';
+            d._anim = null;
+          };
+        } else {
+          sectionOpenState.set(d.dataset.sectionId, true);
+          d.classList.remove('is-closing');
+          d.open = true;
+          const endH = body.offsetHeight;
+          body.style.overflow = 'hidden';
+          const anim = body.animate([
+            { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 },
+            { height: `${endH}px`, paddingTop: pad, paddingBottom: pad, opacity: 1 }
+          ], { duration: 260, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+          d._anim = anim;
+          anim.onfinish = () => {
+            body.style.overflow = '';
+            d._anim = null;
+          };
+          anim.oncancel = () => {
+            body.style.overflow = '';
+            d._anim = null;
+          };
+        }
+      });
     });
   }
   function renderCommunityGridOnly(root) {
