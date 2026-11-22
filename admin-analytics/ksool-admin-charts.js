@@ -179,23 +179,48 @@ class KSoolAdminCharts extends HTMLElement {
       showSite ? `<span><i class="dot" style="background:#16a34a"></i>커뮤니티 (ksool)</span>` : '',
     ].filter(Boolean).join('');
 
+    const guideLines = series.map((d, i) => {
+      const x = xFor(i).toFixed(1);
+      return `<line class="hover-vline" data-vline="${i}" x1="${x}" y1="${padT}" x2="${x}" y2="${padT + plotH}" stroke="#191919" stroke-width="1.5" stroke-dasharray="3 2" opacity="0"/>`;
+    }).join('');
+
     const dots = series.map((d, i) => [
-      showGame ? `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(d.gameUsers || 0).toFixed(1)}" r="3.5" fill="#2563eb" stroke="#191919" stroke-width="1"><title>${esc(d.date)} 게임: ${d.gameUsers}명</title></circle>` : '',
-      showSite ? `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(d.siteUsers || 0).toFixed(1)}" r="3.5" fill="#16a34a" stroke="#191919" stroke-width="1"><title>${esc(d.date)} 사이트: ${d.siteUsers}명</title></circle>` : '',
+      showGame ? `<circle class="chart-dot" data-dot-idx="${i}" cx="${xFor(i).toFixed(1)}" cy="${yFor(d.gameUsers || 0).toFixed(1)}" r="3.8" fill="#2563eb" stroke="#191919" stroke-width="1.2"/>` : '',
+      showSite ? `<circle class="chart-dot" data-dot-idx="${i}" cx="${xFor(i).toFixed(1)}" cy="${yFor(d.siteUsers || 0).toFixed(1)}" r="3.8" fill="#191919" style="fill:#16a34a" stroke="#191919" stroke-width="1.2"/>` : '',
     ].join('')).join('');
+
+    const hitCols = series.map((d, i) => {
+      const prevX = i === 0 ? padL : (xFor(i - 1) + xFor(i)) / 2;
+      const nextX = i === series.length - 1 ? w - padR : (xFor(i) + xFor(i + 1)) / 2;
+      const colW = Math.max(8, nextX - prevX);
+      const prevDay = i > 0 ? series[i - 1] : null;
+      const g = Number(d.gameUsers || 0);
+      const s = Number(d.siteUsers || 0);
+      const tot = (showGame ? g : 0) + (showSite ? s : 0);
+      const prevTot = prevDay ? ((showGame ? Number(prevDay.gameUsers || 0) : 0) + (showSite ? Number(prevDay.siteUsers || 0) : 0)) : null;
+      const diff = prevTot !== null ? tot - prevTot : null;
+      return `<rect class="hover-col" data-chart-idx="${i}" data-date="${esc(d.date)}" data-game="${g}" data-site="${s}" data-tot="${tot}" data-diff="${diff !== null ? diff : ''}" data-x-pct="${((xFor(i) / w) * 100).toFixed(2)}" x="${prevX.toFixed(1)}" y="${padT}" width="${colW.toFixed(1)}" height="${plotH + padB}" fill="transparent"/>`;
+    }).join('');
+
+    this._lastSeriesMeta = { showGame, showSite };
 
     return `
       <div class="legend-row" style="justify-content:space-between;align-items:center;">
         <div style="display:flex;gap:14px;flex-wrap:wrap;">${legendItems}</div>
         <span class="muted" style="font-size:11px;">조회: 최근 ${rangeDays}일 · 실제 데이터: ${esc(firstDate)} ~ ${esc(lastDate)} (${series.length}일)</span>
       </div>
-      <svg viewBox="0 0 ${w} ${h}" class="line-svg" role="img" aria-label="일별 사이트 vs 게임 방문자 추이">
-        ${ticks}
-        ${xLabels}
-        ${showGame ? `<path d="${pathFor('gameUsers')}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/>` : ''}
-        ${showSite ? `<path d="${pathFor('siteUsers')}" fill="none" stroke="#16a34a" stroke-width="3" stroke-linejoin="round"/>` : ''}
-        ${dots}
-      </svg>
+      <div class="chart-wrap" id="daily-chart-wrap">
+        <svg viewBox="0 0 ${w} ${h}" class="line-svg" role="img" aria-label="일별 사이트 vs 게임 방문자 추이">
+          ${ticks}
+          ${xLabels}
+          ${guideLines}
+          ${showGame ? `<path d="${pathFor('gameUsers')}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/>` : ''}
+          ${showSite ? `<path d="${pathFor('siteUsers')}" fill="none" stroke="#16a34a" stroke-width="3" stroke-linejoin="round"/>` : ''}
+          ${dots}
+          ${hitCols}
+        </svg>
+        <div id="line-chart-tooltip" class="chart-tooltip" hidden></div>
+      </div>
     `;
   }
 
@@ -283,7 +308,19 @@ class KSoolAdminCharts extends HTMLElement {
         .grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; }
         .legend-row { display:flex; gap:14px; font-size:11px; font-weight:800; margin-bottom:6px; flex-wrap:wrap; }
         .dot { display:inline-block; width:10px; height:10px; border:1px solid #191919; margin-right:5px; vertical-align:middle; }
+        .chart-wrap { position:relative; }
         .line-svg { width:100%; height:auto; display:block; }
+        .hover-col { cursor:crosshair; }
+        .chart-dot { transition:r .15s ease, stroke-width .15s ease; pointer-events:none; }
+        .chart-dot.is-hover { r:6px; stroke-width:2px; }
+        .hover-vline { transition:opacity .15s ease; pointer-events:none; }
+        .hover-vline.is-hover { opacity:0.65; }
+        .chart-tooltip { position:absolute; top:8px; z-index:10; min-width:165px; padding:8px 10px; border:2px solid #191919; background:#fffdf5; box-shadow:3px 3px 0 #191919; font-size:11px; line-height:1.55; pointer-events:none; transform:translateX(-50%); }
+        .chart-tooltip.align-left { transform:translateX(0); }
+        .chart-tooltip.align-right { transform:translateX(-100%); }
+        .chart-tooltip-date { font-weight:950; font-size:12px; border-bottom:1.5px solid #191919; padding-bottom:3px; margin-bottom:4px; display:flex; justify-content:space-between; gap:8px; }
+        .chart-tooltip-row { display:flex; justify-content:space-between; gap:10px; font-weight:800; }
+        .chart-tooltip-foot { margin-top:4px; padding-top:3px; border-top:1px dashed #bcb5a0; display:flex; justify-content:space-between; gap:8px; font-weight:900; }
         .hbar-list { display:flex; flex-direction:column; gap:8px; }
         .hbar-row { display:flex; flex-direction:column; gap:3px; font-size:11px; }
         .hbar-head { display:flex; justify-content:space-between; gap:8px; font-weight:800; }
@@ -532,6 +569,54 @@ class KSoolAdminCharts extends HTMLElement {
     });
     const refBtn = this.shadowRoot.getElementById('ga-refresh-btn');
     if (refBtn) refBtn.onclick = () => this.loadAll(true);
+
+    const chartWrap = this.shadowRoot.getElementById('daily-chart-wrap');
+    const tooltip = this.shadowRoot.getElementById('line-chart-tooltip');
+    if (chartWrap && tooltip) {
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const { showGame = true, showSite = true } = this._lastSeriesMeta || {};
+      const clearHover = () => {
+        tooltip.hidden = true;
+        chartWrap.querySelectorAll('.chart-dot.is-hover, .hover-vline.is-hover').forEach((el) => el.classList.remove('is-hover'));
+      };
+      chartWrap.querySelectorAll('.hover-col').forEach((col) => {
+        col.addEventListener('mouseenter', () => {
+          const idx = col.dataset.chartIdx;
+          const dateStr = col.dataset.date || '';
+          const g = Number(col.dataset.game || 0);
+          const s = Number(col.dataset.site || 0);
+          const tot = Number(col.dataset.tot || 0);
+          const diffRaw = col.dataset.diff;
+          const xPct = Number(col.dataset.xPct || 50);
+          const dt = new Date(`${dateStr}T00:00:00Z`);
+          const dayLabel = !Number.isNaN(dt.getTime()) ? ` (${weekdays[dt.getUTCDay()]})` : '';
+          const gPct = tot > 0 ? Math.round((g / tot) * 1000) / 10 : 0;
+          const sPct = tot > 0 ? Math.round((s / tot) * 1000) / 10 : 0;
+          let diffHtml = '';
+          if (diffRaw !== '') {
+            const dNum = Number(diffRaw);
+            const cls = dNum > 0 ? 'up' : dNum < 0 ? 'down' : 'flat';
+            const sign = dNum > 0 ? `▲ +${dNum}명` : dNum < 0 ? `▼ ${dNum}명` : '– 변동없음';
+            diffHtml = `<span class="delta ${cls}">전일비 ${sign}</span>`;
+          }
+
+          chartWrap.querySelectorAll('.chart-dot.is-hover, .hover-vline.is-hover').forEach((el) => el.classList.remove('is-hover'));
+          chartWrap.querySelectorAll(`[data-dot-idx="${idx}"], [data-vline="${idx}"]`).forEach((el) => el.classList.add('is-hover'));
+
+          tooltip.innerHTML = `
+            <div class="chart-tooltip-date"><span>📅 ${esc(dateStr)}${dayLabel}</span></div>
+            ${showGame ? `<div class="chart-tooltip-row"><span><i class="dot" style="background:#2563eb"></i>게임</span><span>${g.toLocaleString()}명${showSite ? ` (${gPct}%)` : ''}</span></div>` : ''}
+            ${showSite ? `<div class="chart-tooltip-row"><span><i class="dot" style="background:#16a34a"></i>커뮤니티</span><span>${s.toLocaleString()}명${showGame ? ` (${sPct}%)` : ''}</span></div>` : ''}
+            <div class="chart-tooltip-foot"><span>${showGame && showSite ? `합계 ${tot.toLocaleString()}명` : `방문 ${tot.toLocaleString()}명`}</span>${diffHtml}</div>
+          `;
+          tooltip.classList.toggle('align-left', xPct < 22);
+          tooltip.classList.toggle('align-right', xPct > 78);
+          tooltip.style.left = `${xPct}%`;
+          tooltip.hidden = false;
+        });
+      });
+      chartWrap.addEventListener('mouseleave', clearHover);
+    }
   }
 }
 
