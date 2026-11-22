@@ -42,6 +42,7 @@
           <option value="zh-CN">简体中文</option>
           <option value="zh-TW">繁體中文</option>
           <option value="fr">Français</option>
+          <option value="es">Español</option>
         </select>
         <a href="/" class="p2-link-btn" style="padding:5px 10px;box-shadow:2px 2px 0 var(--ink);" id="p2-home-top">← 조합소 홈</a>
       </div>
@@ -112,7 +113,7 @@
         ko: {
           brand:'조합소', home:'← 조합소 홈', badge:'🍬 달고나 100% 완성 특별 보상 · PART 2 PRE-REGISTER',
           title:'K-술 2탄: K-안주 & K-디저트 출시 사전 알림',
-          subtitle:'달고나 100% 완성을 축하합니다! 한국의 술자리와 찰떡궁합을 이루는 K-안주와 K-디저트 연금술 2탄이 준비 중입니다. 출시 소식을 가장 먼저 받아보세요.',
+          subtitle:'🎉 호리병 달고나 100% 완성을 축하합니다! 2탄(K-안주 / K-디저트) 출시 시 가장 먼저 알림을 보내드립니다.',
           c1t:'🥘 K-안주 조합', c1d:'김치전, 떡볶이, 닭발, 어묵탕까지 술과 함께 곁들이는 한국 대표 안주 레시피',
           c2t:'🍧 K-디저트 & 해장', c2d:'달고나, 붕어빵, 팥빙수, 꿀물 해장 루트까지 달콤한 K-푸드 연금술 확장팩',
           c3t:'🔔 무료 출시 알림', c3d:'사전 알림을 신청하시면 2탄 오픈 당일 가장 먼저 플레이 링크를 받아보실 수 있습니다.',
@@ -192,11 +193,26 @@
           submit:'🔔 M’avertir à la sortie', play:'🎮 Retour au jeu ↗', portal:'📖 Voir les recettes', blog:'📝 Blog officiel ↗',
           okNew:'✅ Inscription confirmée pour la Partie 2 !',
           okDup:'✅ E-mail déjà inscrit ! Préférences mises à jour.'
+        },
+        es: {
+          brand:'Mix Club', home:'← Inicio Mix Club', badge:'🍬 RECOMPENSA DALGONA 100% · PARTE 2',
+          title:'K-Sool Parte 2: K-Anju y K-Postres',
+          subtitle:'🎉 ¡Felicidades por completar el Dalgona al 100%! Te avisaremos primero cuando salga la Parte 2 (K-Anju / K-Postres).',
+          c1t:'🥘 Combos K-Anju', c1d:'Tortitas de kimchi, tteokbokki y tapas clásicas de taberna coreana.',
+          c2t:'🍧 K-Postres', c2d:'Dalgona, bungeoppang, patbingsu y dulces tradicionales coreanos.',
+          c3t:'🔔 Aviso de lanzamiento', c3d:'Regístrate gratis para recibir el enlace el día de estreno.',
+          formTitle:'📩 Recibir aviso de lanzamiento', count:'{n} registrados',
+          email:'Correo electrónico (Obligatorio)', nick:'Apodo (Opcional)', interest:'Tema favorito',
+          both:'🥘 K-Anju + 🍧 K-Postres', anju:'🥘 K-Anju', dessert:'🍧 K-Postres',
+          submit:'🔔 Avisarme en el lanzamiento', play:'🎮 Volver al juego ↗', portal:'📖 Ver recetas', blog:'📝 Blog oficial ↗',
+          okNew:'✅ ¡Registro confirmado para la Parte 2!',
+          okDup:'✅ ¡Correo ya registrado! Preferencia actualizada.'
         }
       };
-      const SUPPORTED = ['ko','en','ja','zh-CN','zh-TW','fr'];
+      const SUPPORTED = ['ko','en','ja','zh-CN','zh-TW','fr','es'];
       const qp = new URLSearchParams(location.search).get('lang');
-      let lang = SUPPORTED.includes(qp) ? qp : (localStorage.getItem('ksool_lang_v1') || (navigator.language.startsWith('ko') ? 'ko' : navigator.language.startsWith('ja') ? 'ja' : navigator.language.startsWith('fr') ? 'fr' : 'en'));
+      const savedLang = localStorage.getItem('ksool_lang_v1') || localStorage.getItem('ksool_lang');
+      let lang = SUPPORTED.includes(qp) ? qp : (SUPPORTED.includes(savedLang) ? savedLang : (navigator.language.startsWith('ko') ? 'ko' : navigator.language.startsWith('ja') ? 'ja' : navigator.language.startsWith('fr') ? 'fr' : navigator.language.startsWith('es') ? 'es' : 'en'));
       if (!SUPPORTED.includes(lang)) lang = 'en';
       let totalCount = 0;
 
@@ -233,7 +249,7 @@
       document.getElementById('p2-lang-select').onchange = (e) => {
         if (SUPPORTED.includes(e.target.value)) {
           lang = e.target.value;
-          try { localStorage.setItem('ksool_lang_v1', lang); } catch (_) {}
+          try { localStorage.setItem('ksool_lang_v1', lang); localStorage.setItem('ksool_lang', lang); } catch (_) {}
           applyLang();
         }
       };

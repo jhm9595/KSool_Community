@@ -119,17 +119,26 @@ test('admin RBAC, prompt generator, and game-rule validation work end-to-end', a
 
     // 6. Affiliate partners declarative registry, locale filtering, and Admin ON/OFF + CRUD
     const koAff = await (await call(env, '/api/affiliates?lang=ko')).json();
-    assert.deepEqual(koAff.partners.map(p => p.id), ['coupang', 'ohouse']);
+    assert.deepEqual(koAff.partners.map(p => p.id), ['coupang', 'ohouse', 'temu']);
     assert.equal(koAff.partners[0].url, 'https://link.coupang.com/a/iSnsj2FEfk');
-    assert.equal(koAff.partners[1].url, 'https://ozip.me/u15xC78?af');
+    assert.equal(koAff.partners[1].url, 'https://ozip.me/uf9thsP?af');
+    assert.equal(koAff.partners[2].url, 'https://temu.to/k/gyzx2roqsct');
     assert.match(koAff.partners[0].disclosure.ko, /쿠팡 파트너스/);
     assert.match(koAff.partners[1].disclosure.ko, /오늘의집 큐레이터/);
 
     const frAff = await (await call(env, '/api/affiliates?lang=fr')).json();
     assert.ok(frAff.partners.some(p => p.id === 'amazon-fr'));
+    assert.ok(frAff.partners.some(p => p.id === 'ebay'));
+    assert.ok(frAff.partners.some(p => p.id === 'temu'));
     assert.ok(!frAff.partners.some(p => p.id === 'coupang'));
     const amazonFr = frAff.partners.find(p => p.id === 'amazon-fr');
-    assert.ok(!amazonFr.url.includes('ksool-20') && !amazonFr.url.includes('ksool-22'));
+    assert.equal(amazonFr.url, 'https://www.amazon.fr/gp/bestsellers/?tag=ksool-21');
+    assert.equal(amazonFr.disclosure.fr, 'En tant que Partenaire Amazon, je réalise un bénéfice sur les achats remplissant les conditions requises.');
+
+    const esAff = await (await call(env, '/api/affiliates?lang=es')).json();
+    const amazonEs = esAff.partners.find(p => p.id === 'amazon-es');
+    assert.equal(amazonEs.url, 'https://www.amazon.es/gp/bestsellers/?tag=ksool0b-21');
+    assert.equal(amazonEs.disclosure.es, 'En calidad de Afiliado de Amazon, obtengo ingresos por las compras adscritas que cumplen los requisitos aplicables.');
 
     const enAff = await (await call(env, '/api/affiliates?lang=en')).json();
     const amazonUs = enAff.partners.find(p => p.id === 'amazon-us');
@@ -160,7 +169,7 @@ test('admin RBAC, prompt generator, and game-rule validation work end-to-end', a
     });
     assert.equal(toggleOff.status, 200);
     const koAfterOff = await (await call(env, '/api/affiliates?lang=ko')).json();
-    assert.deepEqual(koAfterOff.partners.map(p => p.id), ['ohouse']);
+    assert.deepEqual(koAfterOff.partners.map(p => p.id), ['ohouse', 'temu']);
 
     const addCustom = await call(env, '/api/admin/affiliates', {
       method: 'POST',
@@ -177,7 +186,7 @@ test('admin RBAC, prompt generator, and game-rule validation work end-to-end', a
     });
     assert.equal(addCustom.status, 201);
     const koWithCustom = await (await call(env, '/api/affiliates?lang=ko')).json();
-    assert.deepEqual(koWithCustom.partners.map(p => p.id), ['custom-shop', 'ohouse']);
+    assert.deepEqual(koWithCustom.partners.map(p => p.id), ['custom-shop', 'ohouse', 'temu']);
   } finally {
     db.close();
   }

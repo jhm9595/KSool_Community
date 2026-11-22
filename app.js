@@ -36,10 +36,17 @@
   const recipes = data.recipes.map(r => ({...r, items:data.recipe_ingredients.filter(i => i.recipe_id === r.recipe_id).sort((a,b) => a.slot_order - b.slot_order)}));
   const byId = new Map(recipes.map(r => [r.recipe_id,r]));
   const icon = (item, size=40) => window.KSool.pixelIcon(item,size,'',{theme:'hd'});
-  const SUPPORTED_LANGS = ['ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr'];
+  const SUPPORTED_LANGS = ['ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es'];
   function detectInitialLang() {
     try {
-      const saved = localStorage.getItem('ksool_lang_v1');
+      const qp = new URLSearchParams(location.search).get('lang');
+      if (qp && SUPPORTED_LANGS.includes(qp)) {
+        try { localStorage.setItem('ksool_lang_v1', qp); localStorage.setItem('ksool_lang', qp); } catch (_) {}
+        return qp;
+      }
+    } catch (_) {}
+    try {
+      const saved = localStorage.getItem('ksool_lang_v1') || localStorage.getItem('ksool_lang');
       if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
     } catch (_) {}
     try {
@@ -49,11 +56,13 @@
       if (tz === 'Asia/Taipei' || tz === 'Asia/Hong_Kong' || tz === 'Asia/Macau') return 'zh-TW';
       if (tz === 'Asia/Shanghai') return 'zh-CN';
       if (tz === 'Europe/Paris') return 'fr';
+      if (tz === 'Europe/Madrid') return 'es';
     } catch (_) {}
     const nav = (navigator.language || '').toLowerCase();
     if (nav.startsWith('ko')) return 'ko';
     if (nav.startsWith('ja')) return 'ja';
     if (nav.startsWith('fr')) return 'fr';
+    if (nav.startsWith('es')) return 'es';
     if (nav.startsWith('zh-hant') || nav === 'zh-tw' || nav === 'zh-hk') return 'zh-TW';
     if (nav.startsWith('zh')) return 'zh-CN';
     return 'en';
@@ -61,13 +70,14 @@
   let portalLang = detectInitialLang();
   let contentLangFilter = portalLang;
   const LANG_META = {
-    all: { code: 'ALL', flag: '🌐', label: { ko: '전체 언어', en: 'All Languages', ja: '全言語', 'zh-CN': '全部语言', 'zh-TW': '全部語言', fr: 'Toutes les langues' } },
+    all: { code: 'ALL', flag: '🌐', label: { ko: '전체 언어', en: 'All Languages', ja: '全言語', 'zh-CN': '全部语言', 'zh-TW': '全部語言', fr: 'Toutes les langues', es: 'Todos los idiomas' } },
     ko: { code: 'KO', flag: '🇰🇷', label: '한국어' },
     en: { code: 'EN', flag: '🇺🇸', label: 'English' },
     ja: { code: 'JA', flag: '🇯🇵', label: '日本語' },
     'zh-CN': { code: 'ZH-CN', flag: '🇨🇳', label: '简体中文' },
     'zh-TW': { code: 'ZH-TW', flag: '🇹🇼', label: '繁體中文' },
-    fr: { code: 'FR', flag: '🇫🇷', label: 'Français' }
+    fr: { code: 'FR', flag: '🇫🇷', label: 'Français' },
+    es: { code: 'ES', flag: '🇪🇸', label: 'Español' }
   };
   const getLangFilterLabel = (langKey) => {
     const m = LANG_META[langKey] || LANG_META.ko;
@@ -277,6 +287,38 @@
       stagesTycoon:{ 1:'Stand sans alcool', 2:'Pojangmacha', 3:'Taverne traditionnelle', 4:'Pub artisanal', 5:'Skyline Lounge', 6:'Bar futuriste' },
       stagesQuiz:{ 1:'Bases (No.01~18)', 2:'Soju & Bière (No.19~37)', 3:'Traditionnels (No.38~55)', 4:'Proportions (No.56~67)', 5:'Ratios d’or (No.68~77)', 6:'Spécialités (No.78~90)' },
       affiliateTitle:'🛍️ Boutique & Partenaires recommandés', affiliateVisit:'Découvrir ↗'
+    },
+    es: {
+      brandTitle:'Mix Club', gameBtn:'K-Sool', googleSync:'G Synchro Google', loginBtn:'👤 Iniciar sesión', loginModalTitle:'Iniciar sesión y sincronizar', loginModalDesc:'Inicia sesión con tu cuenta del juego para sincronizar recetas y pistas.', googleBtn:'Continuar con Google', moreProvidersNote:'Otros métodos de acceso aparecerán aquí.', logout:'Cerrar sesión', loggedOut:'Sesión cerrada.', resynced:'Progreso sincronizado con Google.',
+      recipes:'Recetas', tips:'Comunidad', suggestions:'Combos', rankings:'Ranking', updates:'Novedades', blog:'Blog ↗',
+      heroTitle:'Recetas K-Sool.', search:'Buscar recetas o ingredientes', write:'Publicar', proposeCombo:'Sugerir combo',
+      searchTips:'Buscar publicaciones o autores', searchSuggestions:'Buscar combos por ingrediente',
+      storyBtn:'🎬 Historia y guía en video', rankTitle:'🏆 Top Combos y Ranking', updateTitle:'📢 Actualizaciones K-Sool',
+      quizDex:'🎯 Quiz Dex', tycoonDex:'🏪 Tycoon Dex', codeInput:'Ingresar código', close:'Cerrar', importBtn:'Importar',
+      codePlaceholder:'Pega el enlace o código KSOOL_SYNC_V1 del juego',
+      viewGrouped:'🔓 Desbloqueados/Bloqueados', viewStage:'🗺️ Por etapa',
+      sortNumber:'Por n.º', sortRecommended:'Recomendados', sortSimple:'Menos ingredientes',
+      unlockedSection:'🔓 Recetas desbloqueadas', lockedSection:'🔒 Recetas bloqueadas',
+      noUnlocked:'Aún no hay recetas desbloqueadas. Mezcla en el juego o sincroniza con Google.',
+      stageHiddenNotice:'🔒 {n} etapa(s) superior(es) oculta(s) para evitar spoilers.',
+      lockedModeHint:'🔒 Desbloquear en modo {mode}', modeQuiz:'Quiz', modeTycoon:'Tycoon',
+      orderBadge:'En orden', countUnit:'',
+      savedRecipesTitle:'🔖 Recetas guardadas', savedPostsTitle:'💬 Publicaciones guardadas',
+      emptySavedTitle:'Guarda tus recetas favoritas', emptySavedDesc:'Pulsa el marcador en cualquier receta para guardarla.',
+      emptySearchTitle:'Sin resultados', emptySearchDesc:'Prueba con otra palabra clave o filtro.',
+      colKind:'Tipo', colTitle:'Título', colAuthor:'Autor', colVotes:'Votos',
+      kindExp:'Nuevo combo', kindTip:'Consejo', kindExpFull:'Idea de combo', exampleTag:'Ejemplo',
+      gameSugBadge:'🎮 Sugerencia del juego', userSugBadge:'Combo de jugador',
+      tycoonRankTitle:'🏆 Bar Tycoon Top 100 Mundial', tycoonRankSub:'(Top 10 en juego · Top 100 aquí)',
+      modeTimeAttack:'⏱️ Contrarreloj', modeInfinite:'♾️ Infinito',
+      rankSearchPlaceholder:'Buscar tu apodo en el ranking',
+      colRank:'Puesto', colPlayer:'Jugador', colServed:'Servidos', colEarnings:'Ingresos', colCombo:'Combo máx.', colWave:'Oleada',
+      topPostsTitle:'💬 Consejos populares', rankEmpty:'Cargando ranking o aún sin registros.',
+      savedToast:'Guardado', unsavedToast:'Eliminado', copiedToast:'Enlace copiado',
+      cats:{ '전체':'Todo', '기초 재료':'Base', '과일·편의점':'Frutas y tienda', '소맥·폭탄주':'Somaek y bombas', '막걸리':'Makgeolli', '특산 명주':'Especialidades', '플레이 팁':'Consejos', '새 조합 제안':'Nuevos combos', '기초합성':'Mezcla base' },
+      stagesTycoon:{ 1:'Puesto sin alcohol', 2:'Pojangmacha', 3:'Taberna tradicional', 4:'Pub artesanal', 5:'Skyline Lounge', 6:'Bar futurista' },
+      stagesQuiz:{ 1:'Bases (No.01~18)', 2:'Soju y cerveza (No.19~37)', 3:'Tradicionales (No.38~55)', 4:'Proporciones (No.56~67)', 5:'Ratios de oro (No.68~77)', 6:'Especialidades (No.78~90)' },
+      affiliateTitle:'🛍️ Tienda y socios recomendados', affiliateVisit:'Ver ↗'
     }
   };
   const pt = k => (PORTAL_UI[portalLang] && PORTAL_UI[portalLang][k]) || PORTAL_UI.en[k] || k;
@@ -301,6 +343,18 @@
     const enEntities = gameI18n.en?.entities || {};
     const key = i.detail_id != null ? `det:${i.detail_id}` : i.recipe_id != null ? `rec:${i.recipe_id}` : i.ingredient_id != null ? `ing:${i.ingredient_id}` : null;
     return (key && (entities[key] || enEntities[key])) || koFallback;
+  };
+  const recipeDesc = r => {
+    if (!r) return '';
+    if (portalLang === 'ko') return r.description || '';
+    const id = String(r.recipe_id);
+    return gameI18n[portalLang]?.recipeTexts?.[id]?.description || gameI18n.en?.recipeTexts?.[id]?.description || r.description || '';
+  };
+  const recipeHint = r => {
+    if (!r) return '';
+    if (portalLang === 'ko') return r.unlock_hint || r.description || '';
+    const id = String(r.recipe_id);
+    return gameI18n[portalLang]?.recipeTexts?.[id]?.hint || gameI18n.en?.recipeTexts?.[id]?.hint || r.unlock_hint || r.description || '';
   };
   const ingredientFor = item => details.get(item.detail_id || item.detail_ingredient_id) || ingredients.get(item.ingredient_id);
   const colors = ['#d5f88a','#ffdb69','#bce8f0','#f5b9d1','#d3bffc','#ffb78b','#aeddc1','#c5d5fc','#f1e58a'];
@@ -1085,7 +1139,7 @@
             </div>
             <input name="url" type="url" placeholder="https://..." maxlength="500" required>
             <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;font-weight:800;">
-              ${SUPPORTED_LANGS.map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${l === 'ko' ? 'checked' : ''}> ${esc(l)}</label>`).join('')}
+              ${['*', ...SUPPORTED_LANGS].map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${l === 'ko' ? 'checked' : ''}> ${l === '*' ? '*(전체)' : esc(l)}</label>`).join('')}
             </div>
             <div class="admin-update-row">
               <input name="name_ko" placeholder="이름 (ko)" maxlength="80">
@@ -1118,7 +1172,7 @@
                   <input name="url" type="url" value="${esc(p.url)}" aria-label="제휴 URL" required>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;font-weight:800;">
-                  ${SUPPORTED_LANGS.map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${(p.locales || []).includes(l) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}
+                  ${['*', ...SUPPORTED_LANGS].map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${(p.locales || []).includes(l) ? 'checked' : ''}> ${l === '*' ? '*(전체)' : esc(l)}</label>`).join('')}
                 </div>
               </form>
             `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">등록된 제휴 플랫폼이 없습니다.</p>'}
@@ -1642,7 +1696,7 @@
     });
   }
   function contentLangBarMarkup(items) {
-    const counts = { all: items.length, ko: 0, en: 0, ja: 0, 'zh-CN': 0, 'zh-TW': 0, fr: 0 };
+    const counts = { all: items.length, ko: 0, en: 0, ja: 0, 'zh-CN': 0, 'zh-TW': 0, fr: 0, es: 0 };
     for (const it of items) {
       const l = SUPPORTED_LANGS.includes(it.lang) ? it.lang : 'ko';
       counts[l] = (counts[l] || 0) + 1;
@@ -1716,7 +1770,7 @@
       return;
     }
     const visible = (affiliatePartners || [])
-      .filter(p => p && p.enabled === true && Array.isArray(p.locales) && p.locales.includes(portalLang))
+      .filter(p => p && p.enabled === true && Array.isArray(p.locales) && (p.locales.includes(portalLang) || p.locales.includes('*')))
       .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
     if (!visible.length) {
       sec.hidden = true;
@@ -2022,13 +2076,15 @@
       const partialFormulaHtml = bbStage >= 2
         ? `<div class="detail-formula">${r.items.map((i, idx) => `<span class="detail-ingredient">${r.requires_order ? `<span class="detail-step">${idx + 1}</span>` : ''}${icon(ingredientFor(i), 26)}<span class="detail-ing-name">${esc(name(ingredientFor(i)))}</span>${bbStage >= 3 ? `<b class="detail-ratio">×${i.ratio}</b>` : `<b class="detail-ratio">?</b>`}</span>`).join('<span class="detail-plus">＋</span>')}</div>`
         : (bbStage === 1 ? `<p class="detail-note" style="margin:6px 0;">⚾ 1단계 힌트: 총 <b>${r.items.length}종류</b>의 재료가 들어갑니다.</p>` : '');
-      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:72px;height:72px;background:${imgOk ? cardColorForCategory(r.category) : '#e4e4e7'};font-size:2rem;">${imgOk ? icon(r, 56) : '🔒'}</div><div><small>${esc(r.formatted_number)} · ${esc(catLabel(r.category))}</small><h2>${esc(name(r))}</h2>${partialHints.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${partialHints.map(h => `<span style="font-size:10px;font-weight:850;padding:2px 6px;border:1.5px solid var(--ink);background:var(--green);">${h}</span>`).join('')}</div>` : ''}</div></div>${descOk ? `<div class="neo-panel" style="background:#fef3c7;margin:10px 0;padding:10px 12px;font-size:12px;line-height:1.6;"><b>📝 해금된 설명 힌트</b><br>${esc(r.unlock_hint || r.description)}</div>` : ''}${partialFormulaHtml}<div class="neo-panel" style="background:#f3f0e7; margin:10px 0; padding:10px 12px; font-size:12px; line-height:1.6;"><b>🔒 ${bbStage >= 3 ? '게임에서 직접 조합하면 도감이 완성됩니다!' : '미해금 레시피입니다.'}</b><br>${esc(modeName)} 모드에서 조합에 성공하거나 힌트를 더 열면 이 화면에 반영됩니다.</div>${storyHtml}<div class="detail-actions"><a class="button purple" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 K-술 플레이 ${uiIcon('arrowUpRight',16)}</a><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">관련 커뮤니티 팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
+      $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="display:grid;place-items:center;width:72px;height:72px;background:${imgOk ? cardColorForCategory(r.category) : '#e4e4e7'};font-size:2rem;">${imgOk ? icon(r, 56) : '🔒'}</div><div><small>${esc(r.formatted_number)} · ${esc(catLabel(r.category))}</small><h2>${esc(name(r))}</h2>${partialHints.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${partialHints.map(h => `<span style="font-size:10px;font-weight:850;padding:2px 6px;border:1.5px solid var(--ink);background:var(--green);">${h}</span>`).join('')}</div>` : ''}</div></div>${descOk ? `<div class="neo-panel" style="background:#fef3c7;margin:10px 0;padding:10px 12px;font-size:12px;line-height:1.6;"><b>📝 해금된 설명 힌트</b><br>${esc(recipeHint(r))}</div>` : ''}${partialFormulaHtml}<div class="neo-panel" style="background:#f3f0e7; margin:10px 0; padding:10px 12px; font-size:12px; line-height:1.6;"><b>🔒 ${bbStage >= 3 ? '게임에서 직접 조합하면 도감이 완성됩니다!' : '미해금 레시피입니다.'}</b><br>${esc(modeName)} 모드에서 조합에 성공하거나 힌트를 더 열면 이 화면에 반영됩니다.</div>${storyHtml}<div class="detail-actions"><a class="button purple" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 K-술 플레이 ${uiIcon('arrowUpRight',16)}</a><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">관련 커뮤니티 팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
       bindCardActions($('#recipe-detail'));
       $('#write-related').onclick=()=>openCompose(id);
       openDialog($('#recipe-dialog'));
       return;
     }
-    const detailDesc = r.description && r.description !== r.unlock_hint ? `<p class="detail-description">${esc(r.description)}</p>` : '';
+    const locDesc = recipeDesc(r);
+    const locHint = recipeHint(r);
+    const detailDesc = locDesc && locDesc !== locHint ? `<p class="detail-description">${esc(locDesc)}</p>` : '';
     $('#recipe-detail').innerHTML=`<div class="detail-hero"><div class="detail-icon" style="background:${cardColorForCategory(r.category)};">${icon(r,64)}</div><div><small>${esc(r.formatted_number)} · ${esc(catLabel(r.category))}</small><h2>${esc(name(r))}</h2></div></div>${detailDesc}<div class="detail-formula">${r.items.map((i,index)=>`<span class="detail-ingredient">${r.requires_order?`<span class="detail-step">${index+1}</span>`:''}${icon(ingredientFor(i),28)}<span class="detail-ing-name">${esc(name(ingredientFor(i)))}</span><b class="detail-ratio">×${i.ratio}</b></span>`).join('<span class="detail-plus">＋</span>')}</div>${r.requires_order?`<p class="detail-note">${esc(pt('orderBadge'))}</p>`:''}${storyHtml}<div class="detail-actions"><a class="button purple" href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer">🎮 K-술 플레이 ${uiIcon('arrowUpRight',16)}</a><button data-bookmark="r:${id}" aria-label="공략 저장" aria-pressed="${bookmarks.has(`r:${id}`)}">${uiIcon('bookmark',18)}</button><button id="share-recipe" aria-label="공략 링크 공유">${uiIcon('share',18)}</button><button id="write-related" aria-label="팁 남기기">${uiIcon('plus',18)}</button></div>${related.length?`<h3 class="detail-subheading">팁 ${related.length}</h3>${related.map(p=>`<div class="detail-tips"><h4>${esc(p.title)}</h4><p>${renderBodyWithSafeHelpLinks(p.body)}</p></div>`).join('')}`:''}`;
     bindCardActions($('#recipe-detail'));
     $('#share-recipe').onclick=()=>shareLink(new URL(`#recipe=${id}`,location.href).href,`${name(r)} 조합 공략 · 조합소`);
@@ -2163,7 +2219,7 @@
       if (SUPPORTED_LANGS.includes(next)) {
         portalLang = next;
         contentLangFilter = next;
-        try { localStorage.setItem('ksool_lang_v1', next); } catch (_) {}
+        try { localStorage.setItem('ksool_lang_v1', next); localStorage.setItem('ksool_lang', next); } catch (_) {}
         render();
       }
     };

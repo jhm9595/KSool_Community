@@ -23,11 +23,14 @@ export function openDatabase(path){
       ins.run(p.id,p.enabled?1:0,p.order,JSON.stringify(p.locales),p.icon||'🛍️',p.url,JSON.stringify(p.name||{}),JSON.stringify(p.badge||{}),JSON.stringify(p.desc||{}),JSON.stringify(p.disclosure||{}),ts);
     }
   }else{
-    const upd=sqlite.prepare('UPDATE affiliate_partners SET locales_json=?,url=?,desc_json=?,disclosure_json=?,updated_at=? WHERE id=? AND url LIKE ?');
+    const insIgnore=sqlite.prepare('INSERT OR IGNORE INTO affiliate_partners(id,enabled,sort_order,locales_json,icon,url,name_json,badge_json,desc_json,disclosure_json,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+    const updSync=sqlite.prepare('UPDATE affiliate_partners SET sort_order=?,locales_json=?,icon=?,url=?,name_json=?,badge_json=?,desc_json=?,disclosure_json=?,updated_at=? WHERE id=?');
     const ts=Date.now();
-    for(const id of ['amazon-us','amazon-jp','amazon-global']){
-      const p=DEFAULT_AFFILIATE_PARTNERS.find(x=>x.id===id);
-      if(p)upd.run(JSON.stringify(p.locales),p.url,JSON.stringify(p.desc||{}),JSON.stringify(p.disclosure||{}),ts,id,'%/s?k=%');
+    for(const p of DEFAULT_AFFILIATE_PARTNERS){
+      insIgnore.run(p.id,p.enabled?1:0,p.order,JSON.stringify(p.locales),p.icon||'🛍️',p.url,JSON.stringify(p.name||{}),JSON.stringify(p.badge||{}),JSON.stringify(p.desc||{}),JSON.stringify(p.disclosure||{}),ts);
+      if(['ohouse','amazon-us','amazon-jp','amazon-fr','amazon-es','amazon-global','rakuten','ebay','aliexpress','temu'].includes(p.id)){
+        updSync.run(p.order,JSON.stringify(p.locales),p.icon||'🛍️',p.url,JSON.stringify(p.name||{}),JSON.stringify(p.badge||{}),JSON.stringify(p.desc||{}),JSON.stringify(p.disclosure||{}),ts,p.id);
+      }
     }
   }
   function statement(sql,args=[]){

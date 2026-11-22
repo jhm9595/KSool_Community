@@ -54,7 +54,7 @@ for (const assetFile of ['app_logo.png', 'favicon-32x32.png', 'favicon.png', 'ap
 // 게임의 다국어(i18n) 및 블로그/어필리에이트 링크 설정도 게임 프로젝트 기준으로 단일 동기화
 const i18nContext = { window: { KSool: { I18N_LOCALES: {} } } };
 vm.createContext(i18nContext);
-for (const langFile of ['ko.js', 'en.js', 'ja.js', 'zh-CN.js', 'zh-TW.js']) {
+for (const langFile of ['ko.js', 'en.js', 'ja.js', 'zh-CN.js', 'zh-TW.js', 'fr.js', 'es.js', 'extra_locales.js', 'ui_completeness_locales.js']) {
   const fullPath = resolve(source, 'src/js/i18n', langFile);
   if (existsSync(fullPath)) {
     vm.runInContext(await readFile(fullPath, 'utf8'), i18nContext);

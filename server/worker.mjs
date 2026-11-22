@@ -72,7 +72,7 @@ async function countVotes(env,target,actorId){
   const mine=actorId?await stmt(env,'SELECT direction FROM votes WHERE target_key=? AND actor_id=?',target,actorId).first():null;
   return {...row,myVote:mine?.direction||null};
 }
-const VALID_LANGS=new Set(['ko','en','ja','zh-CN','zh-TW','fr']);
+const VALID_LANGS=new Set(['ko','en','ja','zh-CN','zh-TW','fr','es']);
 function safeJsonObj(raw){try{const v=JSON.parse(raw||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(_){return {};}}
 function safeJsonArr(raw){try{const v=JSON.parse(raw||'[]');return Array.isArray(v)?v:[];}catch(_){return [];}}
 function serializeAffiliate(row){
@@ -80,7 +80,7 @@ function serializeAffiliate(row){
     id:row.id,
     enabled:Boolean(row.enabled),
     order:Number(row.sort_order)||0,
-    locales:safeJsonArr(row.locales_json).filter(l=>VALID_LANGS.has(l)),
+    locales:safeJsonArr(row.locales_json).filter(l=>l==='*'||VALID_LANGS.has(l)),
     icon:row.icon||'🛍️',
     url:row.url,
     name:safeJsonObj(row.name_json),
@@ -97,7 +97,7 @@ function validateAffiliatePayload(b,overrideId=null){
   let parsedUrl;
   try{parsedUrl=new URL(url);}catch(_){throw problem('올바른 URL을 입력하세요');}
   if(!['https:','http:'].includes(parsedUrl.protocol))throw problem('http/https URL만 허용됩니다');
-  const locales=(Array.isArray(b.locales)?b.locales:[]).map(x=>String(x).trim()).filter(l=>VALID_LANGS.has(l));
+  const locales=(Array.isArray(b.locales)?b.locales:[]).map(x=>String(x).trim()).filter(l=>l==='*'||VALID_LANGS.has(l));
   if(!locales.length)throw problem('최소 1개 이상의 노출 언어를 선택하세요');
   const cleanMap=(m)=>{
     const out={};
@@ -318,7 +318,7 @@ export async function handleApi(req,env){
       const {results}=await stmt(env,'SELECT * FROM affiliate_partners WHERE enabled=1 ORDER BY sort_order ASC,id ASC').all();
       let partners=results.map(serializeAffiliate);
       if(langParam&&VALID_LANGS.has(langParam)){
-        partners=partners.filter(p=>p.locales.includes(langParam));
+        partners=partners.filter(p=>p.locales.includes(langParam)||p.locales.includes('*'));
       }
       result=json({partners});
     }else if(req.method==='GET'&&path==='/api/part2-notify/stats'){

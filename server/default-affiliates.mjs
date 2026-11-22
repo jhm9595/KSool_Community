@@ -7,15 +7,15 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
     icon: '🚀',
     url: 'https://link.coupang.com/a/iSnsj2FEfk',
     name: {
-      ko: '쿠팡',
+      ko: '쿠팡 (Coupang)',
       en: 'Coupang'
     },
     badge: {
-      ko: '파트너스',
-      en: 'Partners'
+      ko: '로켓배송',
+      en: 'Rocket'
     },
     desc: {
-      ko: '로켓배송 · 홈술 안주·제빙기·하이볼 잔·칵테일 쉐이커',
+      ko: '평소 사던 생필품·안주·전자기기 최저가 검색',
       en: 'Fast delivery for barware, ice makers & snacks'
     },
     disclosure: {
@@ -28,7 +28,7 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
     order: 20,
     locales: ['ko'],
     icon: '🏠',
-    url: 'https://ozip.me/u15xC78?af',
+    url: 'https://ozip.me/uf9thsP?af',
     name: {
       ko: '오늘의집',
       en: 'Ohouse'
@@ -38,7 +38,7 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
       en: 'Curator'
     },
     desc: {
-      ko: '오늘의집 베스트 · 홈술 잔·인테리어·리빙 아이템 (큐레이터 ID: 49696)',
+      ko: '오늘의집 베스트 · 홈술 잔·인테리어·리빙 아이템',
       en: 'Home bar glassware, interior & living picks'
     },
     disclosure: {
@@ -48,20 +48,20 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
   {
     id: 'amazon-us',
     enabled: true,
-    order: 30,
+    order: 10,
     locales: ['en'],
     icon: '📦',
     url: 'https://www.amazon.com/gp/bestsellers/?tag=ksool-20',
     name: {
-      en: 'Amazon US',
+      en: 'Amazon',
       ko: '아마존 US'
     },
     badge: {
-      en: 'Associate',
+      en: 'Prime Deals',
       ko: '제휴'
     },
     desc: {
-      en: 'Amazon Bestsellers · Home-bar glassware, ice makers & cocktail essentials',
+      en: 'Everyday essentials, gaming gear & snacks',
       ko: '아마존 베스트셀러 · 홈바 글라스·제빙기·칵테일 용품'
     },
     disclosure: {
@@ -71,7 +71,7 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
   {
     id: 'amazon-jp',
     enabled: true,
-    order: 40,
+    order: 10,
     locales: ['ja'],
     icon: '📦',
     url: 'https://www.amazon.co.jp/gp/bestsellers/?tag=ksool-22',
@@ -80,11 +80,11 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
       en: 'Amazon JP'
     },
     badge: {
-      ja: 'アソシエイト',
+      ja: '定番',
       en: 'Associate'
     },
     desc: {
-      ja: 'Amazon 売れ筋ランキング · 宅飲みグラス・シェイカー・おつまみアイテム',
+      ja: '日用品・ガジェット・おつまみのお買い物に',
       en: 'Amazon JP Bestsellers · Glassware, shakers & home-bar picks'
     },
     disclosure: {
@@ -94,85 +94,76 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
   {
     id: 'rakuten',
     enabled: true,
-    order: 50,
+    order: 20,
     locales: ['ja'],
-    icon: '🛍️',
-    url: 'https://search.rakuten.co.jp/search/mall/%E9%9F%93%E5%9B%BD%E9%85%92/',
+    icon: '🛒',
+    url: 'https://www.rakuten.co.jp/',
     name: {
-      ja: '楽天市場',
+      ja: '楽天市場 (Rakuten)',
       en: 'Rakuten'
     },
     badge: {
-      ja: 'アフィリエイト',
+      ja: 'ポイント',
       en: 'Affiliate'
     },
     desc: {
-      ja: '焼酎・マッコリ・おうち居酒屋にぴったりの酒器とおつまみ',
+      ja: 'いつものお買い物で楽天ポイントもそのまま',
       en: 'Soju, makgeolli & izakaya barware'
     },
     disclosure: {
-      ja: '本リンクは楽天アフィリエイトプログラムを利用しており、購入により紹介料を受け取る場合があります。'
+      ja: '※ 本リンクにはアフィリエイト広告（PR）が含まれています。'
     }
   },
   {
     id: 'amazon-fr',
     enabled: true,
-    order: 60,
+    order: 10,
     locales: ['fr'],
     icon: '📦',
-    url: 'https://www.amazon.fr/s?k=verre+cocktail+shaker+bar',
+    url: 'https://www.amazon.fr/gp/bestsellers/?tag=ksool-21',
     name: {
-      fr: 'Amazon France',
+      fr: 'Amazon.fr',
       en: 'Amazon FR'
     },
     badge: {
-      fr: 'Partenaire',
+      fr: 'Populaire',
       en: 'Partner'
     },
     desc: {
-      fr: 'Verres à cocktail, shakers et accessoires de bar coréen à la maison',
+      fr: 'Faites vos achats habituels sur Amazon France via ce passage secret',
       en: 'Cocktail glasses, shakers & home-bar accessories'
     },
     disclosure: {
-      fr: 'En tant que Partenaire Amazon, ce site réalise un bénéfice sur les achats remplissant les conditions requises.'
+      fr: 'En tant que Partenaire Amazon, je réalise un bénéfice sur les achats remplissant les conditions requises.'
     }
   },
   {
-    id: 'aliexpress',
+    id: 'amazon-es',
     enabled: true,
-    order: 70,
-    locales: ['en', 'zh-CN', 'zh-TW', 'fr'],
-    icon: '🌏',
-    url: 'https://www.aliexpress.com/wholesale?SearchText=cocktail+barware+soju+glass',
+    order: 10,
+    locales: ['es'],
+    icon: '📦',
+    url: 'https://www.amazon.es/gp/bestsellers/?tag=ksool0b-21',
     name: {
-      en: 'AliExpress',
-      'zh-CN': '速卖通 AliExpress',
-      'zh-TW': '全球速賣通 AliExpress',
-      fr: 'AliExpress'
+      es: 'Amazon.es',
+      en: 'Amazon ES'
     },
     badge: {
-      en: 'Affiliate',
-      'zh-CN': '联盟推荐',
-      'zh-TW': '聯盟推薦',
-      fr: 'Affilié'
+      es: 'Popular',
+      en: 'Affiliate'
     },
     desc: {
-      en: 'Global barware, novelty shot glasses & party drinking props',
-      'zh-CN': '全球精选调酒器具、创意酒杯与聚会酒桌道具',
-      'zh-TW': '全球精選調酒器具、創意酒杯與聚會酒桌道具',
-      fr: 'Accessoires de bar, verres à shot originaux et jeux de soirée'
+      es: 'Haz tus compras habituales en Amazon España por este pasaje',
+      en: 'Amazon Spain Bestsellers · Home-bar & everyday essentials'
     },
     disclosure: {
-      en: 'This link is part of an affiliate program and may earn a commission at no extra cost to you.',
-      'zh-CN': '本链接包含联盟推广信息，通过该链接购买可能会为本站带来一定比例的佣金收入。',
-      'zh-TW': '本連結包含聯盟推廣資訊，透過該連結購買可能會為本站帶來一定比例的佣金收入。',
-      fr: 'Ce lien fait partie d’un programme d’affiliation et peut générer une commission sans coût supplémentaire pour vous.'
+      es: 'En calidad de Afiliado de Amazon, obtengo ingresos por las compras adscritas que cumplen los requisitos aplicables.'
     }
   },
   {
     id: 'amazon-global',
     enabled: true,
-    order: 80,
+    order: 15,
     locales: ['zh-CN', 'zh-TW'],
     icon: '🌐',
     url: 'https://www.amazon.com/gp/bestsellers/?tag=ksool-20',
@@ -182,12 +173,12 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
       'zh-TW': 'Amazon 全球購'
     },
     badge: {
-      en: 'Associate',
+      en: 'Worldwide',
       'zh-CN': '全球购',
       'zh-TW': '全球購'
     },
     desc: {
-      en: 'Amazon Bestsellers & international shipping for home-bar essentials',
+      en: 'International shipping for tech & daily essentials',
       'zh-CN': 'Amazon 畅销榜单 · 支持跨境直邮的调酒套装与特色酒具',
       'zh-TW': 'Amazon 熱銷榜單 · 支援跨境直郵的調酒套裝與特色酒具'
     },
@@ -195,6 +186,122 @@ export const DEFAULT_AFFILIATE_PARTNERS = [
       en: 'As an Amazon Associate I earn from qualifying purchases.',
       'zh-CN': 'As an Amazon Associate I earn from qualifying purchases.',
       'zh-TW': 'As an Amazon Associate I earn from qualifying purchases.'
+    }
+  },
+  {
+    id: 'ebay',
+    enabled: true,
+    order: 20,
+    locales: ['en', 'fr', 'es', 'zh-CN', 'zh-TW'],
+    icon: '🏷️',
+    url: 'https://www.ebay.com/deals?mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339257555&customid=ksool&toolid=10001&mkevt=1',
+    name: {
+      en: 'eBay',
+      fr: 'eBay',
+      es: 'eBay',
+      'zh-CN': 'eBay 全球特惠',
+      'zh-TW': 'eBay 全球特惠'
+    },
+    badge: {
+      en: 'Daily Deals',
+      fr: 'Offres du jour',
+      es: 'Ofertas',
+      'zh-CN': '每日特惠',
+      'zh-TW': '每日特惠'
+    },
+    desc: {
+      en: 'Daily tech drops, collectibles & global deals',
+      fr: 'Offres tech quotidiennes, objets de collection et promotions mondiales',
+      es: 'Ofertas diarias de tecnología, coleccionables y envíos globales',
+      'zh-CN': '全球精选数码、收藏品与每日特惠折扣',
+      'zh-TW': '全球精選數位、收藏品與每日特惠折扣'
+    },
+    disclosure: {
+      en: 'When you click on links to various merchants on this site and make a purchase, this can result in this site earning a commission. Affiliate programs and affiliations include, but are not limited to, the eBay Partner Network.',
+      fr: 'When you click on links to various merchants on this site and make a purchase, this can result in this site earning a commission. Affiliate programs and affiliations include, but are not limited to, the eBay Partner Network.',
+      es: 'When you click on links to various merchants on this site and make a purchase, this can result in this site earning a commission. Affiliate programs and affiliations include, but are not limited to, the eBay Partner Network.',
+      'zh-CN': 'When you click on links to various merchants on this site and make a purchase, this can result in this site earning a commission. Affiliate programs and affiliations include, but are not limited to, the eBay Partner Network.',
+      'zh-TW': 'When you click on links to various merchants on this site and make a purchase, this can result in this site earning a commission. Affiliate programs and affiliations include, but are not limited to, the eBay Partner Network.'
+    }
+  },
+  {
+    id: 'aliexpress',
+    enabled: true,
+    order: 25,
+    locales: ['zh-CN', 'zh-TW', 'fr', 'es'],
+    icon: '🛍️',
+    url: 'https://www.aliexpress.com/',
+    name: {
+      en: 'AliExpress',
+      'zh-CN': '速卖通 AliExpress',
+      'zh-TW': '全球速賣通 AliExpress',
+      fr: 'AliExpress',
+      es: 'AliExpress'
+    },
+    badge: {
+      en: 'Best Value',
+      'zh-CN': '超值精选',
+      'zh-TW': '超值精選',
+      fr: 'Bon plan',
+      es: 'Ofertas'
+    },
+    desc: {
+      en: 'Worldwide deals on accessories & collectibles',
+      'zh-CN': '全球精选调酒器具、创意酒杯与聚会酒桌道具',
+      'zh-TW': '全球精選調酒器具、創意酒杯與聚會酒桌道具',
+      fr: 'Accessoires de bar, verres à shot originaux et jeux de soirée',
+      es: 'Accesorios de bar, vasos originales y artículos para fiestas'
+    },
+    disclosure: {
+      en: 'Affiliate link: we may earn a small commission at no extra cost to you.',
+      'zh-CN': '本链接包含联盟推广信息，通过该链接购买可能会为本站带来一定比例的佣金收入。',
+      'zh-TW': '本連結包含聯盟推廣資訊，透過該連結購買可能會為本站帶來一定比例的佣金收入。',
+      fr: 'Lien affilié : nous pouvons percevoir une petite commission sans frais supplémentaires pour vous.',
+      es: 'Enlace de afiliado: podemos recibir una pequeña comisión sin costo adicional para ti.'
+    }
+  },
+  {
+    id: 'temu',
+    enabled: true,
+    order: 30,
+    locales: ['*'],
+    icon: '🛍️',
+    url: 'https://temu.to/k/gyzx2roqsct',
+    name: {
+      ko: 'Temu',
+      en: 'Temu',
+      ja: 'Temu',
+      'zh-CN': 'Temu',
+      'zh-TW': 'Temu',
+      fr: 'Temu',
+      es: 'Temu'
+    },
+    badge: {
+      ko: 'rfa543944',
+      en: 'rfa543944',
+      ja: 'rfa543944',
+      'zh-CN': 'rfa543944',
+      'zh-TW': 'rfa543944',
+      fr: 'rfa543944',
+      es: 'rfa543944'
+    },
+    desc: {
+      ko: '글로벌 특가 · 추천 코드 rfa543944 적용 가능',
+      en: 'Global deals · Referral/discount code rfa543944 available',
+      ja: 'グローバル特価 · 紹介コード rfa543944 利用可能',
+      'zh-CN': '全球特惠 · 可使用推荐码 rfa543944',
+      'zh-TW': '全球特惠 · 可使用推薦碼 rfa543944',
+      fr: 'Offres mondiales · Code promo rfa543944 disponible',
+      es: 'Ofertas globales · Código de descuento rfa543944 disponible'
+    },
+    disclosure: {
+      ko: '이 콘텐츠는 제휴 마케팅 활동의 일환으로, 구매 시 일정액의 수수료를 제공받습니다.',
+      en: 'Affiliate disclosure: We may earn a commission from qualifying purchases.',
+      ja: 'Affiliate disclosure: We may earn a commission from qualifying purchases.',
+      'zh-CN': 'Affiliate disclosure: We may earn a commission from qualifying purchases.',
+      'zh-TW': 'Affiliate disclosure: We may earn a commission from qualifying purchases.',
+      fr: 'Affiliate disclosure: We may earn a commission from qualifying purchases.',
+      es: 'Affiliate disclosure: We may earn a commission from qualifying purchases.'
     }
   }
 ];
