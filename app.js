@@ -250,7 +250,21 @@
   };
   function syncCommunity(){const next=refreshQueue.then(loadCommunity);refreshQueue=next.catch(()=>{});return next;}
   async function loadCommunity(){
-    try{const [feed,combos]=await Promise.all([api('/posts'),api('/suggestions')]);posts=feed.posts;suggestions=combos.suggestions.map(s=>({...s,myVote:combos.userVotes[s.suggestion_key]||null}));let before=feed.nextBefore;while(before){const page=await api('/posts?before='+encodeURIComponent(before));posts.push(...page.posts);before=page.nextBefore;}before=combos.nextBefore;while(before){const page=await api('/suggestions?before='+encodeURIComponent(before));suggestions.push(...page.suggestions.map(s=>({...s,myVote:page.userVotes[s.suggestion_key]||null})));before=page.nextBefore;}serverConnected=true;$('#connection-status').textContent='● 커뮤니티 연결됨';render();}
+    try{
+      const prevSnap = JSON.stringify({ posts, suggestions, serverConnected });
+      const [feed,combos]=await Promise.all([api('/posts'),api('/suggestions')]);
+      const nextPosts=[...(feed.posts||[])];
+      const nextSuggestions=(combos.suggestions||[]).map(s=>({...s,myVote:combos.userVotes[s.suggestion_key]||null}));
+      let before=feed.nextBefore;
+      while(before){const page=await api('/posts?before='+encodeURIComponent(before));nextPosts.push(...page.posts);before=page.nextBefore;}
+      before=combos.nextBefore;
+      while(before){const page=await api('/suggestions?before='+encodeURIComponent(before));nextSuggestions.push(...page.suggestions.map(s=>({...s,myVote:page.userVotes[s.suggestion_key]||null})));before=page.nextBefore;}
+      posts=nextPosts;
+      suggestions=nextSuggestions;
+      serverConnected=true;
+      $('#connection-status').textContent='● 커뮤니티 연결됨';
+      if (JSON.stringify({ posts, suggestions, serverConnected }) !== prevSnap) render();
+    }
     catch(error){serverConnected=false;$('#connection-status').textContent='○ 서버 연결 실패';toast('커뮤니티 연결 실패 · 새로고침해 주세요');}
   }
   const bookmarks = new Set(Array.isArray(stored.bookmarks) ? stored.bookmarks.filter(i => typeof i === 'string') : []);
@@ -451,6 +465,7 @@
 
   async function loadRemoteGameData() {
     try {
+      const prevSnap = JSON.stringify({ dbUpdates, gameSuggestions, tycoonRankings });
       const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
       const [sugRes, taRes, infRes, updRes] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/ksool_suggestions?select=*&is_applied=eq.false&order=upvotes.desc&limit=100`, { headers }),
@@ -473,7 +488,7 @@
         const rows = await infRes.json();
         if (Array.isArray(rows)) tycoonRankings.INFINITE = rows;
       }
-      render();
+      if (JSON.stringify({ dbUpdates, gameSuggestions, tycoonRankings }) !== prevSnap) render();
     } catch (_) {}
   }
 
@@ -1468,7 +1483,15 @@
         </div>
       `;
       bindToolbarEvents(root, () => renderCommunityGridOnly(root));
-      $$('[data-category]', root).forEach(b => b.onclick = () => { activeCategory = b.dataset.category; render(); });
+      $$('[data-category]', root).forEach(b => b.onclick = () => {
+        activeCategory = b.dataset.category;
+        $$('[data-category]', root).forEach(x => {
+          const isAct = x.dataset.category === activeCategory;
+          x.classList.toggle('active', isAct);
+          x.setAttribute('aria-pressed', String(isAct));
+        });
+        renderCommunityGridOnly(root);
+      });
       renderCommunityGridOnly(root);
       return;
     }
@@ -1511,11 +1534,20 @@
     `;
     bindToolbarEvents(root, () => renderCatalogGridOnly(root));
     bindProgressSyncBar(root);
-    $$('[data-category]', root).forEach(b => b.onclick = () => { activeCategory = b.dataset.category; render(); });
+    $$('[data-category]', root).forEach(b => b.onclick = () => {
+      activeCategory = b.dataset.category;
+      $$('[data-category]', root).forEach(x => {
+        const isAct = x.dataset.category === activeCategory;
+        x.classList.toggle('active', isAct);
+        x.setAttribute('aria-pressed', String(isAct));
+      });
+      renderCatalogGridOnly(root);
+    });
     $$('[data-view-mode]', root).forEach(b => b.onclick = () => {
       activeViewMode = b.dataset.viewMode === 'stage' ? 'stage' : 'grouped';
       try { localStorage.setItem('ksool-recipe-view-mode', activeViewMode); } catch (_) {}
-      render();
+      $$('[data-view-mode]', root).forEach(x => x.classList.toggle('is-active', x.dataset.viewMode === activeViewMode));
+      renderCatalogGridOnly(root);
     });
     const sortEl = $('#sort', root);
     if (sortEl) sortEl.onchange = e => { sort = e.target.value; renderCatalogGridOnly(root); };
@@ -1534,9 +1566,13 @@
       e.stopPropagation();
       const key=b.dataset.bookmark, saved=bookmarks.has(key);
       saved ? bookmarks.delete(key) : bookmarks.add(key);
-      const ok=persist();render();
-      b.classList.toggle('is-saved',!saved);b.setAttribute('aria-pressed',String(!saved));
-      if(root.id==='recipe-detail' && key.startsWith('r:'))b.classList.toggle('is-saved',!saved);
+      const ok=persist();
+      if ($('#saved-count')) $('#saved-count').textContent = bookmarks.size;
+      $$('[data-bookmark]', document).filter(el => el.dataset.bookmark === key).forEach(el => {
+        el.classList.toggle('is-saved', !saved);
+        el.setAttribute('aria-pressed', String(!saved));
+      });
+      if (activeTab === 'saved') renderCatalogGridOnly($('#view-root'));
       if (ok) toast(saved ? pt('unsavedToast') : pt('savedToast'));
     });
     $$('[data-share-post]',root).forEach(b => b.onclick = () => sharePost(b.dataset.sharePost));

@@ -431,18 +431,6 @@ dialog.is-closing {
   animation: neoCollapseIn .22s cubic-bezier(.22,1,.36,1);
 }
 
-.catalog-shell,
-.rankings-board,
-.admin-board,
-.neo-panel,
-.recipe-card,
-.tip-card,
-.suggestion-card,
-.board-row,
-.locked-compact-row {
-  animation: neoViewFadeIn .22s cubic-bezier(.22,1,.36,1);
-}
-
 .header nav button,
 .nav-blog-link,
 .category-filters button,

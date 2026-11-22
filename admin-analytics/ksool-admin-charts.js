@@ -269,9 +269,8 @@ class KSoolAdminCharts extends HTMLElement {
         .muted { color:#666357; font-size:12px; margin:0; }
         .banner-warn { padding:16px; border:2px solid #191919; background:#fff3cd; box-shadow:3px 3px 0 #191919; font-size:12px; line-height:1.65; }
         .banner-err { padding:14px; border:2px solid #191919; background:#ffb6a0; font-size:12px; font-weight:750; }
-        @keyframes gaPanelIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
         .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:10px; }
-        .kpi-card { border:2px solid #191919; background:#fffdf5; padding:12px; box-shadow:3px 3px 0 #191919; display:flex; flex-direction:column; gap:5px; animation:gaPanelIn .2s cubic-bezier(.22,1,.36,1); }
+        .kpi-card { border:2px solid #191919; background:#fffdf5; padding:12px; box-shadow:3px 3px 0 #191919; display:flex; flex-direction:column; gap:5px; }
         .kpi-card.is-live { background:#d5f88a; }
         .kpi-label { font-size:11px; font-weight:800; color:#525046; }
         .kpi-val { font-size:22px; font-weight:950; letter-spacing:-0.5px; }
@@ -279,7 +278,7 @@ class KSoolAdminCharts extends HTMLElement {
         .delta.up { color:#15803d; }
         .delta.down { color:#b91c1c; }
         .delta.flat { color:#666357; }
-        .panel { border:2px solid #191919; background:#fffdf5; padding:14px; box-shadow:3px 3px 0 #191919; animation:gaPanelIn .22s cubic-bezier(.22,1,.36,1); }
+        .panel { border:2px solid #191919; background:#fffdf5; padding:14px; box-shadow:3px 3px 0 #191919; }
         .panel h4 { margin:0 0 10px; font-size:14px; font-weight:900; }
         .grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; }
         .legend-row { display:flex; gap:14px; font-size:11px; font-weight:800; margin-bottom:6px; flex-wrap:wrap; }
