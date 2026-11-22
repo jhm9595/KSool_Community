@@ -42,7 +42,7 @@ const server=createServer(async(req,res)=>{
       'Content-Type':mime[extname(path)]||'application/octet-stream',
       'X-Content-Type-Options':'nosniff',
       'X-Frame-Options':'SAMEORIGIN',
-      'Content-Security-Policy':"frame-src 'self' https://play.ksool.minibig.pw https://*.doubleclick.net https://*.googlesyndication.com https://*.adtrafficquality.google https://www.googletagmanager.com https://www.google.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+      'Content-Security-Policy':"frame-src 'self' https://play.ksool.minibig.pw https://*.doubleclick.net https://*.googlesyndication.com https://*.adtrafficquality.google https://www.googletagmanager.com https://www.google.com https://translate.google.com https://translate.googleapis.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
       'Cache-Control':'no-cache',
       'Referrer-Policy':'strict-origin-when-cross-origin'
     });

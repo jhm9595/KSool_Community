@@ -57,6 +57,35 @@
     return 'en';
   }
   let portalLang = detectInitialLang();
+  let contentLangFilter = portalLang;
+  const LANG_META = {
+    all: { code: 'ALL', flag: '🌐', label: { ko: '전체 언어', en: 'All Languages', ja: '全言語', 'zh-CN': '全部语言', 'zh-TW': '全部語言' } },
+    ko: { code: 'KO', flag: '🇰🇷', label: '한국어' },
+    en: { code: 'EN', flag: '🇺🇸', label: 'English' },
+    ja: { code: 'JA', flag: '🇯🇵', label: '日本語' },
+    'zh-CN': { code: 'ZH-CN', flag: '🇨🇳', label: '简体中文' },
+    'zh-TW': { code: 'ZH-TW', flag: '🇹🇼', label: '繁體中文' }
+  };
+  const getLangFilterLabel = (langKey) => {
+    const m = LANG_META[langKey] || LANG_META.ko;
+    const text = typeof m.label === 'object' ? (m.label[portalLang] || m.label.en) : m.label;
+    return `${m.flag} ${text}`;
+  };
+  const getLangBadgeCode = (langKey) => (LANG_META[langKey]?.code || String(langKey || 'ko').toUpperCase());
+  const translateCache = new Map();
+  async function translateTextViaGoogle(text, targetLang = portalLang) {
+    const clean = String(text || '').trim();
+    if (!clean) return '';
+    const cacheKey = `${targetLang}::${clean}`;
+    if (translateCache.has(cacheKey)) return translateCache.get(cacheKey);
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(clean)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('번역 요청 실패');
+    const json = await res.json();
+    const translated = Array.isArray(json?.[0]) ? json[0].map(part => part?.[0] || '').join('') : clean;
+    translateCache.set(cacheKey, translated);
+    return translated;
+  }
   const PORTAL_UI = {
     ko: {
       brandTitle:'조합소', gameBtn:'K-술', googleSync:'G Google 연동', loginBtn:'👤 로그인', loginModalTitle:'로그인 · 진행도 연동', loginModalDesc:'게임과 동일한 계정으로 로그인하면 해금 도감과 힌트 진행도가 자동 동기화됩니다.', googleBtn:'Google로 계속하기', moreProvidersNote:'추후 다른 로그인 수단이 추가되면 이곳에 함께 표시됩니다.', logout:'로그아웃', loggedOut:'로그아웃되었습니다.', resynced:'Google 계정과 진행도를 다시 동기화했어요.',
@@ -600,9 +629,14 @@
     } catch (_) {}
   })();
   const examples = [
-    {id:'starter',kind:'tip',title:'비율은 숫자 그대로',body:'×2는 두 개. 카드에 적힌 개수대로 넣으세요.',author:'조합소 안내',recipeId:1,example:true},
-    {id:'detail',kind:'tip',title:'안 되면 상세 재료 확인',body:'브랜드·지역 재료가 필요한 조합도 있어요. 재료 이름을 확인하세요.',author:'조합소 안내',recipeId:null,example:true},
-    {id:'spoiler',kind:'tip',title:'다시 볼 조합은 책갈피',body:'카드 오른쪽 위 책갈피를 누르면 한곳에 모아볼 수 있어요.',author:'조합소 안내',recipeId:null,example:true}
+    {id:'starter',kind:'tip',lang:'ko',title:'비율은 숫자 그대로',body:'×2는 두 개. 카드에 적힌 개수대로 넣으세요.',author:'조합소 안내',recipeId:1,example:true},
+    {id:'detail',kind:'tip',lang:'ko',title:'안 되면 상세 재료 확인',body:'브랜드·지역 재료가 필요한 조합도 있어요. 재료 이름을 확인하세요.',author:'조합소 안내',recipeId:null,example:true},
+    {id:'spoiler',kind:'tip',lang:'ko',title:'다시 볼 조합은 책갈피',body:'카드 오른쪽 위 책갈피를 누르면 한곳에 모아볼 수 있어요.',author:'조합소 안내',recipeId:null,example:true},
+    {id:'starter-en',kind:'tip',lang:'en',title:'Ratios match exact counts',body:'×2 means two units. Add the exact number shown on the recipe card.',author:'Mix Club Guide',recipeId:1,example:true},
+    {id:'detail-en',kind:'tip',lang:'en',title:'Check specialty sub-ingredients',body:'Some recipes require specific brands or regional drinks. Check the ingredient label carefully.',author:'Mix Club Guide',recipeId:null,example:true},
+    {id:'starter-ja',kind:'tip',lang:'ja',title:'比率はそのままの個数で',body:'×2は2個です。カードに書かれた個数通りに入れてください。',author:'調合所ガイド',recipeId:1,example:true},
+    {id:'starter-zh-cn',kind:'tip',lang:'zh-CN',title:'比例直接对应数量',body:'×2代表放入两份，请按照配方卡片上的数字添加材料。',author:'调酒所指南',recipeId:1,example:true},
+    {id:'starter-zh-tw',kind:'tip',lang:'zh-TW',title:'比例直接對應數量',body:'×2代表放入兩份，請按照配方卡片上的數字加入材料。',author:'調酒所指南',recipeId:1,example:true}
   ];
   let sharedPost = null;
   const STAGE_META = {
@@ -728,11 +762,12 @@
   }
   function suggestionCard(s,index){
     const badge = s.fromGame ? pt('gameSugBadge') : pt('userSugBadge');
-    return `<article class="suggestion-card" style="--card-color:${colors[index%colors.length]}"><div class="suggestion-badge">${esc(badge)}</div><div class="card-formula">${formula(s.items,true)}</div><div class="suggestion-actions">${voteControls(s)}<button data-copy-combo="${esc(s.suggestion_key)}" aria-label="Share">${uiIcon('share',16)}</button></div></article>`;
+    const langCode = getLangBadgeCode(s.lang || 'ko');
+    return `<article class="suggestion-card" style="--card-color:${colors[index%colors.length]}"><div class="suggestion-badge"><span>${esc(badge)}</span><span class="lang-chip">${esc(langCode)}</span></div><div class="card-formula">${formula(s.items,true)}</div><div class="suggestion-actions">${voteControls(s)}<button data-copy-combo="${esc(s.suggestion_key)}" aria-label="Share">${uiIcon('share',16)}</button></div></article>`;
   }
   function boardMarkup(rows) {
     if (!rows.length) return '';
-    return `<div class="community-board"><div class="board-head"><span>${esc(pt('colKind'))}</span><span>${esc(pt('colTitle'))}</span><span>${esc(pt('colAuthor'))}</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${esc(p.kind === 'experiment' ? pt('kindExp') : pt('kindTip'))}</span><button class="board-title" data-comments="${esc(p.id)}">${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ` · ${esc(pt('exampleTag'))}` : ''}</small></button><span class="board-author">${esc(p.author)}</span></article>`).join('')}</div>`;
+    return `<div class="community-board"><div class="board-head"><span>${esc(pt('colKind'))}</span><span>${esc(pt('colTitle'))}</span><span>${esc(pt('colAuthor'))}</span></div>${rows.map(p => `<article class="board-row"><span class="board-kind ${p.kind === 'experiment' ? 'is-exp' : ''}">${esc(p.kind === 'experiment' ? pt('kindExp') : pt('kindTip'))}</span><button class="board-title" data-comments="${esc(p.id)}"><span class="lang-chip">${esc(getLangBadgeCode(p.lang || 'ko'))}</span> ${esc(p.title)} <small>[${p.commentCount || 0}]${p.example ? ` · ${esc(pt('exampleTag'))}` : ''}</small></button><span class="board-author">${esc(p.author)}</span></article>`).join('')}</div>`;
   }
   function postCard(p) {
     const avail = getAvailableIngredients();
@@ -743,7 +778,7 @@
         ? `<div class="spoiler-shield"><span>🔒 미해금 재료가 포함된 실험 조합입니다.</span><button type="button" data-reveal-spoiler="${esc(p.id)}">스포일러 확인</button></div>`
         : `<div class="card-formula">${formula(p.items,true)}</div><p class="detail-note">실험 · 정답 미확인</p>`)
       : '';
-    return `<article class="tip-card"><div class="tip-card-top"><span class="tip-kind">${p.kind === 'experiment' ? '새 조합 제안' : '플레이 팁'}</span><span>${p.example ? '예시' : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span></div><h3>${esc(p.title)}</h3><p>${renderBodyWithSafeHelpLinks(p.body)}</p>${formulaHtml}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':`${voteControls(p)}${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
+    return `<article class="tip-card" data-post-card="${esc(p.id)}"><div class="tip-card-top"><span class="tip-kind">${esc(p.kind === 'experiment' ? pt('kindExpFull') : pt('kindTip'))}</span><span class="lang-chip">${esc(getLangBadgeCode(p.lang || 'ko'))}</span><span>${p.example ? esc(pt('exampleTag')) : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span><button type="button" class="inline-translate-btn" data-translate-post="${esc(p.id)}">🌐 Google 번역</button></div><h3 data-post-title="${esc(p.id)}">${esc(p.title)}</h3><p data-post-body="${esc(p.id)}">${renderBodyWithSafeHelpLinks(p.body)}</p><div class="translated-box" data-post-translated="${esc(p.id)}" hidden></div>${formulaHtml}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':`${voteControls(p)}${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
   }
   function applyPortalLangUi() {
     document.documentElement.lang = portalLang;
@@ -1443,11 +1478,45 @@
       });
     });
   }
+  function contentLangBarMarkup(items) {
+    const counts = { all: items.length, ko: 0, en: 0, ja: 0, 'zh-CN': 0, 'zh-TW': 0 };
+    for (const it of items) {
+      const l = SUPPORTED_LANGS.includes(it.lang) ? it.lang : 'ko';
+      counts[l] = (counts[l] || 0) + 1;
+    }
+    const keys = ['all', ...SUPPORTED_LANGS];
+    return `
+      <div class="content-lang-bar" role="group" aria-label="Language filter">
+        ${keys.map(k => `<button type="button" data-content-lang="${esc(k)}" class="content-lang-pill ${contentLangFilter === k ? 'is-active' : ''}" aria-pressed="${contentLangFilter === k}">${esc(getLangFilterLabel(k))} <span class="lang-count">${counts[k] || 0}</span></button>`).join('')}
+      </div>
+    `;
+  }
+  function bindContentLangBar(root, onChange) {
+    $$('[data-content-lang]', root).forEach(b => {
+      b.onclick = () => {
+        contentLangFilter = b.dataset.contentLang || 'all';
+        $$('[data-content-lang]', root).forEach(x => {
+          const isAct = x.dataset.contentLang === contentLangFilter;
+          x.classList.toggle('is-active', isAct);
+          x.setAttribute('aria-pressed', String(isAct));
+        });
+        onChange();
+      };
+    });
+  }
   function renderCommunityGridOnly(root) {
     const grid = $('#recipe-grid', root);
     if (!grid) return;
-    const matchingPosts = allPosts().filter(p => (activeCategory === '전체' || (activeCategory === '플레이 팁' ? p.kind === 'tip' : p.kind === 'experiment')) && `${p.title} ${p.body} ${p.author}`.toLowerCase().includes(query.toLowerCase()));
-    grid.innerHTML = boardMarkup(matchingPosts) || `<div class="empty-state"><span>✧</span><h3>아직 일치하는 글이 없어요</h3><p>다른 검색어나 분류로 찾아보세요.</p></div>`;
+    const catPosts = allPosts().filter(p => (activeCategory === '전체' || (activeCategory === '플레이 팁' ? p.kind === 'tip' : p.kind === 'experiment')) && `${p.title} ${p.body} ${p.author}`.toLowerCase().includes(query.toLowerCase()));
+    const langMount = $('#community-lang-bar-mount', root);
+    if (langMount) {
+      langMount.innerHTML = contentLangBarMarkup(catPosts);
+      bindContentLangBar(langMount, () => renderCommunityGridOnly(root));
+    }
+    const matchingPosts = contentLangFilter === 'all'
+      ? catPosts
+      : catPosts.filter(p => (p.lang || 'ko') === contentLangFilter);
+    grid.innerHTML = boardMarkup(matchingPosts) || `<div class="empty-state"><span>✧</span><h3>${esc(pt('emptySearchTitle'))}</h3><p>${esc(pt('emptySearchDesc'))}</p></div>`;
     bindCardActions(grid);
   }
   function renderSuggestionsGridOnly(root) {
@@ -1457,11 +1526,19 @@
     const allMergedSug = mergedSuggestions();
     const safeSug = allMergedSug.filter(s => isItemsUnlocked(s.items, avail));
     const hiddenSugCount = allMergedSug.length - safeSug.length;
-    const matchingSuggestions = safeSug.filter(s => s.items.map(i => name(ingredientFor(i))).join(' ').toLowerCase().includes(query.toLowerCase()));
+    const queryFiltered = safeSug.filter(s => s.items.map(i => name(ingredientFor(i))).join(' ').toLowerCase().includes(query.toLowerCase()));
+    const langMount = $('#suggestions-lang-bar-mount', root);
+    if (langMount) {
+      langMount.innerHTML = contentLangBarMarkup(queryFiltered);
+      bindContentLangBar(langMount, () => renderSuggestionsGridOnly(root));
+    }
+    const matchingSuggestions = contentLangFilter === 'all'
+      ? queryFiltered
+      : queryFiltered.filter(s => (s.lang || 'ko') === contentLangFilter);
     const spoilerBanner = hiddenSugCount > 0
       ? `<div class="spoiler-shield" style="grid-column:1/-1;"><span>🔒 아직 해금하지 않은 재료가 포함된 추천 조합 <b>${hiddenSugCount}개</b>는 스포일러 방지를 위해 숨겨져 있습니다.</span><a href="https://play.ksool.minibig.pw/" target="_blank" rel="noopener noreferrer" style="font-weight:850;color:var(--ink);">게임에서 재료 해금하기 ↗</a></div>`
       : '';
-    grid.innerHTML = spoilerBanner + (matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>일치하는 추천 조합이 없어요</h3><p>다른 재료로 검색하거나 새 조합을 제안해보세요.</p></div>`);
+    grid.innerHTML = spoilerBanner + (matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>${esc(pt('emptySearchTitle'))}</h3><p>${esc(pt('emptySearchDesc'))}</p></div>`);
     bindCardActions(grid);
   }
   function render() {
@@ -1524,6 +1601,7 @@
       const cats = ['전체', '플레이 팁', '새 조합 제안'];
       root.innerHTML = `
         ${searchToolbarMarkup(pt('searchTips'), true, pt('write'))}
+        <div id="community-lang-bar-mount" style="margin-top:10px;"></div>
         <div class="catalog-shell">
           <div class="catalog-tabs-bar">
             <div id="category-filters" class="category-filters">${cats.map(c => `<button data-category="${esc(c)}" class="${c===activeCategory?'active':''}" aria-pressed="${c===activeCategory}">${esc(catLabel(c))}</button>`).join('')}</div>
@@ -1549,7 +1627,8 @@
     if (activeTab === 'suggestions') {
       root.innerHTML = `
         ${searchToolbarMarkup(pt('searchSuggestions'), true, pt('proposeCombo'))}
-        <div class="catalog-body" style="margin-top:12px;">
+        <div id="suggestions-lang-bar-mount" style="margin-top:10px;"></div>
+        <div class="catalog-body" style="margin-top:10px;">
           <div id="recipe-grid" class="recipe-grid suggestions-view"></div>
         </div>
       `;
@@ -1627,9 +1706,47 @@
       if (ok) toast(saved ? pt('unsavedToast') : pt('savedToast'));
     });
     $$('[data-share-post]',root).forEach(b => b.onclick = () => sharePost(b.dataset.sharePost));
+    $$('[data-translate-post]',root).forEach(b => b.onclick = async (e) => {
+      e.stopPropagation();
+      const postId = b.dataset.translatePost;
+      const post = allPosts().find(p => p.id === postId);
+      if (!post) return;
+      const card = b.closest('[data-post-card]') || root;
+      const box = $(`[data-post-translated="${CSS.escape(postId)}"]`, card);
+      if (!box) return;
+      if (!box.hidden) {
+        box.hidden = true;
+        b.textContent = '🌐 Google 번역';
+        return;
+      }
+      b.disabled = true;
+      b.textContent = '🌐 번역 중...';
+      try {
+        const targetLang = (post.lang || 'ko') === portalLang ? (portalLang === 'ko' ? 'en' : 'ko') : portalLang;
+        const [tTitle, tBody] = await Promise.all([
+          translateTextViaGoogle(post.title, targetLang),
+          translateTextViaGoogle(post.body, targetLang)
+        ]);
+        box.innerHTML = `<div class="translated-head">🌐 Google 번역 (${esc(getLangBadgeCode(targetLang))})</div><strong>${esc(tTitle)}</strong><p>${renderBodyWithSafeHelpLinks(tBody)}</p>`;
+        box.hidden = false;
+        b.textContent = '🌐 원문 접기';
+        const commentNodes = $$('[data-comment-body]', $('#recipe-detail'));
+        await Promise.all(commentNodes.map(async (cNode) => {
+          const orig = cNode.dataset.origText || cNode.textContent;
+          cNode.dataset.origText = orig;
+          const tr = await translateTextViaGoogle(orig, targetLang);
+          cNode.innerHTML = `${renderBodyWithSafeHelpLinks(orig)}<div class="translated-comment">🌐 ${esc(tr)}</div>`;
+        }));
+      } catch (err) {
+        toast(err?.message || '번역 실패');
+        b.textContent = '🌐 Google 번역';
+      } finally {
+        b.disabled = false;
+      }
+    });
   }
   function bindRemoteActions(root){
-    $$('[data-vote-target]',root).forEach(b=>b.onclick=async()=>{b.disabled=true;try{const target=b.dataset.voteTarget;let body;if(target.startsWith('s:')){const key=target.slice(2);const sugObj=mergedSuggestions().find(s=>s.suggestion_key===key);body=sugObj&&!sugObj.fromCommunity?{suggestion_key:key,items:sugObj.items,type:b.dataset.voteType}:{suggestion_key:key,type:b.dataset.voteType};}else{body={post_id:target.slice(2),type:b.dataset.voteType};}await api('/votes',{method:'PUT',body:JSON.stringify(body)});await syncCommunity();$$('[data-vote-target]',document).filter(el=>el.dataset.voteTarget===target).forEach(el=>{const s=target.startsWith('s:')?mergedSuggestions().find(s=>s.suggestion_key===target.slice(2)):posts.find(p=>p.id===target.slice(2));if(s){el.setAttribute('aria-pressed',String(s.myVote===el.dataset.voteType));$('span',el).textContent=el.dataset.voteType==='UP'?s.upvotes:s.downvotes;}});}catch(e){toast(e.message);}finally{b.disabled=false;}});
+    $$('[data-vote-target]',root).forEach(b=>b.onclick=async()=>{b.disabled=true;try{const target=b.dataset.voteTarget;let body;if(target.startsWith('s:')){const key=target.slice(2);const sugObj=mergedSuggestions().find(s=>s.suggestion_key===key);body=sugObj&&!sugObj.fromCommunity?{suggestion_key:key,items:sugObj.items,lang:sugObj.lang||portalLang,type:b.dataset.voteType}:{suggestion_key:key,type:b.dataset.voteType};}else{body={post_id:target.slice(2),type:b.dataset.voteType};}await api('/votes',{method:'PUT',body:JSON.stringify(body)});await syncCommunity();$$('[data-vote-target]',document).filter(el=>el.dataset.voteTarget===target).forEach(el=>{const s=target.startsWith('s:')?mergedSuggestions().find(s=>s.suggestion_key===target.slice(2)):posts.find(p=>p.id===target.slice(2));if(s){el.setAttribute('aria-pressed',String(s.myVote===el.dataset.voteType));$('span',el).textContent=el.dataset.voteType==='UP'?s.upvotes:s.downvotes;}});}catch(e){toast(e.message);}finally{b.disabled=false;}});
     $$('[data-delete-post]',root).forEach(b=>b.onclick=async()=>{try{await api('/posts/'+encodeURIComponent(b.dataset.deletePost),{method:'DELETE'});if(root.id==='recipe-detail')$('#recipe-dialog').close();await syncCommunity();}catch(e){toast(e.message);}});
     $$('[data-comments]',root).forEach(b=>b.onclick=()=>openPost(b.dataset.comments).catch(e=>toast(e.message)));
     $$('[data-report]',root).forEach(b=>b.onclick=async()=>{try{await api('/reports',{method:'POST',body:JSON.stringify({post_id:b.dataset.report,reason:'커뮤니티 검토 요청'})});toast('신고 접수');}catch(e){toast(e.message);}});
@@ -1691,11 +1808,11 @@
     $('#recipe-detail').innerHTML=`<h2 style="font-size:25px;margin:23px 0;line-height:1.5">${esc(post.title)}</h2>${postCard(post)}`;
     if(!post.example){
       const data=await api(`/posts/${encodeURIComponent(id)}/comments`);
-      $('#recipe-detail').innerHTML+=`<div class="comments-list">${data.comments.map(c=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><b>${esc(c.author)}</b><p>${renderBodyWithSafeHelpLinks(c.body)}</p></div>${isAdminUser?`<button type="button" class="admin-btn is-danger" data-admin-delete-comment="${esc(c.id)}">삭제</button>`:''}</div>`).join('')}</div><form id="comment-form" class="comment-form"><input name="author" maxlength="16" placeholder="닉네임" aria-label="댓글 닉네임" value="${esc(getDefaultNickname())}" required><input name="body" maxlength="500" placeholder="댓글" aria-label="댓글 내용" required><button class="button coral" aria-label="댓글 등록">${uiIcon('plus',16)}</button></form>`;
+      $('#recipe-detail').innerHTML+=`<div class="comments-list">${data.comments.map(c=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><b>${esc(c.author)} <span class="lang-chip">${esc(getLangBadgeCode(c.lang || 'ko'))}</span></b><p data-comment-body="${esc(c.id)}">${renderBodyWithSafeHelpLinks(c.body)}</p></div>${isAdminUser?`<button type="button" class="admin-btn is-danger" data-admin-delete-comment="${esc(c.id)}">삭제</button>`:''}</div>`).join('')}</div><form id="comment-form" class="comment-form"><input name="author" maxlength="16" placeholder="닉네임" aria-label="댓글 닉네임" value="${esc(getDefaultNickname())}" required><input name="body" maxlength="500" placeholder="댓글" aria-label="댓글 내용" required><button class="button coral" aria-label="댓글 등록">${uiIcon('plus',16)}</button></form>`;
       $$('[data-admin-delete-comment]', $('#recipe-detail')).forEach(b => b.onclick = async () => {
         try { await adminApi(`/admin/comments/${encodeURIComponent(b.dataset.adminDeleteComment)}`, { method: 'DELETE' }); toast('댓글 삭제 완료'); await syncCommunity(); await openPost(id); } catch (e) { toast(e.message); }
       });
-      $('#comment-form').onsubmit=async event=>{event.preventDefault();const f=new FormData(event.target);try{await api(`/posts/${id}/comments`,{method:'POST',body:JSON.stringify({author:f.get('author').trim(),body:f.get('body').trim()})});await syncCommunity();await openPost(id);}catch(e){toast(e.message);}};
+      $('#comment-form').onsubmit=async event=>{event.preventDefault();const f=new FormData(event.target);try{await api(`/posts/${id}/comments`,{method:'POST',body:JSON.stringify({author:f.get('author').trim(),body:f.get('body').trim(),lang:portalLang})});await syncCommunity();await openPost(id);}catch(e){toast(e.message);}};
     }
     bindCardActions($('#recipe-detail'));openDialog($('#recipe-dialog'));
   }
@@ -1716,6 +1833,10 @@
     if (kindSelect) {
       kindSelect.value = defaultKind === 'experiment' ? 'experiment' : 'tip';
       kindSelect.dispatchEvent(new Event('change'));
+    }
+    const langField = $('#post-lang');
+    if (langField) {
+      langField.value = SUPPORTED_LANGS.includes(contentLangFilter) ? contentLangFilter : portalLang;
     }
     const authorInput = $('#compose-form [name=author]');
     if (authorInput && !authorInput.value) authorInput.value = getDefaultNickname();
@@ -1769,7 +1890,8 @@
     e.preventDefault();
     const form=e.target;
     const f=new FormData(form);
-    const entry={id:crypto.randomUUID ? crypto.randomUUID() : `post-${Date.now()}`,kind:f.get('kind'),title:f.get('title').trim(),body:f.get('body').trim(),author:f.get('author').trim(),recipeId:f.get('recipe')?Number(f.get('recipe')):null};
+    const chosenLang = SUPPORTED_LANGS.includes(f.get('lang')) ? f.get('lang') : portalLang;
+    const entry={id:crypto.randomUUID ? crypto.randomUUID() : `post-${Date.now()}`,kind:f.get('kind'),lang:chosenLang,title:f.get('title').trim(),body:f.get('body').trim(),author:f.get('author').trim(),recipeId:f.get('recipe')?Number(f.get('recipe')):null};
     if (entry.kind === 'experiment') {
       entry.items = $$('.composition-row').map(row => ({
         ingredient_id: Number($('.base-select', row).value),
@@ -1785,7 +1907,12 @@
     }
     if(!validatePost(entry)){$('#compose-error').textContent=entry.kind==='experiment'?'게임 룰: 중복 없는 2~4종류 재료, 각 1~10개(총합 최대 10개)와 제목·내용을 확인해주세요.':'공백만 입력할 수 없어요. 제목·닉네임·내용을 확인해주세요.';return;}
     const submit=$('[type=submit]',form);submit.disabled=true;
-    try{const result=await api('/posts',{method:'POST',body:JSON.stringify(entry)});try{localStorage.setItem('community-nickname',entry.author);}catch(_){}await syncCommunity();}
+    try{
+      await api('/posts',{method:'POST',body:JSON.stringify(entry)});
+      try{localStorage.setItem('community-nickname',entry.author);}catch(_){}
+      contentLangFilter = chosenLang;
+      await syncCommunity();
+    }
     catch(error){$('#compose-error').textContent=error.message;submit.disabled=false;return;}
     submit.disabled=false;
     form.reset();$('#experiment-fields').hidden=true;$('#composition-rows').innerHTML='';
@@ -1803,10 +1930,120 @@
       const next = e.target.value;
       if (SUPPORTED_LANGS.includes(next)) {
         portalLang = next;
+        contentLangFilter = next;
         try { localStorage.setItem('ksool_lang_v1', next); } catch (_) {}
         render();
       }
     };
   }
+  // Site-wide Google Translate integration
+  (() => {
+    const gtBtn = $('#gtranslate-toggle-btn');
+    const gtPop = $('#gtranslate-popover');
+    const gtReset = $('#gtranslate-reset-btn');
+    if (!gtBtn || !gtPop) return;
+    let gtScriptLoaded = false;
+    let activeGtLang = '';
+    const originalTexts = new Map();
+
+    function ensureGtWidget() {
+      if (gtScriptLoaded) return;
+      gtScriptLoaded = true;
+      window.googleTranslateElementInit = function () {
+        try {
+          if (window.google?.translate?.TranslateElement) {
+            new window.google.translate.TranslateElement({
+              pageLanguage: 'auto',
+              includedLanguages: 'ko,en,ja,zh-CN,zh-TW,es,fr,de,vi,th',
+              autoDisplay: false
+            }, 'google_translate_element');
+          }
+        } catch (_) {}
+      };
+      const s = document.createElement('script');
+      s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      s.async = true;
+      document.head.appendChild(s);
+    }
+
+    async function translateVisibleDom(targetLang) {
+      const selectors = '.board-title, .tip-card h3, .tip-card p, .comments-list p, .neo-panel p, .admin-row-main strong, .admin-row-main p';
+      const nodes = $$(selectors);
+      await Promise.all(nodes.map(async (el) => {
+        for (const child of el.childNodes) {
+          if (child.nodeType === Node.TEXT_NODE && child.nodeValue.trim().length > 1) {
+            if (!originalTexts.has(child)) originalTexts.set(child, child.nodeValue);
+            const orig = originalTexts.get(child);
+            try {
+              const tr = await translateTextViaGoogle(orig, targetLang);
+              if (tr) child.nodeValue = ` ${tr} `;
+            } catch (_) {}
+          }
+        }
+      }));
+    }
+
+    function restoreOriginalDom() {
+      for (const [node, orig] of originalTexts.entries()) {
+        try { node.nodeValue = orig; } catch (_) {}
+      }
+      originalTexts.clear();
+    }
+
+    gtBtn.onclick = (e) => {
+      e.stopPropagation();
+      const willOpen = gtPop.hidden;
+      gtPop.hidden = !willOpen;
+      gtBtn.setAttribute('aria-expanded', String(willOpen));
+      if (willOpen) ensureGtWidget();
+    };
+    document.addEventListener('click', (e) => {
+      if (!gtPop.hidden && !e.target.closest('#gtranslate-wrap')) {
+        gtPop.hidden = true;
+        gtBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    $$('[data-gt-lang]', gtPop).forEach((b) => {
+      b.onclick = async () => {
+        const lang = b.dataset.gtLang;
+        activeGtLang = lang;
+        $$('[data-gt-lang]', gtPop).forEach(x => x.classList.toggle('is-active', x === b));
+        const labelEl = $('#gtranslate-btn-label');
+        if (labelEl) labelEl.textContent = lang.toUpperCase();
+        // 1) Switch built-in UI if one of our 5 supported languages
+        if (SUPPORTED_LANGS.includes(lang) && portalLang !== lang) {
+          portalLang = lang;
+          if (langSelect) langSelect.value = lang;
+          try { localStorage.setItem('ksool_lang_v1', lang); } catch (_) {}
+          render();
+        }
+        // 2) Drive official Google Translate widget combo if ready
+        const combo = $('.goog-te-combo');
+        if (combo) {
+          combo.value = lang;
+          combo.dispatchEvent(new Event('change'));
+        }
+        // 3) Also translate dynamic user posts/comments directly via Google Translate endpoint
+        toast(`🌐 Google 번역 적용 중 (${lang.toUpperCase()})...`);
+        await translateVisibleDom(lang);
+        gtPop.hidden = true;
+        gtBtn.setAttribute('aria-expanded', 'false');
+      };
+    });
+    if (gtReset) {
+      gtReset.onclick = () => {
+        activeGtLang = '';
+        $$('[data-gt-lang]', gtPop).forEach(x => x.classList.remove('is-active'));
+        const labelEl = $('#gtranslate-btn-label');
+        if (labelEl) labelEl.textContent = '번역';
+        restoreOriginalDom();
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        render();
+        gtPop.hidden = true;
+        gtBtn.setAttribute('aria-expanded', 'false');
+        toast('원문으로 복원되었습니다.');
+      };
+    }
+  })();
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&['tips','suggestions'].includes(activeTab)&&!$('dialog[open]'))syncCommunity();});
 })();

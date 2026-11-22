@@ -82,6 +82,40 @@ test('admin RBAC, prompt generator, and game-rule validation work end-to-end', a
     assert.equal(promptRes.status, 200);
     const promptData = await promptRes.json();
     assert.match(promptData.prompt, /recipe_id/);
+
+    // 5. Language storage and filtering on posts and suggestions
+    const koPostRes = await call(env, '/api/posts', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'tip', lang: 'ko', title: '소맥 황금비율 팁', body: '맥주 먼저 따르세요', author: '주모' })
+    });
+    assert.equal(koPostRes.status, 201);
+    assert.equal((await koPostRes.json()).post.lang, 'ko');
+
+    const enPostRes = await call(env, '/api/posts', {
+      method: 'POST',
+      body: JSON.stringify({
+        kind: 'experiment',
+        lang: 'en',
+        title: 'Melon Soda Bomb',
+        body: 'Great refreshing mix',
+        author: 'Bartender',
+        items: [{ ingredient_id: 202, ratio: 3 }, { ingredient_id: 206, ratio: 2 }]
+      })
+    });
+    assert.equal(enPostRes.status, 201);
+    assert.equal((await enPostRes.json()).post.lang, 'en');
+
+    const koOnlyPosts = await (await call(env, '/api/posts?lang=ko')).json();
+    assert.equal(koOnlyPosts.posts.length, 1);
+    assert.equal(koOnlyPosts.posts[0].lang, 'ko');
+
+    const enOnlyPosts = await (await call(env, '/api/posts?lang=en')).json();
+    assert.equal(enOnlyPosts.posts.length, 1);
+    assert.equal(enOnlyPosts.posts[0].lang, 'en');
+
+    const enOnlySugs = await (await call(env, '/api/suggestions?lang=en')).json();
+    assert.equal(enOnlySugs.suggestions.length, 1);
+    assert.equal(enOnlySugs.suggestions[0].lang, 'en');
   } finally {
     db.close();
   }

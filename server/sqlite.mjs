@@ -11,6 +11,9 @@ export function openDatabase(path){
   for(const file of readdirSync(migDir).filter(f=>f.endsWith('.sql')).sort()){
     sqlite.exec(readFileSync(join(migDir,file),'utf8').replace(/^\uFEFF/,''));
   }
+  for(const tbl of ['posts','suggestions','comments']){
+    try{sqlite.exec(`ALTER TABLE ${tbl} ADD COLUMN lang TEXT NOT NULL DEFAULT 'ko';`);}catch(_){}
+  }
   function statement(sql,args=[]){
     return {sql,args,bind(...values){return statement(sql,values);},async first(){return sqlite.prepare(sql).get(...args)||null;},async all(){return {results:sqlite.prepare(sql).all(...args)};},async run(){const r=sqlite.prepare(sql).run(...args);return {success:true,meta:{changes:Number(r.changes)}};}};
   }

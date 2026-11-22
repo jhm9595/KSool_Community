@@ -72,20 +72,31 @@ async function countVotes(env,target,actorId){
   const mine=actorId?await stmt(env,'SELECT direction FROM votes WHERE target_key=? AND actor_id=?',target,actorId).first():null;
   return {...row,myVote:mine?.direction||null};
 }
-function suggestionInsert(env,items){return stmt(env,'INSERT OR IGNORE INTO suggestions(suggestion_key,items_json,created_at) VALUES(?,?,?)',buildKey(items),JSON.stringify(items),now());}
+const VALID_LANGS=new Set(['ko','en','ja','zh-CN','zh-TW']);
+function normalizeLang(raw,sample=''){
+  if(typeof raw==='string'&&VALID_LANGS.has(raw.trim()))return raw.trim();
+  if(/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(sample))return 'ko';
+  if(/[\u3040-\u30ff]/.test(sample))return 'ja';
+  if(/[\u4e00-\u9fff]/.test(sample))return 'zh-CN';
+  if(/[a-zA-Z]/.test(sample))return 'en';
+  return 'ko';
+}
+function suggestionInsert(env,items,lang='ko'){return stmt(env,'INSERT OR IGNORE INTO suggestions(suggestion_key,items_json,lang,created_at) VALUES(?,?,?,?)',buildKey(items),JSON.stringify(items),normalizeLang(lang),now());}
 function voteInsert(env,target,actorId,type){if(!['UP','DOWN'].includes(type))throw problem('UP 또는 DOWN 필요');return stmt(env,'INSERT INTO votes(target_key,actor_id,direction) VALUES(?,?,?) ON CONFLICT(target_key,actor_id) DO UPDATE SET direction=excluded.direction',target,actorId,type);}
 async function suggestionList(env,actorId,url){
   const [beforeTime,beforeKey]=cursor(url.searchParams.get('before'));
   const available=url.searchParams.has('available')?new Set(url.searchParams.get('available').split(',').filter(Boolean).map(Number)):null;
-  const {results}=await stmt(env,`SELECT s.*,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='DOWN') AS downvotes,m.direction AS my_vote FROM suggestions s LEFT JOIN votes m ON m.target_key=s.suggestion_key AND m.actor_id=? WHERE s.is_applied=0 AND (s.created_at<? OR (s.created_at=? AND s.suggestion_key<?)) ORDER BY s.created_at DESC,s.suggestion_key DESC LIMIT 201`,actorId,beforeTime,beforeTime,beforeKey).all();
+  const langFilter=url.searchParams.get('lang');
+  const hasLang=langFilter&&VALID_LANGS.has(langFilter);
+  const {results}=await stmt(env,`SELECT s.*,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='DOWN') AS downvotes,m.direction AS my_vote FROM suggestions s LEFT JOIN votes m ON m.target_key=s.suggestion_key AND m.actor_id=? WHERE s.is_applied=0${hasLang?' AND COALESCE(s.lang,\'ko\')=?':''} AND (s.created_at<? OR (s.created_at=? AND s.suggestion_key<?)) ORDER BY s.created_at DESC,s.suggestion_key DESC LIMIT 201`,...(hasLang?[actorId,langFilter,beforeTime,beforeTime,beforeKey]:[actorId,beforeTime,beforeTime,beforeKey])).all();
   const page=results.slice(0,200);
   const userVotes={};
-  const suggestions=page.map(s=>{if(s.my_vote)userVotes[s.suggestion_key]=s.my_vote;return {suggestion_key:s.suggestion_key,items:JSON.parse(s.items_json),upvotes:s.upvotes,downvotes:s.downvotes,is_applied:!!s.is_applied};}).filter(s=>!available||s.items.every(i=>available.has(i.ingredient_id)));
+  const suggestions=page.map(s=>{if(s.my_vote)userVotes[s.suggestion_key]=s.my_vote;return {suggestion_key:s.suggestion_key,items:JSON.parse(s.items_json),lang:s.lang||'ko',upvotes:s.upvotes,downvotes:s.downvotes,is_applied:!!s.is_applied};}).filter(s=>!available||s.items.every(i=>available.has(i.ingredient_id)));
   suggestions.sort((a,b)=>(b.upvotes-b.downvotes)-(a.upvotes-a.downvotes));
   return {suggestions,userVotes,nextBefore:results.length>200?`${page.at(-1).created_at}|${page.at(-1).suggestion_key}`:null};
 }
 const postSelect=`SELECT p.*,s.items_json,(SELECT COUNT(*) FROM votes v WHERE v.target_key=p.target_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=p.target_key AND v.direction='DOWN') AS downvotes,m.direction AS my_vote,(SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id) AS comment_count FROM posts p LEFT JOIN suggestions s ON s.suggestion_key=p.suggestion_key LEFT JOIN votes m ON m.target_key=p.target_key AND m.actor_id=?`;
-function serializePost(p,actorId){return {id:p.id,kind:p.kind,title:p.title,body:p.body,author:p.author,recipeId:p.recipe_id,suggestion_key:p.suggestion_key,items:p.items_json?JSON.parse(p.items_json):undefined,upvotes:p.upvotes,downvotes:p.downvotes,myVote:p.my_vote||null,commentCount:p.comment_count,createdAt:p.created_at,isMine:p.actor_id===actorId};}
+function serializePost(p,actorId){return {id:p.id,kind:p.kind,title:p.title,body:p.body,author:p.author,lang:p.lang||'ko',recipeId:p.recipe_id,suggestion_key:p.suggestion_key,items:p.items_json?JSON.parse(p.items_json):undefined,upvotes:p.upvotes,downvotes:p.downvotes,myVote:p.my_vote||null,commentCount:p.comment_count,createdAt:p.created_at,isMine:p.actor_id===actorId};}
 
 const SUPABASE_URL='https://jyjxvwxlwkoedxwkkysj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5anh2d3hsd2tvZWR4d2treXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzY5NDUsImV4cCI6MjEwOTA1Mjk0NX0.wfaRfya2PV4Ykawd6md4fXrO91_TWnyGyusSRa-2fJ8';
@@ -202,12 +213,13 @@ export async function handleApi(req,env){
     else if(req.method==='POST'&&path==='/api/suggestions'){
       const body=await readBody(req);const items=normalizeItems(body.items||body.potSlots?.map(s=>({ingredient_id:s.baseId,detail_id:s.detailId||null,ratio:s.count})));
       const key=buildKey(items);ensureNotOfficialRecipe(key);
-      await env.DB.batch([suggestionInsert(env,items),voteInsert(env,key,identity.id,'UP')]);
-      result=json({suggestion_key:key,items,...await countVotes(env,key,identity.id),is_applied:false},201);
+      const lang=normalizeLang(body.lang);
+      await env.DB.batch([suggestionInsert(env,items,lang),voteInsert(env,key,identity.id,'UP')]);
+      result=json({suggestion_key:key,items,lang,...await countVotes(env,key,identity.id),is_applied:false},201);
     }else if(req.method==='PUT'&&path==='/api/votes'){
       const body=await readBody(req);let target;
       const batch=[];
-      if(body.items){const items=normalizeItems(body.items);target=buildKey(items);batch.push(suggestionInsert(env,items));}
+      if(body.items){const items=normalizeItems(body.items);target=buildKey(items);batch.push(suggestionInsert(env,items,body.lang));}
       else if(body.suggestion_key){target=str(body.suggestion_key,1,300,'조합');if(!await stmt(env,'SELECT suggestion_key FROM suggestions WHERE suggestion_key=?',target).first())throw problem('조합 없음',404);}
       else if(body.post_id){const post=await stmt(env,'SELECT target_key FROM posts WHERE id=? AND deleted_at IS NULL',body.post_id).first();if(!post)throw problem('글 없음',404);target=post.target_key;}
       else throw problem('조합 또는 글 필요');
@@ -215,18 +227,21 @@ export async function handleApi(req,env){
       result=json({target_key:target,...await countVotes(env,target,identity.id)});
     }else if(req.method==='GET'&&path==='/api/posts'){
       const [beforeTime,beforeId]=cursor(url.searchParams.get('before'));
-      const {results}=await stmt(env,`${postSelect} WHERE p.deleted_at IS NULL AND (p.created_at<? OR (p.created_at=? AND p.id<?)) ORDER BY p.created_at DESC,p.id DESC LIMIT 101`,identity.id,beforeTime,beforeTime,beforeId).all();
+      const langFilter=url.searchParams.get('lang');
+      const hasLang=langFilter&&VALID_LANGS.has(langFilter);
+      const {results}=await stmt(env,`${postSelect} WHERE p.deleted_at IS NULL${hasLang?' AND COALESCE(p.lang,\'ko\')=?':''} AND (p.created_at<? OR (p.created_at=? AND p.id<?)) ORDER BY p.created_at DESC,p.id DESC LIMIT 101`,...(hasLang?[identity.id,langFilter,beforeTime,beforeTime,beforeId]:[identity.id,beforeTime,beforeTime,beforeId])).all();
       result=json({posts:results.slice(0,100).map(p=>serializePost(p,identity.id)),nextBefore:results.length>100?`${results[99].created_at}|${results[99].id}`:null});
     }else if(req.method==='POST'&&path==='/api/posts'){
       await limit(req,env,'posts',10);
       const b=await readBody(req),id=crypto.randomUUID(),time=now();
       if(!['tip','experiment'].includes(b.kind))throw problem('글 종류 확인');
       const title=str(b.title,1,70,'제목'),body=str(b.body,1,1500,'내용'),author=str(b.author,1,16,'닉네임');
+      const lang=normalizeLang(b.lang,`${title} ${body}`);
       const recipeId=b.recipeId??null;if(recipeId!==null&&!recipeIds.has(recipeId))throw problem('공식 조합 확인');
       let key=null,batch=[];
-      if(b.kind==='experiment'){const items=normalizeItems(b.items);key=buildKey(items);ensureNotOfficialRecipe(key);batch.push(suggestionInsert(env,items));}
+      if(b.kind==='experiment'){const items=normalizeItems(b.items);key=buildKey(items);ensureNotOfficialRecipe(key);batch.push(suggestionInsert(env,items,lang));}
       const target=key||`post:${id}`;
-      batch.push(stmt(env,'INSERT INTO posts(id,actor_id,kind,title,body,author,recipe_id,suggestion_key,target_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',id,identity.id,b.kind,title,body,author,recipeId,key,target,time));
+      batch.push(stmt(env,'INSERT INTO posts(id,actor_id,kind,title,body,author,lang,recipe_id,suggestion_key,target_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)',id,identity.id,b.kind,title,body,author,lang,recipeId,key,target,time));
       await env.DB.batch(batch);
       const row=await stmt(env,`${postSelect} WHERE p.id=?`,identity.id,id).first();
       result=json({post:serializePost(row,identity.id)},201);
@@ -237,8 +252,8 @@ export async function handleApi(req,env){
       else throw problem('지원하지 않는 요청',405);
     }else if(/^\/api\/posts\/[\w-]+\/comments$/.test(path)){
       const id=path.split('/')[3];if(!await stmt(env,'SELECT id FROM posts WHERE id=? AND deleted_at IS NULL',id).first())throw problem('글 없음',404);
-      if(req.method==='GET'){const {results}=await stmt(env,'SELECT id,author,body,created_at FROM comments WHERE post_id=? ORDER BY created_at,id LIMIT 200',id).all();result=json({comments:results});}
-      else if(req.method==='POST'){await limit(req,env,'comments',30);const b=await readBody(req);await stmt(env,'INSERT INTO comments(id,post_id,actor_id,author,body,created_at) VALUES(?,?,?,?,?,?)',crypto.randomUUID(),id,identity.id,str(b.author,1,16,'닉네임'),str(b.body,1,500,'댓글'),now()).run();result=json({ok:true},201);}
+      if(req.method==='GET'){const {results}=await stmt(env,'SELECT id,author,body,COALESCE(lang,\'ko\') AS lang,created_at FROM comments WHERE post_id=? ORDER BY created_at,id LIMIT 200',id).all();result=json({comments:results});}
+      else if(req.method==='POST'){await limit(req,env,'comments',30);const b=await readBody(req),cBody=str(b.body,1,500,'댓글'),cLang=normalizeLang(b.lang,cBody);await stmt(env,'INSERT INTO comments(id,post_id,actor_id,author,body,lang,created_at) VALUES(?,?,?,?,?,?,?)',crypto.randomUUID(),id,identity.id,str(b.author,1,16,'닉네임'),cBody,cLang,now()).run();result=json({ok:true},201);}
       else throw problem('지원하지 않는 요청',405);
     }else if(req.method==='POST'&&path==='/api/reports'){
       const b=await readBody(req);if(!await stmt(env,'SELECT id FROM posts WHERE id=? AND deleted_at IS NULL',b.post_id).first())throw problem('글 없음',404);
