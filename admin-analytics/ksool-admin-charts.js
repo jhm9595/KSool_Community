@@ -379,15 +379,15 @@ class KSoolAdminCharts extends HTMLElement {
             <h4>🧭 사람들이 어디서 알고 찾아왔나?</h4>
             ${src.length ? `
               <div class="hbar-list">
-                ${src.slice(0, 6).map((s) => {
+                ${src.slice(0, 8).map((s) => {
                   const maxU = Math.max(1, src[0]?.users || 1);
-                  return `<div class="hbar-row"><div class="hbar-head"><span>${esc(s.label)}${s.campaign ? ` <small>(${esc(s.campaign)})</small>` : ''}</span><span>${s.users.toLocaleString()}명 (참여 ${s.engagementRatePct}%)</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${Math.round((s.users / maxU) * 100)}%"></div></div></div>`;
+                  const cleanCamp = String(s.campaign || '').replace(/^\(+|\)+$/g, '').trim();
+                  const showCamp = cleanCamp && !['direct', 'referral', 'organic', 'not set', 'none'].includes(cleanCamp.toLowerCase());
+                  const gameMeta = this.hostScope === 'all' ? ` · 게임 ${s.gameSharePct}%` : '';
+                  return `<div class="hbar-row"><div class="hbar-head"><span>${esc(s.label)}${showCamp ? ` <small style="color:#666357;">(${esc(cleanCamp)})</small>` : ''}</span><span style="white-space:nowrap;"><b>${s.users.toLocaleString()}명</b> · 참여 ${s.engagementRatePct}%${gameMeta} · 체류 ${esc(s.avgDurationFormatted)}</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${Math.round((s.users / maxU) * 100)}%"></div></div></div>`;
                 }).join('')}
               </div>
-              <table class="tbl"><thead><tr><th>유입원</th><th>방문</th><th>참여율</th><th>게임비중</th><th>체류</th></tr></thead><tbody>
-                ${src.slice(0, 8).map((s) => `<tr><td>${esc(s.label)}</td><td>${s.users}</td><td>${s.engagementRatePct}%</td><td>${s.gameSharePct}%</td><td>${esc(s.avgDurationFormatted)}</td></tr>`).join('')}
-              </tbody></table>
-              ${(srcMeta.oauthRedirects > 0 || srcMeta.testReferrals > 0) ? `<p class="muted" style="margin-top:8px;">🔐 분리된 경로: 구글 로그인 복귀 ${srcMeta.oauthRedirects || 0}명 · 테스트 유입 ${srcMeta.testReferrals || 0}명</p>` : ''}
+              ${(srcMeta.oauthRedirects > 0 || srcMeta.testReferrals > 0) ? `<p class="muted" style="margin-top:10px;">🔐 분리된 경로: 구글 로그인 복귀 ${srcMeta.oauthRedirects || 0}명 · 테스트 유입 ${srcMeta.testReferrals || 0}명</p>` : ''}
             ` : '<p class="muted">유입 경로 데이터가 아직 없습니다.</p>'}
           </section>
 
