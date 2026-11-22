@@ -28,7 +28,18 @@ const GAME_MODE_LABELS: Record<string, string> = {
   party_fridge: "🍻 [술게임] 냉장고를 부탁해",
   party_market: "🍻 [술게임] 시장에 가면",
   party_iamground: "🍻 [술게임] 아이엠그라운드",
+  party_caproulette: "🍻 [술게임] 병뚜껑 룰렛",
+  party_somaekpour: "🍻 [술게임] 소맥 황금비율 따르기",
+  party_fingerroulette: "🍻 [술게임] 손가락 룰렛",
 };
+
+function getGameModeLabel(mode: string): string {
+  if (GAME_MODE_LABELS[mode]) return GAME_MODE_LABELS[mode];
+  if (String(mode || "").startsWith("party_")) {
+    return `🍻 [술게임] ${String(mode).replace(/^party_/, "")}`;
+  }
+  return mode || "기타";
+}
 
 const LEVEL_ID_LABELS: Record<string, string> = {
   step_1: "1단계 (입문·편의점 꿀조합)",
@@ -315,15 +326,26 @@ async function buildReport(accessToken: string, report: string, range: string, h
       gameSessions: number;
       durationWeighted: number;
     }>();
+    let oauthRedirects = 0;
+    let testReferrals = 0;
 
     for (const r of rows) {
       const sm = dim(r, 0) || "(direct) / (none)";
+      const lowerSm = sm.toLowerCase();
       const camp = dim(r, 1);
       const host = dim(r, 2).toLowerCase();
       const users = met(r, 0);
       const sessions = met(r, 1);
       const engaged = met(r, 2);
       const avgDur = met(r, 3);
+      if (lowerSm.includes("accounts.google.com")) {
+        oauthRedirects += users;
+        continue;
+      }
+      if (lowerSm.includes("github.io")) {
+        testReferrals += users;
+        continue;
+      }
       const key = `${sm}::${camp && camp !== "(not set)" ? camp : ""}`;
       const item = grouped.get(key) || {
         sourceMedium: sm,
@@ -357,7 +379,7 @@ async function buildReport(accessToken: string, report: string, range: string, h
       .sort((a, b) => b.users - a.users)
       .slice(0, 15);
 
-    return { sources };
+    return { sources, separatedMeta: { oauthRedirects, testReferrals } };
   }
 
   if (report === "game_modes") {
@@ -397,7 +419,7 @@ async function buildReport(accessToken: string, report: string, range: string, h
     for (const [mode, val] of byMode.entries()) {
       const isParty = mode.startsWith("party_");
       const groupKey = isParty ? "party_all" : mode;
-      const groupLabel = isParty ? "🍻 술자리 파티게임 (전체)" : (GAME_MODE_LABELS[mode] || mode);
+      const groupLabel = isParty ? "🍻 술자리 파티게임 (전체)" : getGameModeLabel(mode);
       const item = donutMap.get(groupKey) || { key: groupKey, label: groupLabel, plays: 0, users: 0, durationSum: 0, ends: 0 };
       item.plays += val.starts || val.ends;
       item.users += val.users;
@@ -520,7 +542,7 @@ async function buildReport(accessToken: string, report: string, range: string, h
       const failOrQuitPct = total > 0 ? pct(s.loseCount + s.quitCount, total) : 0;
       return {
         gameMode: s.gameMode,
-        gameModeLabel: GAME_MODE_LABELS[s.gameMode] || s.gameMode,
+        gameModeLabel: getGameModeLabel(s.gameMode),
         levelId: s.levelId,
         levelLabel: LEVEL_ID_LABELS[s.levelId] || s.levelId,
         winCount: s.winCount,
@@ -577,7 +599,7 @@ async function buildReport(accessToken: string, report: string, range: string, h
         const totalPlays = x.plays || x.ends;
         return {
           gameMode: x.gameMode,
-          label: GAME_MODE_LABELS[x.gameMode] || x.gameMode,
+          label: getGameModeLabel(x.gameMode),
           plays: totalPlays,
           users: x.users,
           avgDurationFormatted: formatDuration(x.ends > 0 ? x.durationSum / x.ends : 0),
@@ -701,6 +723,90 @@ async function buildReport(accessToken: string, report: string, range: string, h
       outboundClicks: { storyLinkClicks, affiliateBuyClicks, topClickedRecipes },
       socialAndAccount: { shareCount, googleSignUps, googleLogins, recipeUnlocks },
     };
+  }
+
+  if (report === "geo_lang") {
+    const [geoRes, langRes] = await Promise.all([
+      gaFetch(accessToken, "runReport", {
+        dateRanges: [{ startDate: currentStart, endDate: "today" }],
+        dimensions: [{ name: "country" }],
+        metrics: [{ name: "activeUsers" }, { name: "engagedSessions" }],
+        dimensionFilter: hostFilter(hosts),
+        orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
+        limit: 10,
+      }),
+      gaFetch(accessToken, "runReport", {
+        dateRanges: [{ startDate: currentStart, endDate: "today" }],
+        dimensions: [{ name: "customEvent:lang" }],
+        metrics: [{ name: "activeUsers" }, { name: "eventCount" }],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              hostFilter(hosts),
+              { filter: { fieldName: "eventName", inListFilter: { values: ["language_change", "page_view"] } } },
+            ],
+          },
+        },
+        orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
+        limit: 10,
+      }),
+    ]);
+
+    const countries = ((geoRes.rows || []) as GaRow[]).map((r) => ({
+      country: dim(r, 0) || "(알 수 없음)",
+      users: met(r, 0),
+      engagedSessions: met(r, 1),
+    }));
+    const langMap = new Map<string, { lang: string; users: number; events: number }>();
+    for (const r of (langRes.rows || []) as GaRow[]) {
+      const code = dim(r, 0);
+      if (!code || code === "(not set)") continue;
+      const cur = langMap.get(code) || { lang: code, users: 0, events: 0 };
+      cur.users += met(r, 0);
+      cur.events += met(r, 1);
+      langMap.set(code, cur);
+    }
+    const languages = Array.from(langMap.values()).sort((a, b) => b.users - a.users);
+    return { countries, languages };
+  }
+
+  if (report === "exceptions") {
+    const data = await gaFetch(accessToken, "runReport", {
+      dateRanges: [{ startDate: "7daysAgo", endDate: "today" }],
+      dimensions: [{ name: "customEvent:description" }, { name: "customEvent:game_mode" }],
+      metrics: [{ name: "eventCount" }, { name: "activeUsers" }],
+      dimensionFilter: {
+        andGroup: {
+          expressions: [
+            { filter: { fieldName: "hostName", stringFilter: { matchType: "EXACT", value: "play.ksool.minibig.pw" } } },
+            { filter: { fieldName: "eventName", stringFilter: { matchType: "EXACT", value: "exception" } } },
+          ],
+        },
+      },
+      orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
+      limit: 15,
+    });
+
+    const exceptions = ((data.rows || []) as GaRow[]).map((r) => {
+      const rawDesc = dim(r, 0);
+      const isLegacy = !rawDesc || rawDesc === "(not set)";
+      const mode = dim(r, 1);
+      const count = met(r, 0);
+      const users = met(r, 1);
+      return {
+        description: isLegacy ? "이전 기록(상세 미수집)" : rawDesc,
+        isLegacy,
+        gameMode: mode && mode !== "(not set)" ? getGameModeLabel(mode) : "-",
+        count,
+        users,
+        warningBadge: count >= 5 ? "🐞 버그 점검 필요" : null,
+      };
+    }).sort((a, b) => {
+      if (a.isLegacy !== b.isLegacy) return a.isLegacy ? 1 : -1;
+      return b.count - a.count;
+    });
+
+    return { exceptions };
   }
 
   throw new Error(`지원하지 않는 report 유형: ${report}`);

@@ -82,7 +82,7 @@ class KSoolAdminCharts extends HTMLElement {
     this.errorMsg = null;
     this.render();
 
-    const names = ['realtime', 'overview', 'sources', 'game_modes', 'funnel_and_levels', 'party_games', 'conversions'];
+    const names = ['realtime', 'overview', 'sources', 'game_modes', 'funnel_and_levels', 'party_games', 'conversions', 'geo_lang', 'exceptions'];
     try {
       const results = await Promise.all(names.map((n) => this.fetchReport(n, forceRefresh)));
       names.forEach((n, idx) => { this.reports[n] = results[idx]; });
@@ -188,6 +188,7 @@ class KSoolAdminCharts extends HTMLElement {
     const ov = this.reports.overview || {};
     const kpis = ov.kpis || {};
     const src = this.reports.sources?.sources || [];
+    const srcMeta = this.reports.sources?.separatedMeta || {};
     const gm = this.reports.game_modes?.modes || [];
     const fn = this.reports.funnel_and_levels || {};
     const pg = this.reports.party_games?.partyGames || [];
@@ -195,6 +196,8 @@ class KSoolAdminCharts extends HTMLElement {
     const ad = cv.adSummary || {};
     const out = cv.outboundClicks || {};
     const soc = cv.socialAndAccount || {};
+    const geo = this.reports.geo_lang || {};
+    const exc = this.reports.exceptions?.exceptions || [];
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -328,9 +331,10 @@ class KSoolAdminCharts extends HTMLElement {
                   return `<div class="hbar-row"><div class="hbar-head"><span>${esc(s.label)}${s.campaign ? ` <small>(${esc(s.campaign)})</small>` : ''}</span><span>${s.users.toLocaleString()}명 (참여 ${s.engagementRatePct}%)</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${Math.round((s.users / maxU) * 100)}%"></div></div></div>`;
                 }).join('')}
               </div>
-              <table class="tbl"><thead><tr><th>유입원</th><th>방문</th><th>게임비중</th><th>체류</th></tr></thead><tbody>
-                ${src.slice(0, 8).map((s) => `<tr><td>${esc(s.label)}</td><td>${s.users}</td><td>${s.gameSharePct}%</td><td>${esc(s.avgDurationFormatted)}</td></tr>`).join('')}
+              <table class="tbl"><thead><tr><th>유입원</th><th>방문</th><th>참여율</th><th>게임비중</th><th>체류</th></tr></thead><tbody>
+                ${src.slice(0, 8).map((s) => `<tr><td>${esc(s.label)}</td><td>${s.users}</td><td>${s.engagementRatePct}%</td><td>${s.gameSharePct}%</td><td>${esc(s.avgDurationFormatted)}</td></tr>`).join('')}
               </tbody></table>
+              ${(srcMeta.oauthRedirects > 0 || srcMeta.testReferrals > 0) ? `<p class="muted" style="margin-top:8px;">🔐 분리된 경로: 구글 로그인 복귀 ${srcMeta.oauthRedirects || 0}명 · 테스트 유입 ${srcMeta.testReferrals || 0}명</p>` : ''}
             ` : '<p class="muted">유입 경로 데이터가 아직 없습니다.</p>'}
           </section>
 
@@ -411,6 +415,47 @@ class KSoolAdminCharts extends HTMLElement {
                 ${(ad.byPlacement || []).map((a) => `<div class="hbar-row"><div class="hbar-head"><span>${esc(a.label)}</span><span>${a.completes}/${a.starts} (${a.ratePct}%)</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${a.ratePct}%;background:#c6f35c"></div></div></div>`).join('')}
               </div>
             ` : '<p class="muted">광고 및 전환 이벤트가 아직 수집되지 않았습니다.</p>'}
+          </section>
+        </div>
+
+        <div class="grid-2">
+          <!-- 위젯 8: 국가 & 언어 분포 -->
+          <section class="panel">
+            <h4>🌍 어느 나라·언어권 유저가 늘고 있나?</h4>
+            <div class="grid-2" style="gap:10px;">
+              <div>
+                <p class="muted" style="margin-bottom:6px;font-weight:800;">접속 국가 TOP 5</p>
+                ${(geo.countries || []).length ? `
+                  <div class="hbar-list">
+                    ${(geo.countries || []).slice(0, 5).map((c) => {
+                      const maxC = Math.max(1, geo.countries[0]?.users || 1);
+                      return `<div class="hbar-row"><div class="hbar-head"><span>${esc(c.country)}</span><span>${c.users.toLocaleString()}명</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${Math.round((c.users / maxC) * 100)}%;background:#93c5fd"></div></div></div>`;
+                    }).join('')}
+                  </div>
+                ` : '<p class="muted">국가 데이터가 아직 없습니다.</p>'}
+              </div>
+              <div>
+                <p class="muted" style="margin-bottom:6px;font-weight:800;">인게임 언어 분포</p>
+                ${(geo.languages || []).length ? `
+                  <div class="hbar-list">
+                    ${(geo.languages || []).slice(0, 5).map((l) => {
+                      const maxL = Math.max(1, geo.languages[0]?.users || 1);
+                      return `<div class="hbar-row"><div class="hbar-head"><span>${esc(l.lang)}</span><span>${l.users.toLocaleString()}명 (${l.events}회)</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${Math.round((l.users / maxL) * 100)}%;background:#c4b5f7"></div></div></div>`;
+                    }).join('')}
+                  </div>
+                ` : '<p class="muted">언어 설정 데이터가 아직 없습니다.</p>'}
+              </div>
+            </div>
+          </section>
+
+          <!-- 위젯 9: 게임 내 JS 오류 실시간 모니터링 -->
+          <section class="panel">
+            <h4>🐞 게임 중 에러가 터지고 있지는 않나? (최근 7일)</h4>
+            ${exc.length ? `
+              <table class="tbl"><thead><tr><th>오류 내용</th><th>모드</th><th>횟수</th><th>유저</th></tr></thead><tbody>
+                ${exc.slice(0, 10).map((e) => `<tr><td>${esc(e.description)}${e.warningBadge ? `<span class="warn-badge">${esc(e.warningBadge)}</span>` : ''}</td><td>${esc(e.gameMode)}</td><td>${e.count}</td><td>${e.users}</td></tr>`).join('')}
+              </tbody></table>
+            ` : '<p class="muted">최근 7일간 수집된 게임 JS 오류가 없습니다. ✅</p>'}
           </section>
         </div>
       </div>
