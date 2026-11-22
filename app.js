@@ -975,7 +975,7 @@
         </section>
       `;
     } else if (activeAdminTab === 'analytics' && isSuperAdmin) {
-      bodyHtml = `<ksool-admin-charts endpoint="https://jyjxvwxlwkoedxwkkysj.supabase.co/functions/v1/ga-report" token="${esc(adminAccessToken || '')}"></ksool-admin-charts>`;
+      bodyHtml = `<div id="ga-charts-mount"></div>`;
     } else if (activeAdminTab === 'roles' && isSuperAdmin) {
       bodyHtml = `
         <section class="neo-panel">
@@ -1011,7 +1011,7 @@
       <div class="admin-board">
         <div class="admin-subtabs">
           ${subTabs.map(t => `<button type="button" data-admin-subtab="${t.id}" class="${activeAdminTab===t.id?'is-active':''}">${t.label}</button>`).join('')}
-          <button type="button" id="admin-refresh-btn" class="admin-btn" style="margin-left:auto;">↻ 새로고침</button>
+          ${activeAdminTab === 'analytics' ? '' : '<button type="button" id="admin-refresh-btn" class="admin-btn" style="margin-left:auto;">↻ 새로고침</button>'}
         </div>
         ${bodyHtml}
       </div>
@@ -1406,7 +1406,23 @@
     if (!root) return;
 
     if (activeTab === 'admin') {
+      const existingMount = $('#ga-charts-mount', root);
+      if (activeAdminTab === 'analytics' && isSuperAdmin && existingMount && window._ksoolAdminChartsEl && existingMount.contains(window._ksoolAdminChartsEl)) {
+        if (adminAccessToken && window._ksoolAdminChartsEl.getAttribute('token') !== adminAccessToken) {
+          window._ksoolAdminChartsEl.setAttribute('token', adminAccessToken);
+        }
+        return;
+      }
       root.innerHTML = `<div id="recipe-grid" class="recipe-grid">${adminMarkup()}</div>`;
+      const mount = $('#ga-charts-mount', root);
+      if (mount && activeAdminTab === 'analytics' && isSuperAdmin) {
+        if (!window._ksoolAdminChartsEl) {
+          window._ksoolAdminChartsEl = document.createElement('ksool-admin-charts');
+          window._ksoolAdminChartsEl.setAttribute('endpoint', 'https://jyjxvwxlwkoedxwkkysj.supabase.co/functions/v1/ga-report');
+        }
+        if (adminAccessToken) window._ksoolAdminChartsEl.setAttribute('token', adminAccessToken);
+        mount.appendChild(window._ksoolAdminChartsEl);
+      }
       bindAdminActions(root);
       bindCardActions(root);
       return;

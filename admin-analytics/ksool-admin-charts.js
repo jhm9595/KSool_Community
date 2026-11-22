@@ -23,8 +23,11 @@ class KSoolAdminCharts extends HTMLElement {
   }
 
   connectedCallback() {
-    this.render();
-    this.loadAll(false);
+    if (!this._renderedOnce) {
+      this._renderedOnce = true;
+      this.render();
+      this.loadAll(false);
+    }
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
@@ -80,7 +83,11 @@ class KSoolAdminCharts extends HTMLElement {
     this.loading = true;
     this.setupError = null;
     this.errorMsg = null;
-    this.render();
+    const refBtn = this.shadowRoot?.getElementById('ga-refresh-btn');
+    if (refBtn) {
+      refBtn.disabled = true;
+      refBtn.textContent = '불러오는 중...';
+    }
 
     const names = ['realtime', 'overview', 'sources', 'game_modes', 'funnel_and_levels', 'party_games', 'conversions', 'geo_lang', 'exceptions'];
     try {
@@ -272,7 +279,7 @@ class KSoolAdminCharts extends HTMLElement {
               <button type="button" data-range="28d" class="${this.range === '28d' ? 'is-active' : ''}">28일</button>
               <button type="button" data-range="90d" class="${this.range === '90d' ? 'is-active' : ''}">90일</button>
             </div>
-            <button type="button" id="ga-refresh-btn" class="btn" ${this.loading ? 'disabled' : ''}>${this.loading ? '불러오는 중...' : '↻ 새로고침'}</button>
+            <button type="button" id="ga-refresh-btn" class="btn" ${this.loading ? 'disabled' : ''}>${this.loading ? '불러오는 중...' : '↻ 정보 갱신'}</button>
           </div>
         </div>
 
@@ -462,10 +469,20 @@ class KSoolAdminCharts extends HTMLElement {
     `;
 
     this.shadowRoot.querySelectorAll('[data-scope]').forEach((b) => {
-      b.onclick = () => { this.hostScope = b.dataset.scope; this.loadAll(false); };
+      b.onclick = () => {
+        if (this.hostScope === b.dataset.scope) return;
+        this.hostScope = b.dataset.scope;
+        this.shadowRoot.querySelectorAll('[data-scope]').forEach((x) => x.classList.toggle('is-active', x === b));
+        this.loadAll(false);
+      };
     });
     this.shadowRoot.querySelectorAll('[data-range]').forEach((b) => {
-      b.onclick = () => { this.range = b.dataset.range; this.loadAll(false); };
+      b.onclick = () => {
+        if (this.range === b.dataset.range) return;
+        this.range = b.dataset.range;
+        this.shadowRoot.querySelectorAll('[data-range]').forEach((x) => x.classList.toggle('is-active', x === b));
+        this.loadAll(false);
+      };
     });
     const refBtn = this.shadowRoot.getElementById('ga-refresh-btn');
     if (refBtn) refBtn.onclick = () => this.loadAll(true);
