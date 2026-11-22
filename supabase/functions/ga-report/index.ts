@@ -773,7 +773,7 @@ async function buildReport(accessToken: string, report: string, range: string, h
   if (report === "exceptions") {
     const data = await gaFetch(accessToken, "runReport", {
       dateRanges: [{ startDate: "7daysAgo", endDate: "today" }],
-      dimensions: [{ name: "customEvent:description" }, { name: "customEvent:game_mode" }],
+      dimensions: [{ name: "customEvent:description" }, { name: "customEvent:game_mode" }, { name: "dateHourMinute" }],
       metrics: [{ name: "eventCount" }, { name: "activeUsers" }],
       dimensionFilter: {
         andGroup: {
@@ -783,28 +783,78 @@ async function buildReport(accessToken: string, report: string, range: string, h
           ],
         },
       },
-      orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
-      limit: 15,
+      orderBys: [{ dimension: { dimensionName: "dateHourMinute" }, desc: true }],
+      limit: 50,
     });
 
-    const exceptions = ((data.rows || []) as GaRow[]).map((r) => {
+    const propTz = String(data?.metadata?.timeZone || "Asia/Seoul");
+    const formatGaMinuteToKst = (raw: string): string => {
+      if (!/^\d{12}$/.test(raw)) return "-";
+      const y = Number(raw.slice(0, 4));
+      const m = Number(raw.slice(4, 6));
+      const d = Number(raw.slice(6, 8));
+      const hh = Number(raw.slice(8, 10));
+      const mm = Number(raw.slice(10, 12));
+      if (propTz === "Asia/Seoul") {
+        return `${m}월 ${d}일 ${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+      }
+      // Convert from property timezone (e.g. UTC or America/Los_Angeles) to Asia/Seoul
+      const approxUtc = Date.UTC(y, m - 1, d, hh, mm);
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: propTz,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", hour12: false,
+      }).formatToParts(new Date(approxUtc));
+      const getP = (t: string) => Number(parts.find((p) => p.type === t)?.value || 0);
+      const tzAsUtc = Date.UTC(getP("year"), getP("month") - 1, getP("day"), getP("hour") % 24, getP("minute"));
+      const offsetMs = tzAsUtc - approxUtc;
+      const realUtc = new Date(approxUtc - offsetMs);
+      const kstParts = new Intl.DateTimeFormat("ko-KR", {
+        timeZone: "Asia/Seoul",
+        month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false,
+      }).formatToParts(realUtc);
+      const kp = (t: string) => kstParts.find((p) => p.type === t)?.value || "";
+      return `${kp("month")}월 ${kp("day")}일 ${kp("hour").padStart(2, "0")}:${kp("minute").padStart(2, "0")}`;
+    };
+
+    const grouped = new Map<string, {
+      description: string;
+      isLegacy: boolean;
+      gameMode: string;
+      count: number;
+      users: number;
+      latestRaw: string;
+    }>();
+
+    for (const r of (data.rows || []) as GaRow[]) {
       const rawDesc = dim(r, 0);
       const isLegacy = !rawDesc || rawDesc === "(not set)";
+      const desc = isLegacy ? "이전 기록(상세 미수집)" : rawDesc;
       const mode = dim(r, 1);
+      const modeLabel = mode && mode !== "(not set)" ? getGameModeLabel(mode) : "-";
+      const dhm = dim(r, 2);
       const count = met(r, 0);
       const users = met(r, 1);
-      return {
-        description: isLegacy ? "이전 기록(상세 미수집)" : rawDesc,
-        isLegacy,
-        gameMode: mode && mode !== "(not set)" ? getGameModeLabel(mode) : "-",
-        count,
-        users,
-        warningBadge: count >= 5 ? "🐞 버그 점검 필요" : null,
-      };
-    }).sort((a, b) => {
+      const key = `${desc}::${modeLabel}`;
+      const cur = grouped.get(key) || { description: desc, isLegacy, gameMode: modeLabel, count: 0, users: 0, latestRaw: "" };
+      cur.count += count;
+      cur.users = Math.max(cur.users, users);
+      if (dhm && dhm > cur.latestRaw) cur.latestRaw = dhm;
+      grouped.set(key, cur);
+    }
+
+    const exceptions = Array.from(grouped.values()).map((x) => ({
+      description: x.description,
+      isLegacy: x.isLegacy,
+      gameMode: x.gameMode,
+      count: x.count,
+      users: x.users,
+      lastOccurredKst: x.latestRaw ? formatGaMinuteToKst(x.latestRaw) : "-",
+      warningBadge: x.count >= 5 ? "🐞 버그 점검 필요" : null,
+    })).sort((a, b) => {
       if (a.isLegacy !== b.isLegacy) return a.isLegacy ? 1 : -1;
       return b.count - a.count;
-    });
+    }).slice(0, 15);
 
     return { exceptions };
   }

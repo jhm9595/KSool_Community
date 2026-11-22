@@ -540,11 +540,12 @@ class KSoolAdminCharts extends HTMLElement {
 
           <!-- 위젯 9: 게임 내 JS 오류 실시간 모니터링 -->
           <section class="panel">
-            <h4>🐞 게임 중 에러가 터지고 있지는 않나? (최근 7일)</h4>
+            <h4>🐞 게임 중 에러가 터지고 있지는 않나? (최근 7일 · 한국시간)</h4>
             ${exc.length ? `
-              <table class="tbl"><thead><tr><th>오류 내용</th><th>모드</th><th>횟수</th><th>유저</th></tr></thead><tbody>
-                ${exc.slice(0, 10).map((e) => `<tr><td>${esc(e.description)}${e.warningBadge ? `<span class="warn-badge">${esc(e.warningBadge)}</span>` : ''}</td><td>${esc(e.gameMode)}</td><td>${e.count}</td><td>${e.users}</td></tr>`).join('')}
+              <table class="tbl"><thead><tr><th>오류 내용</th><th>최근 발생 (KST)</th><th>모드</th><th>횟수</th><th>유저</th></tr></thead><tbody>
+                ${exc.slice(0, 10).map((e) => `<tr><td>${esc(e.description)}${e.warningBadge ? `<span class="warn-badge">${esc(e.warningBadge)}</span>` : ''}</td><td style="white-space:nowrap;">${esc(e.lastOccurredKst || '-')}</td><td>${esc(e.gameMode)}</td><td>${e.count}</td><td>${e.users}</td></tr>`).join('')}
               </tbody></table>
+              <p class="muted" style="margin-top:6px;font-size:11px;">※ GA4 표준 리포트는 한국시간(KST) 기준 분(MM/DD HH:MM) 단위까지 제공됩니다.</p>
             ` : '<p class="muted">최근 7일간 수집된 게임 JS 오류가 없습니다. ✅</p>'}
           </section>
         </div>
