@@ -152,6 +152,36 @@ function serializePost(p,actorId){return {id:p.id,kind:p.kind,title:p.title,body
 
 const SUPABASE_URL='https://jyjxvwxlwkoedxwkkysj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5anh2d3hsd2tvZWR4d2treXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzY5NDUsImV4cCI6MjEwOTA1Mjk0NX0.wfaRfya2PV4Ykawd6md4fXrO91_TWnyGyusSRa-2fJ8';
+const useSupabaseStorage=(env)=>typeof env.ADMIN_VERIFY_OVERRIDE!=='function';
+function getBearerToken(req){
+  const m=(req.headers.get('authorization')||'').match(/^Bearer\s+(.+)$/i);
+  return m?m[1].trim():'';
+}
+async function sbRest(pathAndQuery,{method='GET',token='',body=null,prefer=''}={}){
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${token||SUPABASE_ANON_KEY}`,'Content-Type':'application/json'};
+  if(prefer)headers.Prefer=prefer;
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/${pathAndQuery}`,{method,headers,body:body!==null?JSON.stringify(body):undefined});
+  const text=await res.text();
+  let data=null;
+  try{data=text?JSON.parse(text):null;}catch(_){}
+  if(!res.ok)throw problem(data?.message||data?.error||'Supabase 요청 실패',res.status===401||res.status===403?403:502);
+  return data;
+}
+function serializeSupabaseAffiliate(r){
+  return {
+    id:r.id,
+    enabled:Boolean(r.enabled),
+    order:Number(r.sort_order)||0,
+    locales:Array.isArray(r.locales)?r.locales.filter(l=>l==='*'||VALID_LANGS.has(l)):[],
+    icon:r.icon||'🛍️',
+    url:r.url,
+    name:r.name&&typeof r.name==='object'?r.name:{},
+    badge:r.badge&&typeof r.badge==='object'?r.badge:{},
+    desc:r.desc&&typeof r.desc==='object'?r.desc:{},
+    disclosure:r.disclosure&&typeof r.disclosure==='object'?r.disclosure:{},
+    updatedAt:r.updated_at?new Date(r.updated_at).getTime():Date.now()
+  };
+}
 const ALL_ADMIN_PERMS=['posts','suggestions','updates','affiliates','prompt_gen'];
 async function verifyAdminUser(req,env){
   const auth=req.headers.get('authorization')||'';
@@ -315,15 +345,26 @@ export async function handleApi(req,env){
       result=json({updates:results});
     }else if(req.method==='GET'&&path==='/api/affiliates'){
       const langParam=url.searchParams.get('lang');
-      const {results}=await stmt(env,'SELECT * FROM affiliate_partners WHERE enabled=1 ORDER BY sort_order ASC,id ASC').all();
-      let partners=results.map(serializeAffiliate);
+      let partners;
+      if(useSupabaseStorage(env)){
+        const rows=await sbRest('ksool_affiliate_partners?enabled=eq.true&order=sort_order.asc,id.asc');
+        partners=(Array.isArray(rows)?rows:[]).map(serializeSupabaseAffiliate);
+      }else{
+        const {results}=await stmt(env,'SELECT * FROM affiliate_partners WHERE enabled=1 ORDER BY sort_order ASC,id ASC').all();
+        partners=results.map(serializeAffiliate);
+      }
       if(langParam&&VALID_LANGS.has(langParam)){
         partners=partners.filter(p=>p.locales.includes(langParam)||p.locales.includes('*'));
       }
       result=json({partners});
     }else if(req.method==='GET'&&path==='/api/part2-notify/stats'){
-      const row=await stmt(env,'SELECT COUNT(*) AS cnt FROM part2_waitlist').first();
-      result=json({totalCount:Number(row?.cnt||0)});
+      if(useSupabaseStorage(env)){
+        const cnt=await sbRest('rpc/get_part2_waitlist_count',{method:'POST',body:{}});
+        result=json({totalCount:Number(cnt||0)});
+      }else{
+        const row=await stmt(env,'SELECT COUNT(*) AS cnt FROM part2_waitlist').first();
+        result=json({totalCount:Number(row?.cnt||0)});
+      }
     }else if(req.method==='POST'&&path==='/api/part2-notify'){
       await limit(req,env,'part2_notify',15);
       const b=await readBody(req);
@@ -332,14 +373,26 @@ export async function handleApi(req,env){
       const nickname=typeof b.nickname==='string'?b.nickname.trim().slice(0,24):'';
       const interest=['both','anju','dessert'].includes(b.interest)?b.interest:'both';
       const lang=normalizeLang(b.lang);
-      const existing=await stmt(env,'SELECT id FROM part2_waitlist WHERE email=?',email).first();
-      if(existing){
-        await stmt(env,'UPDATE part2_waitlist SET nickname=?,interest=?,lang=? WHERE email=?',nickname,interest,lang,email).run();
+      if(useSupabaseStorage(env)){
+        let alreadyRegistered=false;
+        try{
+          await sbRest('ksool_part2_waitlist',{method:'POST',body:{email,nickname,interest,lang}});
+        }catch(err){
+          if(String(err?.message||'').includes('duplicate')||String(err?.message||'').includes('unique'))alreadyRegistered=true;
+          else throw err;
+        }
+        const cnt=await sbRest('rpc/get_part2_waitlist_count',{method:'POST',body:{}});
+        result=json({ok:true,alreadyRegistered,totalCount:Number(cnt||0)},alreadyRegistered?200:201);
       }else{
-        await stmt(env,'INSERT INTO part2_waitlist(id,email,nickname,interest,lang,created_at) VALUES(?,?,?,?,?,?)',crypto.randomUUID(),email,nickname,interest,lang,now()).run();
+        const existing=await stmt(env,'SELECT id FROM part2_waitlist WHERE email=?',email).first();
+        if(existing){
+          await stmt(env,'UPDATE part2_waitlist SET nickname=?,interest=?,lang=? WHERE email=?',nickname,interest,lang,email).run();
+        }else{
+          await stmt(env,'INSERT INTO part2_waitlist(id,email,nickname,interest,lang,created_at) VALUES(?,?,?,?,?,?)',crypto.randomUUID(),email,nickname,interest,lang,now()).run();
+        }
+        const row=await stmt(env,'SELECT COUNT(*) AS cnt FROM part2_waitlist').first();
+        result=json({ok:true,alreadyRegistered:Boolean(existing),totalCount:Number(row?.cnt||0)},existing?200:201);
       }
-      const row=await stmt(env,'SELECT COUNT(*) AS cnt FROM part2_waitlist').first();
-      result=json({ok:true,alreadyRegistered:Boolean(existing),totalCount:Number(row?.cnt||0)},existing?200:201);
     }else if(req.method==='GET'&&path==='/api/admin/me'){
       const user=await verifyAdminUser(req,env);
       result=json({isAdmin:Boolean(user),isSuperAdmin:Boolean(user?.isSuperAdmin),permissions:user?.permissions||[],email:user?.email||null});
@@ -350,7 +403,11 @@ export async function handleApi(req,env){
       const recentPosts=can('posts')?(await stmt(env,`${postSelect} WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC LIMIT 50`,identity.id).all()).results.map(p=>serializePost(p,identity.id)):[];
       const sugRows=can('suggestions')?(await stmt(env,`SELECT s.*,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='DOWN') AS downvotes FROM suggestions s ORDER BY s.created_at DESC LIMIT 100`).all()).results.map(s=>({suggestion_key:s.suggestion_key,items:JSON.parse(s.items_json),upvotes:s.upvotes,downvotes:s.downvotes,is_applied:!!s.is_applied,created_at:s.created_at})):[];
       const updates=can('updates')?(await stmt(env,'SELECT id,version,date,title,body,created_at FROM updates ORDER BY created_at DESC LIMIT 30').all()).results:[];
-      const affiliates=(can('affiliates')||can('updates'))?(await stmt(env,'SELECT * FROM affiliate_partners ORDER BY sort_order ASC,id ASC').all()).results.map(serializeAffiliate):[];
+      const affiliates=(can('affiliates')||can('updates'))
+        ?(useSupabaseStorage(env)
+          ?(await sbRest('ksool_affiliate_partners?order=sort_order.asc,id.asc',{token:getBearerToken(req)})).map(serializeSupabaseAffiliate)
+          :(await stmt(env,'SELECT * FROM affiliate_partners ORDER BY sort_order ASC,id ASC').all()).results.map(serializeAffiliate))
+        :[];
       const roles=admin.isSuperAdmin?(await stmt(env,'SELECT email,permissions_json,added_by,created_at FROM admin_roles ORDER BY created_at DESC').all()).results.map(r=>({email:r.email,permissions:JSON.parse(r.permissions_json),added_by:r.added_by,created_at:r.created_at})):[];
       result=json({reports,posts:recentPosts,suggestions:sugRows,updates,affiliates,roles});
     }else if(req.method==='DELETE'&&/^\/api\/admin\/posts\/[\w-]+$/.test(path)){
@@ -398,37 +455,93 @@ export async function handleApi(req,env){
     }else if(req.method==='POST'&&path==='/api/admin/affiliates'){
       await requireAdmin(req,env,'affiliates');
       const v=validateAffiliatePayload(await readBody(req));
-      await stmt(env,'INSERT INTO affiliate_partners(id,enabled,sort_order,locales_json,icon,url,name_json,badge_json,desc_json,disclosure_json,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,sort_order=excluded.sort_order,locales_json=excluded.locales_json,icon=excluded.icon,url=excluded.url,name_json=excluded.name_json,badge_json=excluded.badge_json,desc_json=excluded.desc_json,disclosure_json=excluded.disclosure_json,updated_at=excluded.updated_at',v.id,v.enabled,v.sort_order,v.locales_json,v.icon,v.url,v.name_json,v.badge_json,v.desc_json,v.disclosure_json,now()).run();
-      const row=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',v.id).first();
-      result=json({ok:true,partner:serializeAffiliate(row)},201);
+      if(useSupabaseStorage(env)){
+        const token=getBearerToken(req);
+        const rows=await sbRest('ksool_affiliate_partners',{
+          method:'POST',
+          token,
+          prefer:'resolution=merge-duplicates,return=representation',
+          body:{
+            id:v.id,enabled:Boolean(v.enabled),sort_order:v.sort_order,
+            locales:JSON.parse(v.locales_json),icon:v.icon,url:v.url,
+            name:JSON.parse(v.name_json),badge:JSON.parse(v.badge_json),
+            desc:JSON.parse(v.desc_json),disclosure:JSON.parse(v.disclosure_json),
+            updated_at:new Date().toISOString()
+          }
+        });
+        result=json({ok:true,partner:serializeSupabaseAffiliate(rows[0])},201);
+      }else{
+        await stmt(env,'INSERT INTO affiliate_partners(id,enabled,sort_order,locales_json,icon,url,name_json,badge_json,desc_json,disclosure_json,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,sort_order=excluded.sort_order,locales_json=excluded.locales_json,icon=excluded.icon,url=excluded.url,name_json=excluded.name_json,badge_json=excluded.badge_json,desc_json=excluded.desc_json,disclosure_json=excluded.disclosure_json,updated_at=excluded.updated_at',v.id,v.enabled,v.sort_order,v.locales_json,v.icon,v.url,v.name_json,v.badge_json,v.desc_json,v.disclosure_json,now()).run();
+        const row=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',v.id).first();
+        result=json({ok:true,partner:serializeAffiliate(row)},201);
+      }
     }else if(/^\/api\/admin\/affiliates\/[a-z0-9_-]+$/i.test(path)){
       await requireAdmin(req,env,'affiliates');
       const id=path.split('/').at(-1).toLowerCase();
-      const existing=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',id).first();
-      if(!existing)throw problem('제휴 플랫폼을 찾을 수 없습니다',404);
-      if(req.method==='PUT'||req.method==='PATCH'){
-        const b=await readBody(req);
-        const cur=serializeAffiliate(existing);
-        const merged={
-          id:cur.id,
-          enabled:b.enabled!==undefined?b.enabled:cur.enabled,
-          order:b.order!==undefined?b.order:cur.order,
-          locales:b.locales!==undefined?b.locales:cur.locales,
-          icon:b.icon!==undefined?b.icon:cur.icon,
-          url:b.url!==undefined?b.url:cur.url,
-          name:b.name!==undefined?b.name:cur.name,
-          badge:b.badge!==undefined?b.badge:cur.badge,
-          desc:b.desc!==undefined?b.desc:cur.desc,
-          disclosure:b.disclosure!==undefined?b.disclosure:cur.disclosure
-        };
-        const v=validateAffiliatePayload(merged,id);
-        await stmt(env,'UPDATE affiliate_partners SET enabled=?,sort_order=?,locales_json=?,icon=?,url=?,name_json=?,badge_json=?,desc_json=?,disclosure_json=?,updated_at=? WHERE id=?',v.enabled,v.sort_order,v.locales_json,v.icon,v.url,v.name_json,v.badge_json,v.desc_json,v.disclosure_json,now(),id).run();
-        const updated=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',id).first();
-        result=json({ok:true,partner:serializeAffiliate(updated)});
-      }else if(req.method==='DELETE'){
-        await stmt(env,'DELETE FROM affiliate_partners WHERE id=?',id).run();
-        result=json({ok:true});
-      }else throw problem('지원하지 않는 요청',405);
+      if(useSupabaseStorage(env)){
+        const token=getBearerToken(req);
+        const found=await sbRest(`ksool_affiliate_partners?id=eq.${encodeURIComponent(id)}`,{token});
+        if(!Array.isArray(found)||!found.length)throw problem('제휴 플랫폼을 찾을 수 없습니다',404);
+        if(req.method==='PUT'||req.method==='PATCH'){
+          const b=await readBody(req);
+          const cur=serializeSupabaseAffiliate(found[0]);
+          const merged={
+            id:cur.id,
+            enabled:b.enabled!==undefined?b.enabled:cur.enabled,
+            order:b.order!==undefined?b.order:cur.order,
+            locales:b.locales!==undefined?b.locales:cur.locales,
+            icon:b.icon!==undefined?b.icon:cur.icon,
+            url:b.url!==undefined?b.url:cur.url,
+            name:b.name!==undefined?b.name:cur.name,
+            badge:b.badge!==undefined?b.badge:cur.badge,
+            desc:b.desc!==undefined?b.desc:cur.desc,
+            disclosure:b.disclosure!==undefined?b.disclosure:cur.disclosure
+          };
+          const v=validateAffiliatePayload(merged,id);
+          const updated=await sbRest(`ksool_affiliate_partners?id=eq.${encodeURIComponent(id)}`,{
+            method:'PATCH',
+            token,
+            prefer:'return=representation',
+            body:{
+              enabled:Boolean(v.enabled),sort_order:v.sort_order,
+              locales:JSON.parse(v.locales_json),icon:v.icon,url:v.url,
+              name:JSON.parse(v.name_json),badge:JSON.parse(v.badge_json),
+              desc:JSON.parse(v.desc_json),disclosure:JSON.parse(v.disclosure_json),
+              updated_at:new Date().toISOString()
+            }
+          });
+          result=json({ok:true,partner:serializeSupabaseAffiliate(updated[0])});
+        }else if(req.method==='DELETE'){
+          await sbRest(`ksool_affiliate_partners?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',token});
+          result=json({ok:true});
+        }else throw problem('지원하지 않는 요청',405);
+      }else{
+        const existing=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',id).first();
+        if(!existing)throw problem('제휴 플랫폼을 찾을 수 없습니다',404);
+        if(req.method==='PUT'||req.method==='PATCH'){
+          const b=await readBody(req);
+          const cur=serializeAffiliate(existing);
+          const merged={
+            id:cur.id,
+            enabled:b.enabled!==undefined?b.enabled:cur.enabled,
+            order:b.order!==undefined?b.order:cur.order,
+            locales:b.locales!==undefined?b.locales:cur.locales,
+            icon:b.icon!==undefined?b.icon:cur.icon,
+            url:b.url!==undefined?b.url:cur.url,
+            name:b.name!==undefined?b.name:cur.name,
+            badge:b.badge!==undefined?b.badge:cur.badge,
+            desc:b.desc!==undefined?b.desc:cur.desc,
+            disclosure:b.disclosure!==undefined?b.disclosure:cur.disclosure
+          };
+          const v=validateAffiliatePayload(merged,id);
+          await stmt(env,'UPDATE affiliate_partners SET enabled=?,sort_order=?,locales_json=?,icon=?,url=?,name_json=?,badge_json=?,desc_json=?,disclosure_json=?,updated_at=? WHERE id=?',v.enabled,v.sort_order,v.locales_json,v.icon,v.url,v.name_json,v.badge_json,v.desc_json,v.disclosure_json,now(),id).run();
+          const updated=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',id).first();
+          result=json({ok:true,partner:serializeAffiliate(updated)});
+        }else if(req.method==='DELETE'){
+          await stmt(env,'DELETE FROM affiliate_partners WHERE id=?',id).run();
+          result=json({ok:true});
+        }else throw problem('지원하지 않는 요청',405);
+      }
     }else if(req.method==='POST'&&path==='/api/admin/roles'){
       const admin=await requireAdmin(req,env,'roles');
       const b=await readBody(req);
