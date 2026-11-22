@@ -221,7 +221,7 @@ async function buildReport(accessToken: string, report: string, range: string, h
         { startDate: currentStart, endDate: "today", name: "current" },
         { startDate: prevStart, endDate: prevEnd, name: "previous" },
       ],
-      dimensions: [{ name: "date" }, { name: "hostName" }, { name: "dateRange" }],
+      dimensions: [{ name: "date" }, { name: "hostName" }],
       metrics: [
         { name: "activeUsers" },
         { name: "newUsers" },
