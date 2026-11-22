@@ -405,6 +405,8 @@
     progressRequest = true;
     const userId = sbUser.id;
     const requestEpoch = progressEpoch;
+    const prevSnapshot = JSON.stringify(syncedProgress);
+    const prevStatus = progressStatus;
     try {
       const { data: row, error } = await sbClient.from('ksool_user_progress')
         .select('tycoon_state,quiz_state,tycoon_unlocked,quiz_unlocked').eq('user_id', userId).maybeSingle();
@@ -413,7 +415,12 @@
       if (row) mergeProgressRow(row);
       progressStatus = row ? '클라우드 저장 기록 · 5초마다 확인 (게임 저장 후 반영)' : '클라우드 기록 없음 · 게임에서 같은 계정으로 저장해 주세요';
     } catch (_) { progressStatus = '클라우드 갱신 실패 · 기존 기록 표시 중'; }
-    finally { progressRequest = false; render(); }
+    finally {
+      progressRequest = false;
+      if (JSON.stringify(syncedProgress) !== prevSnapshot || progressStatus !== prevStatus) {
+        render();
+      }
+    }
   }
   async function syncFromSupabaseUser() {
     if (!sbClient) return;
@@ -1543,8 +1550,17 @@
   }
   function switchTab(tab,scroll=true) {activeTab=tab;if(tab==='tips')history.replaceState(null,'','#community');else if(tab==='suggestions')history.replaceState(null,'','#recommendations');else if(tab==='rankings')history.replaceState(null,'','#rankings');else if(tab==='updates')history.replaceState(null,'','#updates');else if(tab==='admin')history.replaceState(null,'','#admin');else history.replaceState(null,'',location.pathname+location.search);if(['tips','suggestions','rankings','updates'].includes(tab)){syncCommunity();loadRemoteGameData();}if(tab==='admin'){loadAdminData();}activeCategory='전체';limit=16;render();if(scroll)$('#browse').scrollIntoView({behavior:'smooth',block:'start'});}
   function openDialog(dialog) {
-    $$('dialog[open]').forEach(d => {if(d!==dialog)d.close();});
+    $$('dialog[open]').forEach(d => { if (d !== dialog) { d.classList.remove('is-closing'); d.close(); } });
+    dialog.classList.remove('is-closing');
     if(!dialog.open)dialog.showModal();
+  }
+  function closeDialog(dialog) {
+    if (!dialog || !dialog.open || dialog.classList.contains('is-closing')) return;
+    dialog.classList.add('is-closing');
+    setTimeout(() => {
+      dialog.classList.remove('is-closing');
+      if (dialog.open) dialog.close();
+    }, 180);
   }
   function navigateRecipe(id) {
     if(location.hash === `#recipe=${id}`)openRecipe(id);else location.hash=`recipe=${id}`;
@@ -1658,8 +1674,8 @@
   $$('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab,false));
   $$('[data-open-tip]').forEach(b=>b.onclick=()=>openPost(b.dataset.openTip));
   $$('[data-compose]').forEach(b=>b.onclick=()=>openCompose());
-  $$('.dialog-close').forEach(b=>b.onclick=()=>b.closest('dialog').close());
-  $$('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
+  $$('.dialog-close').forEach(b=>b.onclick=()=>closeDialog(b.closest('dialog')));
+  $$('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeDialog(d);}}));
   $('#post-kind').onchange=e=>{$('#experiment-fields').hidden=e.target.value!=='experiment';if(e.target.value==='experiment'&&!$$('.composition-row').length){addCompositionRow();addCompositionRow();}$$('#composition-rows select, #composition-rows input').forEach(field=>field.disabled=e.target.value!=='experiment');};
   $('#add-composition-row').onclick=addCompositionRow;
   $('#compose-form').onsubmit=async e=>{

@@ -280,3 +280,196 @@ body.game-dock-open .recipe-grid.community-view { display:block; }
 .auth-provider-btn:hover{background:var(--neo-yellow);transform:translate(-1px,-1px)}
 .auth-provider-btn.is-google{background:#ffffff}
 @media(max-width:650px){.admin-update-row{grid-template-columns:1fr}.brand-logo-img{height:30px;padding:2px 5px}.brand strong{font-size:20px!important}}
+
+/* Site-wide smooth transitions & animations */
+@keyframes neoViewFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes neoDialogIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes neoDialogOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(0.95); }
+}
+@keyframes neoCollapseIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page,
+.header-inner {
+  transition: padding-right .32s cubic-bezier(.22,1,.36,1),
+              max-width .32s cubic-bezier(.22,1,.36,1),
+              opacity .26s ease,
+              transform .26s cubic-bezier(.22,1,.36,1);
+}
+
+.game-dock {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
+  transform-origin: top right;
+  transition: opacity .32s cubic-bezier(.22,1,.36,1),
+              transform .32s cubic-bezier(.22,1,.36,1),
+              visibility .32s,
+              right .32s cubic-bezier(.22,1,.36,1),
+              width .32s cubic-bezier(.22,1,.36,1);
+}
+.game-dock[hidden] {
+  display: flex !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(30px) scale(0.95);
+}
+@media(max-width:1099px) {
+  .game-dock {
+    transform: translateX(50%) translateY(0) scale(1);
+    transform-origin: top center;
+  }
+  .game-dock[hidden] {
+    transform: translateX(50%) translateY(20px) scale(0.95);
+  }
+  body.game-dock-open .page {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}
+
+.game-link {
+  max-width: 160px;
+  overflow: hidden;
+  transition: opacity .24s ease,
+              transform .24s cubic-bezier(.22,1,.36,1),
+              max-width .28s cubic-bezier(.22,1,.36,1),
+              padding .28s cubic-bezier(.22,1,.36,1),
+              margin .28s cubic-bezier(.22,1,.36,1),
+              border-width .24s ease,
+              background .18s ease,
+              color .18s ease,
+              box-shadow .18s ease;
+}
+.game-link[hidden] {
+  display: inline-flex !important;
+  opacity: 0;
+  max-width: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin: 0 !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
+  pointer-events: none;
+  transform: scale(0.9);
+}
+
+.compact-banner {
+  max-height: 150px;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: max-height .32s cubic-bezier(.22,1,.36,1),
+              min-height .32s cubic-bezier(.22,1,.36,1),
+              opacity .25s ease,
+              padding .32s cubic-bezier(.22,1,.36,1),
+              margin .32s cubic-bezier(.22,1,.36,1),
+              border-width .25s ease,
+              box-shadow .25s ease,
+              transform .3s cubic-bezier(.22,1,.36,1);
+}
+.compact-banner[hidden] {
+  display: flex !important;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  border-width: 0 !important;
+  box-shadow: 0 0 0 transparent !important;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.985);
+}
+.banner-icons,
+.banner-icons > span,
+.banner-icons > span svg,
+.banner-count b {
+  transition: all .3s cubic-bezier(.22,1,.36,1);
+}
+
+.sync-manual-form {
+  max-height: 80px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height .26s cubic-bezier(.22,1,.36,1),
+              opacity .22s ease,
+              margin-top .26s ease,
+              padding-top .26s ease,
+              border-color .22s ease;
+}
+.sync-manual-form[hidden] {
+  display: flex !important;
+  max-height: 0 !important;
+  opacity: 0;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top-color: transparent !important;
+  pointer-events: none;
+}
+
+dialog[open] {
+  animation: neoDialogIn .22s cubic-bezier(.22,1,.36,1);
+}
+dialog.is-closing {
+  animation: neoDialogOut .18s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+.stage-accordion[open] > .stage-body,
+.hint-details[open] > p {
+  animation: neoCollapseIn .22s cubic-bezier(.22,1,.36,1);
+}
+
+.catalog-shell,
+.rankings-board,
+.admin-board,
+.neo-panel,
+.recipe-card,
+.tip-card,
+.suggestion-card,
+.board-row,
+.locked-compact-row {
+  animation: neoViewFadeIn .22s cubic-bezier(.22,1,.36,1);
+}
+
+.header nav button,
+.nav-blog-link,
+.category-filters button,
+.view-mode-toggle button,
+.unlock-filters button,
+.rank-mode-tabs button,
+.admin-subtabs button,
+.admin-btn,
+.auth-pill,
+.auth-logout-btn,
+.button,
+.bookmark,
+.vote-controls button,
+.board-row,
+.locked-compact-row,
+.stage-accordion summary {
+  transition: background-color .18s ease,
+              color .18s ease,
+              border-color .18s ease,
+              box-shadow .18s cubic-bezier(.22,1,.36,1),
+              transform .18s cubic-bezier(.22,1,.36,1),
+              opacity .18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
