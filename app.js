@@ -450,6 +450,9 @@
   let isSuperAdmin = false;
   let adminPermissions = [];
   let activeAdminTab = 'reports';
+  let affSearchQuery = '';
+  let affFilterLocale = 'all';
+  let affFilterStatus = 'all';
   let adminData = { reports: [], posts: [], suggestions: [], updates: [], affiliates: [], roles: [], gameSuggestions: [] };
   let dbUpdates = [];
   let affiliatePartners = [];
@@ -1127,36 +1130,38 @@
         </section>
       `;
     } else if (activeAdminTab === 'affiliates' && (canAdmin('affiliates') || canAdmin('updates'))) {
+      const q = affSearchQuery.trim().toLowerCase();
+      const filteredAff = (adminData.affiliates || []).filter(p => {
+        if (affFilterStatus === 'on' && !p.enabled) return false;
+        if (affFilterStatus === 'off' && p.enabled) return false;
+        if (affFilterLocale !== 'all' && !(p.locales || []).includes(affFilterLocale)) return false;
+        if (q) {
+          const hay = `${p.id} ${p.url} ${Object.values(p.name || {}).join(' ')} ${Object.values(p.desc || {}).join(' ')}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
       bodyHtml = `
         <section class="neo-panel">
-          <div class="neo-panel-head"><h3>🤝 언어별 제휴 후원 플랫폼 관리</h3></div>
-          <p style="margin:0 0 12px;font-size:12px;color:var(--muted);">노출 언어(<code>ko, en, ja, zh-CN, zh-TW, fr</code>), 정렬 순서(<code>order</code>), 활성화(ON/OFF), URL 및 대가성 고지 문구를 즉시 관리합니다. 각 카드 아래에 개별 대가성 문구가 즉시 노출됩니다.</p>
-          <form id="admin-affiliate-add-form" class="admin-update-form">
-            <div class="admin-update-row">
-              <input name="id" placeholder="ID (예: coupang)" maxlength="40" required>
-              <input name="icon" placeholder="아이콘 (🛍️)" value="🛍️" maxlength="8" required>
-              <input name="order" type="number" placeholder="정렬 순서 (예: 30)" value="30" required>
+          <div class="neo-panel-head">
+            <h3>🤝 언어별 제휴 후원 플랫폼 조회 (${filteredAff.length} / ${adminData.affiliates.length})</h3>
+            <button type="button" id="admin-aff-open-modal-btn" class="button coral" style="min-height:36px;padding:7px 14px;">${uiIcon('plus', 16)} 제휴 등록</button>
+          </div>
+          <div class="admin-update-form" style="background:#f3f0e7;border-style:solid;margin-bottom:14px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <input id="admin-aff-search" type="search" value="${esc(affSearchQuery)}" placeholder="ID, 플랫폼명, URL로 검색..." style="flex:1;min-width:200px;padding:8px 10px;border:2px solid var(--ink);background:#fff;font-size:12px;">
+              <select id="admin-aff-status" aria-label="노출 상태 필터" style="padding:8px 10px;border:2px solid var(--ink);background:#fff;font-size:12px;font-weight:800;min-height:38px;">
+                <option value="all" ${affFilterStatus === 'all' ? 'selected' : ''}>전체 상태</option>
+                <option value="on" ${affFilterStatus === 'on' ? 'selected' : ''}>● ON (노출 중)</option>
+                <option value="off" ${affFilterStatus === 'off' ? 'selected' : ''}>○ OFF (숨김)</option>
+              </select>
             </div>
-            <input name="url" type="url" placeholder="https://..." maxlength="500" required>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;font-weight:800;">
-              ${['*', ...SUPPORTED_LANGS].map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${l === 'ko' ? 'checked' : ''}> ${l === '*' ? '*(전체)' : esc(l)}</label>`).join('')}
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              ${['all', '*', ...SUPPORTED_LANGS].map(l => `<button type="button" data-aff-filter-lang="${esc(l)}" class="admin-btn ${affFilterLocale === l ? 'is-ok' : ''}" style="font-size:11px;">${l === 'all' ? '전체 언어' : l === '*' ? '*(공통)' : esc(l)}</button>`).join('')}
             </div>
-            <div class="admin-update-row">
-              <input name="name_ko" placeholder="이름 (ko)" maxlength="80">
-              <input name="badge_ko" placeholder="배지 (ko)" maxlength="40">
-              <input name="desc_ko" placeholder="설명 (ko)" maxlength="200">
-            </div>
-            <input name="disclosure_ko" placeholder="대가성 고지 문구 (ko · 공정위 필수)" maxlength="300">
-            <div class="admin-update-row">
-              <input name="name_en" placeholder="Name (en)" maxlength="80">
-              <input name="badge_en" placeholder="Badge (en)" maxlength="40">
-              <input name="desc_en" placeholder="Desc (en)" maxlength="200">
-            </div>
-            <input name="disclosure_en" placeholder="Affiliate disclosure (en)" maxlength="300">
-            <button type="submit" class="button coral" style="justify-self:start;min-height:36px;">+ 제휴 플랫폼 추가/저장</button>
-          </form>
+          </div>
           <div class="admin-list">
-            ${adminData.affiliates.length ? adminData.affiliates.map(p => `
+            ${filteredAff.length ? filteredAff.map(p => `
               <form class="admin-row admin-aff-item" data-aff-id="${esc(p.id)}" style="flex-direction:column;align-items:stretch;gap:8px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
                   <strong>${esc(p.icon)} ${esc(p.name?.[portalLang] || p.name?.ko || p.name?.en || p.id)} <code>(${esc(p.id)})</code></strong>
@@ -1167,15 +1172,15 @@
                   </div>
                 </div>
                 <div class="admin-update-row">
-                  <input name="order" type="number" value="${Number(p.order) || 0}" aria-label="정렬 순서" required>
-                  <input name="icon" value="${esc(p.icon || '🛍️')}" aria-label="아이콘" required>
-                  <input name="url" type="url" value="${esc(p.url)}" aria-label="제휴 URL" required>
+                  <label style="display:grid;gap:3px;font-size:10px;font-weight:850;color:var(--muted);">노출 순서<input name="order" type="number" value="${Number(p.order) || 0}" aria-label="정렬 순서" required></label>
+                  <label style="display:grid;gap:3px;font-size:10px;font-weight:850;color:var(--muted);">아이콘<input name="icon" value="${esc(p.icon || '🛍️')}" aria-label="아이콘" required></label>
+                  <label style="display:grid;gap:3px;font-size:10px;font-weight:850;color:var(--muted);">제휴 URL<input name="url" type="url" value="${esc(p.url)}" aria-label="제휴 URL" required></label>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;font-weight:800;">
                   ${['*', ...SUPPORTED_LANGS].map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${(p.locales || []).includes(l) ? 'checked' : ''}> ${l === '*' ? '*(전체)' : esc(l)}</label>`).join('')}
                 </div>
               </form>
-            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">등록된 제휴 플랫폼이 없습니다.</p>'}
+            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">조건에 맞는 제휴 플랫폼이 없습니다.</p>'}
           </div>
         </section>
       `;
@@ -1300,32 +1305,83 @@
     $$('[data-admin-delete-role]', root).forEach(b => b.onclick = async () => {
       try { await adminApi(`/admin/roles/${encodeURIComponent(b.dataset.adminDeleteRole)}`, { method: 'DELETE' }); toast('권한 회수 완료'); await loadAdminData(); } catch (e) { toast(e.message); }
     });
-    const affAddForm = $('#admin-affiliate-add-form', root);
-    if (affAddForm) {
-      affAddForm.onsubmit = async e => {
-        e.preventDefault();
-        const f = new FormData(affAddForm);
-        const locales = f.getAll('locales');
-        const payload = {
-          id: f.get('id').trim(),
-          icon: f.get('icon').trim() || '🛍️',
-          order: Number(f.get('order')) || 100,
-          url: f.get('url').trim(),
-          locales,
-          enabled: true,
-          name: { ko: f.get('name_ko')?.trim(), en: f.get('name_en')?.trim() },
-          badge: { ko: f.get('badge_ko')?.trim(), en: f.get('badge_en')?.trim() },
-          desc: { ko: f.get('desc_ko')?.trim(), en: f.get('desc_en')?.trim() },
-          disclosure: { ko: f.get('disclosure_ko')?.trim(), en: f.get('disclosure_en')?.trim() }
-        };
-        try {
-          await adminApi('/admin/affiliates', { method: 'POST', body: JSON.stringify(payload) });
-          toast('제휴 플랫폼 저장 완료');
-          await loadRemoteGameData();
-          await loadAdminData();
-        } catch (err) { toast(err.message); }
+    const affOpenBtn = $('#admin-aff-open-modal-btn', root);
+    if (affOpenBtn) {
+      affOpenBtn.onclick = () => {
+        $('#recipe-detail').innerHTML = `
+          <h2 style="font-size:21px;margin:4px 0 8px;font-weight:950;">🤝 새 제휴 후원 플랫폼 등록</h2>
+          <p style="margin:0 0 12px;font-size:12px;color:var(--muted);line-height:1.5;">노출 언어(<code>ko, en, ja, zh-CN, zh-TW, fr, es</code>), 정렬 순서(<code>order</code>), URL 및 공정위 대가성 고지 문구를 입력해 등록하세요.</p>
+          <form id="admin-affiliate-add-form" class="admin-update-form" style="margin-bottom:0;">
+            <div class="admin-update-row">
+              <input name="id" placeholder="ID (예: coupang)" maxlength="40" required>
+              <input name="icon" placeholder="아이콘 (🛍️)" value="🛍️" maxlength="8" required>
+              <input name="order" type="number" placeholder="정렬 순서 (예: 30)" value="30" required>
+            </div>
+            <input name="url" type="url" placeholder="https://..." maxlength="500" required>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;font-weight:800;">
+              ${['*', ...SUPPORTED_LANGS].map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${l === 'ko' ? 'checked' : ''}> ${l === '*' ? '*(전체)' : esc(l)}</label>`).join('')}
+            </div>
+            <div class="admin-update-row">
+              <input name="name_ko" placeholder="이름 (ko)" maxlength="80">
+              <input name="badge_ko" placeholder="배지 (ko)" maxlength="40">
+              <input name="desc_ko" placeholder="설명 (ko)" maxlength="200">
+            </div>
+            <input name="disclosure_ko" placeholder="대가성 고지 문구 (ko · 공정위 필수)" maxlength="300">
+            <div class="admin-update-row">
+              <input name="name_en" placeholder="Name (en)" maxlength="80">
+              <input name="badge_en" placeholder="Badge (en)" maxlength="40">
+              <input name="desc_en" placeholder="Desc (en)" maxlength="200">
+            </div>
+            <input name="disclosure_en" placeholder="Affiliate disclosure (en)" maxlength="300">
+            <button type="submit" class="button coral" style="justify-self:start;min-height:38px;">저장하기</button>
+          </form>
+        `;
+        const modalForm = $('#admin-affiliate-add-form', $('#recipe-detail'));
+        if (modalForm) {
+          modalForm.onsubmit = async e => {
+            e.preventDefault();
+            const f = new FormData(modalForm);
+            const payload = {
+              id: f.get('id').trim(),
+              icon: f.get('icon').trim() || '🛍️',
+              order: Number(f.get('order')) || 100,
+              url: f.get('url').trim(),
+              locales: f.getAll('locales'),
+              enabled: true,
+              name: { ko: f.get('name_ko')?.trim(), en: f.get('name_en')?.trim() },
+              badge: { ko: f.get('badge_ko')?.trim(), en: f.get('badge_en')?.trim() },
+              desc: { ko: f.get('desc_ko')?.trim(), en: f.get('desc_en')?.trim() },
+              disclosure: { ko: f.get('disclosure_ko')?.trim(), en: f.get('disclosure_en')?.trim() }
+            };
+            try {
+              await adminApi('/admin/affiliates', { method: 'POST', body: JSON.stringify(payload) });
+              closeDialog($('#recipe-dialog'));
+              toast('제휴 플랫폼 등록 완료');
+              await loadRemoteGameData();
+              await loadAdminData();
+            } catch (err) { toast(err.message); }
+          };
+        }
+        openDialog($('#recipe-dialog'));
       };
     }
+    const affSearchEl = $('#admin-aff-search', root);
+    if (affSearchEl) {
+      affSearchEl.oninput = e => {
+        affSearchQuery = e.target.value;
+        const pos = e.target.selectionStart;
+        render();
+        const nextEl = $('#admin-aff-search');
+        if (nextEl) { nextEl.focus(); try { nextEl.setSelectionRange(pos, pos); } catch (_) {} }
+      };
+    }
+    const affStatusEl = $('#admin-aff-status', root);
+    if (affStatusEl) {
+      affStatusEl.onchange = e => { affFilterStatus = e.target.value; render(); };
+    }
+    $$('[data-aff-filter-lang]', root).forEach(b => {
+      b.onclick = () => { affFilterLocale = b.dataset.affFilterLang || 'all'; render(); };
+    });
     $$('.admin-aff-item', root).forEach(form => {
       form.onsubmit = async e => {
         e.preventDefault();
