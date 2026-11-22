@@ -91,13 +91,22 @@ class KSoolAdminCharts extends HTMLElement {
 
     const names = ['realtime', 'overview', 'sources', 'game_modes', 'funnel_and_levels', 'party_games', 'conversions', 'geo_lang', 'exceptions'];
     try {
-      const results = await Promise.all(names.map((n) => this.fetchReport(n, forceRefresh)));
-      names.forEach((n, idx) => { this.reports[n] = results[idx]; });
-    } catch (e) {
-      if (e.code === 'GA_SERVICE_ACCOUNT_JSON_NOT_SET') {
-        this.setupError = e.message;
-      } else {
-        this.errorMsg = e.message || 'GA4 통계를 불러오지 못했습니다.';
+      const settled = await Promise.allSettled(names.map((n) => this.fetchReport(n, forceRefresh)));
+      const errors = [];
+      settled.forEach((res, idx) => {
+        if (res.status === 'fulfilled') {
+          this.reports[names[idx]] = res.value;
+        } else {
+          const e = res.reason;
+          if (e?.code === 'GA_SERVICE_ACCOUNT_JSON_NOT_SET') {
+            this.setupError = e.message;
+          } else {
+            errors.push(`${names[idx]}: ${e?.message || '오류'}`);
+          }
+        }
+      });
+      if (errors.length && !this.setupError) {
+        this.errorMsg = errors[0];
       }
     } finally {
       this.loading = false;
@@ -112,8 +121,30 @@ class KSoolAdminCharts extends HTMLElement {
     return `<span class="delta ${cls}">${arrow} ${num > 0 ? '+' : ''}${num}${suffix}</span>`;
   }
 
-  renderDualLineSvg(series) {
-    if (!series || !series.length) return '<p class="muted">표시할 일별 방문자 데이터가 없습니다.</p>';
+  fillDailySeries(series) {
+    if (!series || !series.length) return [];
+    const byDate = new Map(series.map((d) => [d.date, d]));
+    const start = new Date(`${series[0].date}T00:00:00Z`);
+    const end = new Date(`${series[series.length - 1].date}T00:00:00Z`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return series;
+    const filled = [];
+    for (let t = start.getTime(); t <= end.getTime(); t += 86400000) {
+      const iso = new Date(t).toISOString().slice(0, 10);
+      filled.push(byDate.get(iso) || { date: iso, gameUsers: 0, siteUsers: 0 });
+    }
+    return filled;
+  }
+
+  renderDualLineSvg(rawSeries, hostScope = 'all', range = '28d') {
+    const series = this.fillDailySeries(rawSeries);
+    if (!series.length) return '<p class="muted">표시할 일별 방문자 데이터가 없습니다.</p>';
+
+    const showGame = hostScope !== 'site';
+    const showSite = hostScope !== 'game';
+    const rangeDays = range === '7d' ? 7 : range === '90d' ? 90 : 28;
+    const firstDate = series[0].date;
+    const lastDate = series[series.length - 1].date;
+
     const w = 680;
     const h = 210;
     const padL = 40;
@@ -122,7 +153,11 @@ class KSoolAdminCharts extends HTMLElement {
     const padB = 28;
     const plotW = w - padL - padR;
     const plotH = h - padT - padB;
-    const maxVal = Math.max(10, ...series.flatMap((d) => [d.gameUsers || 0, d.siteUsers || 0]));
+    const visibleVals = series.flatMap((d) => [
+      ...(showGame ? [d.gameUsers || 0] : []),
+      ...(showSite ? [d.siteUsers || 0] : []),
+    ]);
+    const maxVal = Math.max(10, ...visibleVals);
     const xFor = (i) => (series.length === 1 ? padL + plotW / 2 : padL + (i / (series.length - 1)) * plotW);
     const yFor = (v) => padT + plotH - (v / maxVal) * plotH;
     const pathFor = (key) => series.map((d, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(d[key] || 0).toFixed(1)}`).join(' ');
@@ -139,17 +174,27 @@ class KSoolAdminCharts extends HTMLElement {
       return `<text x="${xFor(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="10" fill="#666357">${esc(d.date.slice(5))}</text>`;
     }).join('');
 
+    const legendItems = [
+      showGame ? `<span><i class="dot" style="background:#2563eb"></i>게임 (play.ksool)</span>` : '',
+      showSite ? `<span><i class="dot" style="background:#16a34a"></i>커뮤니티 (ksool)</span>` : '',
+    ].filter(Boolean).join('');
+
+    const dots = series.map((d, i) => [
+      showGame ? `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(d.gameUsers || 0).toFixed(1)}" r="3.5" fill="#2563eb" stroke="#191919" stroke-width="1"><title>${esc(d.date)} 게임: ${d.gameUsers}명</title></circle>` : '',
+      showSite ? `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(d.siteUsers || 0).toFixed(1)}" r="3.5" fill="#16a34a" stroke="#191919" stroke-width="1"><title>${esc(d.date)} 사이트: ${d.siteUsers}명</title></circle>` : '',
+    ].join('')).join('');
+
     return `
-      <div class="legend-row">
-        <span><i class="dot" style="background:#2563eb"></i>게임 (play.ksool)</span>
-        <span><i class="dot" style="background:#16a34a"></i>커뮤니티 (ksool)</span>
+      <div class="legend-row" style="justify-content:space-between;align-items:center;">
+        <div style="display:flex;gap:14px;flex-wrap:wrap;">${legendItems}</div>
+        <span class="muted" style="font-size:11px;">조회: 최근 ${rangeDays}일 · 실제 데이터: ${esc(firstDate)} ~ ${esc(lastDate)} (${series.length}일)</span>
       </div>
       <svg viewBox="0 0 ${w} ${h}" class="line-svg" role="img" aria-label="일별 사이트 vs 게임 방문자 추이">
         ${ticks}
         ${xLabels}
-        <path d="${pathFor('gameUsers')}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/>
-        <path d="${pathFor('siteUsers')}" fill="none" stroke="#16a34a" stroke-width="3" stroke-linejoin="round"/>
-        ${series.map((d, i) => `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(d.gameUsers || 0).toFixed(1)}" r="3.5" fill="#2563eb" stroke="#191919" stroke-width="1"><title>${esc(d.date)} 게임: ${d.gameUsers}명</title></circle><circle cx="${xFor(i).toFixed(1)}" cy="${yFor(d.siteUsers || 0).toFixed(1)}" r="3.5" fill="#16a34a" stroke="#191919" stroke-width="1"><title>${esc(d.date)} 사이트: ${d.siteUsers}명</title></circle>`).join('')}
+        ${showGame ? `<path d="${pathFor('gameUsers')}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/>` : ''}
+        ${showSite ? `<path d="${pathFor('siteUsers')}" fill="none" stroke="#16a34a" stroke-width="3" stroke-linejoin="round"/>` : ''}
+        ${dots}
       </svg>
     `;
   }
@@ -324,7 +369,7 @@ class KSoolAdminCharts extends HTMLElement {
         <!-- 위젯 2: 사이트 vs 게임 추이 -->
         <section class="panel">
           <h4>📈 방문자가 매일 늘고 있나? (사이트 vs 게임 추이)</h4>
-          ${this.renderDualLineSvg(ov.dailySeries || [])}
+          ${this.renderDualLineSvg(ov.dailySeries || [], this.hostScope, this.range)}
         </section>
 
         <div class="grid-2">
