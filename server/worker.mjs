@@ -72,7 +72,59 @@ async function countVotes(env,target,actorId){
   const mine=actorId?await stmt(env,'SELECT direction FROM votes WHERE target_key=? AND actor_id=?',target,actorId).first():null;
   return {...row,myVote:mine?.direction||null};
 }
-const VALID_LANGS=new Set(['ko','en','ja','zh-CN','zh-TW']);
+const VALID_LANGS=new Set(['ko','en','ja','zh-CN','zh-TW','fr']);
+function safeJsonObj(raw){try{const v=JSON.parse(raw||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(_){return {};}}
+function safeJsonArr(raw){try{const v=JSON.parse(raw||'[]');return Array.isArray(v)?v:[];}catch(_){return [];}}
+function serializeAffiliate(row){
+  return {
+    id:row.id,
+    enabled:Boolean(row.enabled),
+    order:Number(row.sort_order)||0,
+    locales:safeJsonArr(row.locales_json).filter(l=>VALID_LANGS.has(l)),
+    icon:row.icon||'🛍️',
+    url:row.url,
+    name:safeJsonObj(row.name_json),
+    badge:safeJsonObj(row.badge_json),
+    desc:safeJsonObj(row.desc_json),
+    disclosure:safeJsonObj(row.disclosure_json),
+    updatedAt:row.updated_at
+  };
+}
+function validateAffiliatePayload(b,overrideId=null){
+  const id=str(overrideId||b.id,2,40,'제휴 ID').toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  if(!id||id.length<2)throw problem('제휴 ID는 영문·숫자·하이픈만 사용 가능합니다');
+  const url=str(b.url,8,500,'제휴 URL');
+  let parsedUrl;
+  try{parsedUrl=new URL(url);}catch(_){throw problem('올바른 URL을 입력하세요');}
+  if(!['https:','http:'].includes(parsedUrl.protocol))throw problem('http/https URL만 허용됩니다');
+  const locales=(Array.isArray(b.locales)?b.locales:[]).map(x=>String(x).trim()).filter(l=>VALID_LANGS.has(l));
+  if(!locales.length)throw problem('최소 1개 이상의 노출 언어를 선택하세요');
+  const cleanMap=(m)=>{
+    const out={};
+    if(m&&typeof m==='object'){
+      for(const [k,v] of Object.entries(m)){
+        if(VALID_LANGS.has(k)&&typeof v==='string'&&v.trim())out[k]=v.trim().slice(0,400);
+      }
+    }
+    return out;
+  };
+  const name=cleanMap(b.name);
+  if(!Object.keys(name).length)throw problem('플랫폼 이름을 1개 이상 입력하세요');
+  const disclosure=cleanMap(b.disclosure);
+  if(!Object.keys(disclosure).length)throw problem('대가성 고지 문구(disclosure)를 1개 이상 입력하세요');
+  return {
+    id,
+    enabled:b.enabled===undefined?1:(b.enabled?1:0),
+    sort_order:Number.isFinite(Number(b.order))?Math.round(Number(b.order)):100,
+    locales_json:JSON.stringify([...new Set(locales)]),
+    icon:typeof b.icon==='string'&&b.icon.trim()?b.icon.trim().slice(0,8):'🛍️',
+    url:parsedUrl.href,
+    name_json:JSON.stringify(name),
+    badge_json:JSON.stringify(cleanMap(b.badge)),
+    desc_json:JSON.stringify(cleanMap(b.desc)),
+    disclosure_json:JSON.stringify(disclosure)
+  };
+}
 function normalizeLang(raw,sample=''){
   if(typeof raw==='string'&&VALID_LANGS.has(raw.trim()))return raw.trim();
   if(/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(sample))return 'ko';
@@ -100,7 +152,7 @@ function serializePost(p,actorId){return {id:p.id,kind:p.kind,title:p.title,body
 
 const SUPABASE_URL='https://jyjxvwxlwkoedxwkkysj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5anh2d3hsd2tvZWR4d2treXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzY5NDUsImV4cCI6MjEwOTA1Mjk0NX0.wfaRfya2PV4Ykawd6md4fXrO91_TWnyGyusSRa-2fJ8';
-const ALL_ADMIN_PERMS=['posts','suggestions','updates','prompt_gen'];
+const ALL_ADMIN_PERMS=['posts','suggestions','updates','affiliates','prompt_gen'];
 async function verifyAdminUser(req,env){
   const auth=req.headers.get('authorization')||'';
   const m=auth.match(/^Bearer\s+(.+)$/i);
@@ -261,6 +313,14 @@ export async function handleApi(req,env){
     }else if(req.method==='GET'&&path==='/api/updates'){
       const {results}=await stmt(env,'SELECT id,version,date,title,body,created_at FROM updates ORDER BY created_at DESC LIMIT 30').all();
       result=json({updates:results});
+    }else if(req.method==='GET'&&path==='/api/affiliates'){
+      const langParam=url.searchParams.get('lang');
+      const {results}=await stmt(env,'SELECT * FROM affiliate_partners WHERE enabled=1 ORDER BY sort_order ASC,id ASC').all();
+      let partners=results.map(serializeAffiliate);
+      if(langParam&&VALID_LANGS.has(langParam)){
+        partners=partners.filter(p=>p.locales.includes(langParam));
+      }
+      result=json({partners});
     }else if(req.method==='GET'&&path==='/api/admin/me'){
       const user=await verifyAdminUser(req,env);
       result=json({isAdmin:Boolean(user),isSuperAdmin:Boolean(user?.isSuperAdmin),permissions:user?.permissions||[],email:user?.email||null});
@@ -271,8 +331,9 @@ export async function handleApi(req,env){
       const recentPosts=can('posts')?(await stmt(env,`${postSelect} WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC LIMIT 50`,identity.id).all()).results.map(p=>serializePost(p,identity.id)):[];
       const sugRows=can('suggestions')?(await stmt(env,`SELECT s.*,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='UP') AS upvotes,(SELECT COUNT(*) FROM votes v WHERE v.target_key=s.suggestion_key AND v.direction='DOWN') AS downvotes FROM suggestions s ORDER BY s.created_at DESC LIMIT 100`).all()).results.map(s=>({suggestion_key:s.suggestion_key,items:JSON.parse(s.items_json),upvotes:s.upvotes,downvotes:s.downvotes,is_applied:!!s.is_applied,created_at:s.created_at})):[];
       const updates=can('updates')?(await stmt(env,'SELECT id,version,date,title,body,created_at FROM updates ORDER BY created_at DESC LIMIT 30').all()).results:[];
+      const affiliates=(can('affiliates')||can('updates'))?(await stmt(env,'SELECT * FROM affiliate_partners ORDER BY sort_order ASC,id ASC').all()).results.map(serializeAffiliate):[];
       const roles=admin.isSuperAdmin?(await stmt(env,'SELECT email,permissions_json,added_by,created_at FROM admin_roles ORDER BY created_at DESC').all()).results.map(r=>({email:r.email,permissions:JSON.parse(r.permissions_json),added_by:r.added_by,created_at:r.created_at})):[];
-      result=json({reports,posts:recentPosts,suggestions:sugRows,updates,roles});
+      result=json({reports,posts:recentPosts,suggestions:sugRows,updates,affiliates,roles});
     }else if(req.method==='DELETE'&&/^\/api\/admin\/posts\/[\w-]+$/.test(path)){
       await requireAdmin(req,env,'posts');
       const id=path.split('/').at(-1);
@@ -315,6 +376,40 @@ export async function handleApi(req,env){
       const id=path.split('/').at(-1);
       await stmt(env,'DELETE FROM updates WHERE id=?',id).run();
       result=json({ok:true});
+    }else if(req.method==='POST'&&path==='/api/admin/affiliates'){
+      await requireAdmin(req,env,'affiliates');
+      const v=validateAffiliatePayload(await readBody(req));
+      await stmt(env,'INSERT INTO affiliate_partners(id,enabled,sort_order,locales_json,icon,url,name_json,badge_json,desc_json,disclosure_json,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,sort_order=excluded.sort_order,locales_json=excluded.locales_json,icon=excluded.icon,url=excluded.url,name_json=excluded.name_json,badge_json=excluded.badge_json,desc_json=excluded.desc_json,disclosure_json=excluded.disclosure_json,updated_at=excluded.updated_at',v.id,v.enabled,v.sort_order,v.locales_json,v.icon,v.url,v.name_json,v.badge_json,v.desc_json,v.disclosure_json,now()).run();
+      const row=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',v.id).first();
+      result=json({ok:true,partner:serializeAffiliate(row)},201);
+    }else if(/^\/api\/admin\/affiliates\/[a-z0-9_-]+$/i.test(path)){
+      await requireAdmin(req,env,'affiliates');
+      const id=path.split('/').at(-1).toLowerCase();
+      const existing=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',id).first();
+      if(!existing)throw problem('제휴 플랫폼을 찾을 수 없습니다',404);
+      if(req.method==='PUT'||req.method==='PATCH'){
+        const b=await readBody(req);
+        const cur=serializeAffiliate(existing);
+        const merged={
+          id:cur.id,
+          enabled:b.enabled!==undefined?b.enabled:cur.enabled,
+          order:b.order!==undefined?b.order:cur.order,
+          locales:b.locales!==undefined?b.locales:cur.locales,
+          icon:b.icon!==undefined?b.icon:cur.icon,
+          url:b.url!==undefined?b.url:cur.url,
+          name:b.name!==undefined?b.name:cur.name,
+          badge:b.badge!==undefined?b.badge:cur.badge,
+          desc:b.desc!==undefined?b.desc:cur.desc,
+          disclosure:b.disclosure!==undefined?b.disclosure:cur.disclosure
+        };
+        const v=validateAffiliatePayload(merged,id);
+        await stmt(env,'UPDATE affiliate_partners SET enabled=?,sort_order=?,locales_json=?,icon=?,url=?,name_json=?,badge_json=?,desc_json=?,disclosure_json=?,updated_at=? WHERE id=?',v.enabled,v.sort_order,v.locales_json,v.icon,v.url,v.name_json,v.badge_json,v.desc_json,v.disclosure_json,now(),id).run();
+        const updated=await stmt(env,'SELECT * FROM affiliate_partners WHERE id=?',id).first();
+        result=json({ok:true,partner:serializeAffiliate(updated)});
+      }else if(req.method==='DELETE'){
+        await stmt(env,'DELETE FROM affiliate_partners WHERE id=?',id).run();
+        result=json({ok:true});
+      }else throw problem('지원하지 않는 요청',405);
     }else if(req.method==='POST'&&path==='/api/admin/roles'){
       const admin=await requireAdmin(req,env,'roles');
       const b=await readBody(req);

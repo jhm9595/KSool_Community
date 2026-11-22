@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync,mkdirSync,readdirSync } from 'node:fs';
 import { dirname,join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_AFFILIATE_PARTNERS } from './default-affiliates.mjs';
 
 export function openDatabase(path){
   if(path!==':memory:')mkdirSync(dirname(path),{recursive:true});
@@ -13,6 +14,14 @@ export function openDatabase(path){
   }
   for(const tbl of ['posts','suggestions','comments']){
     try{sqlite.exec(`ALTER TABLE ${tbl} ADD COLUMN lang TEXT NOT NULL DEFAULT 'ko';`);}catch(_){}
+  }
+  const affCount=sqlite.prepare('SELECT COUNT(*) AS cnt FROM affiliate_partners').get()?.cnt||0;
+  if(affCount===0){
+    const ins=sqlite.prepare('INSERT INTO affiliate_partners(id,enabled,sort_order,locales_json,icon,url,name_json,badge_json,desc_json,disclosure_json,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+    const ts=Date.now();
+    for(const p of DEFAULT_AFFILIATE_PARTNERS){
+      ins.run(p.id,p.enabled?1:0,p.order,JSON.stringify(p.locales),p.icon||'🛍️',p.url,JSON.stringify(p.name||{}),JSON.stringify(p.badge||{}),JSON.stringify(p.desc||{}),JSON.stringify(p.disclosure||{}),ts);
+    }
   }
   function statement(sql,args=[]){
     return {sql,args,bind(...values){return statement(sql,values);},async first(){return sqlite.prepare(sql).get(...args)||null;},async all(){return {results:sqlite.prepare(sql).all(...args)};},async run(){const r=sqlite.prepare(sql).run(...args);return {success:true,meta:{changes:Number(r.changes)}};}};

@@ -116,6 +116,44 @@ test('admin RBAC, prompt generator, and game-rule validation work end-to-end', a
     const enOnlySugs = await (await call(env, '/api/suggestions?lang=en')).json();
     assert.equal(enOnlySugs.suggestions.length, 1);
     assert.equal(enOnlySugs.suggestions[0].lang, 'en');
+
+    // 6. Affiliate partners declarative registry, locale filtering, and Admin ON/OFF + CRUD
+    const koAff = await (await call(env, '/api/affiliates?lang=ko')).json();
+    assert.deepEqual(koAff.partners.map(p => p.id), ['coupang', 'ohouse']);
+    assert.equal(koAff.partners[0].url, 'https://link.coupang.com/a/iSnsj2FEfk');
+    assert.equal(koAff.partners[1].url, 'https://ozip.me/u15xC78?af');
+    assert.match(koAff.partners[0].disclosure.ko, /쿠팡 파트너스/);
+    assert.match(koAff.partners[1].disclosure.ko, /오늘의집 큐레이터/);
+
+    const frAff = await (await call(env, '/api/affiliates?lang=fr')).json();
+    assert.ok(frAff.partners.some(p => p.id === 'amazon-fr'));
+    assert.ok(!frAff.partners.some(p => p.id === 'coupang'));
+
+    const toggleOff = await call(env, '/api/admin/affiliates/coupang', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer super-token' },
+      body: JSON.stringify({ enabled: false })
+    });
+    assert.equal(toggleOff.status, 200);
+    const koAfterOff = await (await call(env, '/api/affiliates?lang=ko')).json();
+    assert.deepEqual(koAfterOff.partners.map(p => p.id), ['ohouse']);
+
+    const addCustom = await call(env, '/api/admin/affiliates', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer super-token' },
+      body: JSON.stringify({
+        id: 'custom-shop',
+        order: 5,
+        locales: ['ko', 'en'],
+        icon: '🍹',
+        url: 'https://example.com/shop',
+        name: { ko: '테스트샵', en: 'Test Shop' },
+        disclosure: { ko: '제휴 수수료를 받을 수 있습니다.', en: 'Affiliate disclosure.' }
+      })
+    });
+    assert.equal(addCustom.status, 201);
+    const koWithCustom = await (await call(env, '/api/affiliates?lang=ko')).json();
+    assert.deepEqual(koWithCustom.partners.map(p => p.id), ['custom-shop', 'ohouse']);
   } finally {
     db.close();
   }

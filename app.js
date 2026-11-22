@@ -36,7 +36,7 @@
   const recipes = data.recipes.map(r => ({...r, items:data.recipe_ingredients.filter(i => i.recipe_id === r.recipe_id).sort((a,b) => a.slot_order - b.slot_order)}));
   const byId = new Map(recipes.map(r => [r.recipe_id,r]));
   const icon = (item, size=40) => window.KSool.pixelIcon(item,size,'',{theme:'hd'});
-  const SUPPORTED_LANGS = ['ko', 'en', 'ja', 'zh-CN', 'zh-TW'];
+  const SUPPORTED_LANGS = ['ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr'];
   function detectInitialLang() {
     try {
       const saved = localStorage.getItem('ksool_lang_v1');
@@ -48,10 +48,12 @@
       if (tz === 'Asia/Tokyo') return 'ja';
       if (tz === 'Asia/Taipei' || tz === 'Asia/Hong_Kong' || tz === 'Asia/Macau') return 'zh-TW';
       if (tz === 'Asia/Shanghai') return 'zh-CN';
+      if (tz === 'Europe/Paris') return 'fr';
     } catch (_) {}
     const nav = (navigator.language || '').toLowerCase();
     if (nav.startsWith('ko')) return 'ko';
     if (nav.startsWith('ja')) return 'ja';
+    if (nav.startsWith('fr')) return 'fr';
     if (nav.startsWith('zh-hant') || nav === 'zh-tw' || nav === 'zh-hk') return 'zh-TW';
     if (nav.startsWith('zh')) return 'zh-CN';
     return 'en';
@@ -59,12 +61,13 @@
   let portalLang = detectInitialLang();
   let contentLangFilter = portalLang;
   const LANG_META = {
-    all: { code: 'ALL', flag: '🌐', label: { ko: '전체 언어', en: 'All Languages', ja: '全言語', 'zh-CN': '全部语言', 'zh-TW': '全部語言' } },
+    all: { code: 'ALL', flag: '🌐', label: { ko: '전체 언어', en: 'All Languages', ja: '全言語', 'zh-CN': '全部语言', 'zh-TW': '全部語言', fr: 'Toutes les langues' } },
     ko: { code: 'KO', flag: '🇰🇷', label: '한국어' },
     en: { code: 'EN', flag: '🇺🇸', label: 'English' },
     ja: { code: 'JA', flag: '🇯🇵', label: '日本語' },
     'zh-CN': { code: 'ZH-CN', flag: '🇨🇳', label: '简体中文' },
-    'zh-TW': { code: 'ZH-TW', flag: '🇹🇼', label: '繁體中文' }
+    'zh-TW': { code: 'ZH-TW', flag: '🇹🇼', label: '繁體中文' },
+    fr: { code: 'FR', flag: '🇫🇷', label: 'Français' }
   };
   const getLangFilterLabel = (langKey) => {
     const m = LANG_META[langKey] || LANG_META.ko;
@@ -240,7 +243,40 @@
       savedToast:'已收藏', unsavedToast:'已取消收藏', copiedToast:'已複製連結',
       cats:{ '전체':'全部', '기초 재료':'基礎材料', '과일·편의점':'水果·便利店', '소맥·폭탄주':'燒啤·炸彈酒', '막걸리':'馬格利', '특산 명주':'特產名酒', '玩法技巧':'玩法技巧', '플레이 팁':'玩法技巧', '새 조합 제안':'新組合推薦', '기초합성':'基礎合成' },
       stagesTycoon:{ 1:'街頭無醇小攤', 2:'姨母布帳馬車', 3:'巷弄傳統酒館', 4:'精釀啤酒屋', 5:'天際線酒廊', 6:'賽博龐克未來酒吧' },
-      stagesQuiz:{ 1:'基礎組合 (No.01~18)', 2:'燒酒·啤酒 (No.19~37)', 3:'傳統酒 (No.38~55)', 4:'比例調酒 (No.56~67)', 5:'黃金比例 (No.68~77)', 6:'品牌·特產 (No.78~90)' }
+      stagesQuiz:{ 1:'基礎組合 (No.01~18)', 2:'燒酒·啤酒 (No.19~37)', 3:'傳統酒 (No.38~55)', 4:'比例調酒 (No.56~67)', 5:'黃金比例 (No.68~77)', 6:'品牌·特產 (No.78~90)' },
+      affiliateTitle:'🛍️ 추천 홈술 아이템 · 제휴 후원', affiliateVisit:'보러가기 ↗'
+    },
+    fr: {
+      brandTitle:'Mix Club', gameBtn:'K-Sool', googleSync:'G Synchro Google', loginBtn:'👤 Connexion', loginModalTitle:'Connexion & Synchro', loginModalDesc:'Connectez-vous avec votre compte de jeu pour synchroniser vos recettes et indices.', googleBtn:'Continuer avec Google', moreProvidersNote:'Les autres modes de connexion apparaîtront ici.', logout:'Déconnexion', loggedOut:'Déconnecté.', resynced:'Progression synchronisée avec Google.',
+      recipes:'Recettes', tips:'Communauté', suggestions:'Combos', rankings:'Classement', updates:'Nouveautés', blog:'Blog ↗',
+      heroTitle:'Recettes K-Sool.', search:'Rechercher recettes ou ingrédients', write:'Publier', proposeCombo:'Proposer un combo',
+      searchTips:'Rechercher des articles ou auteurs', searchSuggestions:'Rechercher par ingrédient',
+      storyBtn:'🎬 Histoire & Guide Vidéo', rankTitle:'🏆 Top Combos & Classement', updateTitle:'📢 Mises à jour K-Sool',
+      quizDex:'🎯 Quiz Dex', tycoonDex:'🏪 Tycoon Dex', codeInput:'Entrer un code', close:'Fermer', importBtn:'Importer',
+      codePlaceholder:'Collez le lien ou code KSOOL_SYNC_V1 depuis le jeu',
+      viewGrouped:'🔓 Débloqués/Verrouillés', viewStage:'🗺️ Par étape',
+      sortNumber:'Par n°', sortRecommended:'Recommandés', sortSimple:'Moins d’ingrédients',
+      unlockedSection:'🔓 Recettes débloquées', lockedSection:'🔒 Recettes verrouillées',
+      noUnlocked:'Aucune recette débloquée pour le moment. Jouez ou synchronisez votre compte Google.',
+      stageHiddenNotice:'🔒 {n} étape(s) supérieure(s) masquée(s) pour éviter les spoilers.',
+      lockedModeHint:'🔒 Débloquer en mode {mode}', modeQuiz:'Quiz', modeTycoon:'Tycoon',
+      orderBadge:'Dans l’ordre', countUnit:'',
+      savedRecipesTitle:'🔖 Recettes enregistrées', savedPostsTitle:'💬 Articles enregistrés',
+      emptySavedTitle:'Enregistrez vos recettes favorites', emptySavedDesc:'Appuyez sur le signet d’une carte pour la sauvegarder.',
+      emptySearchTitle:'Aucun résultat', emptySearchDesc:'Essayez un autre mot-clé ou filtre.',
+      colKind:'Type', colTitle:'Titre', colAuthor:'Auteur', colVotes:'Votes',
+      kindExp:'Nouveau combo', kindTip:'Astuce', kindExpFull:'Idée de combo', exampleTag:'Exemple',
+      gameSugBadge:'🎮 Choix du jeu', userSugBadge:'Combo joueur',
+      tycoonRankTitle:'🏆 Bar Tycoon Top 100 Mondial', tycoonRankSub:'(Top 10 en jeu · Top 100 ici)',
+      modeTimeAttack:'⏱️ Contre-la-montre', modeInfinite:'♾️ Infini',
+      rankSearchPlaceholder:'Rechercher votre pseudo',
+      colRank:'Rang', colPlayer:'Joueur', colServed:'Servis', colEarnings:'Revenus', colCombo:'Combo max', colWave:'Vague',
+      topPostsTitle:'💬 Astuces populaires', rankEmpty:'Chargement du classement ou aucun record.',
+      savedToast:'Enregistré', unsavedToast:'Retiré', copiedToast:'Lien copié',
+      cats:{ '전체':'Tout', '기초 재료':'Base', '과일·편의점':'Fruits & Épicerie', '소맥·폭탄주':'Somaek & Bombes', '막걸리':'Makgeolli', '특산 명주':'Spécialités', '플레이 팁':'Astuces', '새 조합 제안':'Nouveaux combos', '기초합성':'Mélange de base' },
+      stagesTycoon:{ 1:'Stand sans alcool', 2:'Pojangmacha', 3:'Taverne traditionnelle', 4:'Pub artisanal', 5:'Skyline Lounge', 6:'Bar futuriste' },
+      stagesQuiz:{ 1:'Bases (No.01~18)', 2:'Soju & Bière (No.19~37)', 3:'Traditionnels (No.38~55)', 4:'Proportions (No.56~67)', 5:'Ratios d’or (No.68~77)', 6:'Spécialités (No.78~90)' },
+      affiliateTitle:'🛍️ Boutique & Partenaires recommandés', affiliateVisit:'Découvrir ↗'
     }
   };
   const pt = k => (PORTAL_UI[portalLang] && PORTAL_UI[portalLang][k]) || PORTAL_UI.en[k] || k;
@@ -360,8 +396,9 @@
   let isSuperAdmin = false;
   let adminPermissions = [];
   let activeAdminTab = 'reports';
-  let adminData = { reports: [], posts: [], suggestions: [], updates: [], roles: [], gameSuggestions: [] };
+  let adminData = { reports: [], posts: [], suggestions: [], updates: [], affiliates: [], roles: [], gameSuggestions: [] };
   let dbUpdates = [];
+  let affiliatePartners = [];
   let gameSuggestions = [];
   let tycoonRankings = { TIME_ATTACK: [], INFINITE: [] };
   let activeRankMode = 'TIME_ATTACK';
@@ -390,8 +427,8 @@
       isAdminUser = Boolean(res?.isAdmin);
       isSuperAdmin = Boolean(res?.isSuperAdmin);
       adminPermissions = Array.isArray(res?.permissions) ? res.permissions : [];
-      if (isAdminUser && !canAdmin(activeAdminTab) && activeAdminTab !== 'roles') {
-        activeAdminTab = ['reports','suggestions','updates','roles'].find(t => t === 'roles' ? isSuperAdmin : canAdmin(t === 'reports' ? 'posts' : t)) || 'reports';
+      if (isAdminUser && !canAdmin(activeAdminTab) && activeAdminTab !== 'roles' && activeAdminTab !== 'analytics') {
+        activeAdminTab = ['reports','suggestions','updates','affiliates','roles'].find(t => t === 'roles' ? isSuperAdmin : canAdmin(t === 'reports' ? 'posts' : t)) || 'reports';
       }
     } catch (_) { isAdminUser = false; isSuperAdmin = false; adminPermissions = []; }
     const btn = $('#admin-nav-btn');
@@ -407,6 +444,7 @@
       adminData.posts = overview.posts || [];
       adminData.suggestions = overview.suggestions || [];
       adminData.updates = overview.updates || [];
+      adminData.affiliates = overview.affiliates || [];
       adminData.roles = overview.roles || [];
       if (sbClient && canAdmin('suggestions')) {
         const gsRes = await sbClient.from('ksool_suggestions').select('*').order('upvotes', { ascending: false }).limit(100);
@@ -494,15 +532,17 @@
 
   async function loadRemoteGameData() {
     try {
-      const prevSnap = JSON.stringify({ dbUpdates, gameSuggestions, tycoonRankings });
+      const prevSnap = JSON.stringify({ dbUpdates, affiliatePartners, gameSuggestions, tycoonRankings });
       const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
-      const [sugRes, taRes, infRes, updRes] = await Promise.all([
+      const [sugRes, taRes, infRes, updRes, affRes] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/ksool_suggestions?select=*&is_applied=eq.false&order=upvotes.desc&limit=100`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/ksool_tycoon_leaderboard?mode=eq.TIME_ATTACK&select=*&order=served_count.desc,total_earnings.desc&limit=100`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/ksool_tycoon_leaderboard?mode=eq.INFINITE&select=*&order=served_count.desc,total_earnings.desc&limit=100`, { headers }),
-        api('/updates').catch(() => ({ updates: [] }))
+        api('/updates').catch(() => ({ updates: [] })),
+        api('/affiliates').catch(() => ({ partners: [] }))
       ]);
       if (Array.isArray(updRes?.updates)) dbUpdates = updRes.updates;
+      if (Array.isArray(affRes?.partners)) affiliatePartners = affRes.partners;
       if (sugRes.ok) {
         const rows = await sugRes.json();
         if (Array.isArray(rows)) {
@@ -517,7 +557,7 @@
         const rows = await infRes.json();
         if (Array.isArray(rows)) tycoonRankings.INFINITE = rows;
       }
-      if (JSON.stringify({ dbUpdates, gameSuggestions, tycoonRankings }) !== prevSnap) render();
+      if (JSON.stringify({ dbUpdates, affiliatePartners, gameSuggestions, tycoonRankings }) !== prevSnap) render();
     } catch (_) {}
   }
 
@@ -923,6 +963,7 @@
       canAdmin('posts') ? { id: 'reports', label: `🚨 신고/글 (${adminData.reports.length})` } : null,
       canAdmin('suggestions') ? { id: 'suggestions', label: `🧪 추천 조합 (${adminData.gameSuggestions.length + adminData.suggestions.length})` } : null,
       canAdmin('updates') ? { id: 'updates', label: `📢 공지 관리 (${adminData.updates.length})` } : null,
+      (canAdmin('affiliates') || canAdmin('updates')) ? { id: 'affiliates', label: `🤝 제휴 후원 (${adminData.affiliates.length})` } : null,
       isSuperAdmin ? { id: 'analytics', label: '📊 GA4 통계' } : null,
       isSuperAdmin ? { id: 'roles', label: `👥 운영자 권한 (${adminData.roles.length})` } : null
     ].filter(Boolean);
@@ -1031,6 +1072,59 @@
           </div>
         </section>
       `;
+    } else if (activeAdminTab === 'affiliates' && (canAdmin('affiliates') || canAdmin('updates'))) {
+      bodyHtml = `
+        <section class="neo-panel">
+          <div class="neo-panel-head"><h3>🤝 언어별 제휴 후원 플랫폼 관리</h3></div>
+          <p style="margin:0 0 12px;font-size:12px;color:var(--muted);">노출 언어(<code>ko, en, ja, zh-CN, zh-TW, fr</code>), 정렬 순서(<code>order</code>), 활성화(ON/OFF), URL 및 대가성 고지 문구를 즉시 관리합니다. 각 카드 아래에 개별 대가성 문구가 즉시 노출됩니다.</p>
+          <form id="admin-affiliate-add-form" class="admin-update-form">
+            <div class="admin-update-row">
+              <input name="id" placeholder="ID (예: coupang)" maxlength="40" required>
+              <input name="icon" placeholder="아이콘 (🛍️)" value="🛍️" maxlength="8" required>
+              <input name="order" type="number" placeholder="정렬 순서 (예: 30)" value="30" required>
+            </div>
+            <input name="url" type="url" placeholder="https://..." maxlength="500" required>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;font-weight:800;">
+              ${SUPPORTED_LANGS.map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${l === 'ko' ? 'checked' : ''}> ${esc(l)}</label>`).join('')}
+            </div>
+            <div class="admin-update-row">
+              <input name="name_ko" placeholder="이름 (ko)" maxlength="80">
+              <input name="badge_ko" placeholder="배지 (ko)" maxlength="40">
+              <input name="desc_ko" placeholder="설명 (ko)" maxlength="200">
+            </div>
+            <input name="disclosure_ko" placeholder="대가성 고지 문구 (ko · 공정위 필수)" maxlength="300">
+            <div class="admin-update-row">
+              <input name="name_en" placeholder="Name (en)" maxlength="80">
+              <input name="badge_en" placeholder="Badge (en)" maxlength="40">
+              <input name="desc_en" placeholder="Desc (en)" maxlength="200">
+            </div>
+            <input name="disclosure_en" placeholder="Affiliate disclosure (en)" maxlength="300">
+            <button type="submit" class="button coral" style="justify-self:start;min-height:36px;">+ 제휴 플랫폼 추가/저장</button>
+          </form>
+          <div class="admin-list">
+            ${adminData.affiliates.length ? adminData.affiliates.map(p => `
+              <form class="admin-row admin-aff-item" data-aff-id="${esc(p.id)}" style="flex-direction:column;align-items:stretch;gap:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                  <strong>${esc(p.icon)} ${esc(p.name?.[portalLang] || p.name?.ko || p.name?.en || p.id)} <code>(${esc(p.id)})</code></strong>
+                  <div class="admin-row-actions">
+                    <button type="button" class="admin-btn ${p.enabled ? 'is-ok' : ''}" data-admin-aff-toggle="${esc(p.id)}" data-enabled="${p.enabled ? '1' : '0'}">${p.enabled ? '● ON (노출 중)' : '○ OFF (숨김)'}</button>
+                    <button type="submit" class="admin-btn is-ok">수정 저장</button>
+                    <button type="button" class="admin-btn is-danger" data-admin-aff-delete="${esc(p.id)}">삭제</button>
+                  </div>
+                </div>
+                <div class="admin-update-row">
+                  <input name="order" type="number" value="${Number(p.order) || 0}" aria-label="정렬 순서" required>
+                  <input name="icon" value="${esc(p.icon || '🛍️')}" aria-label="아이콘" required>
+                  <input name="url" type="url" value="${esc(p.url)}" aria-label="제휴 URL" required>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;font-weight:800;">
+                  ${SUPPORTED_LANGS.map(l => `<label style="display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" name="locales" value="${esc(l)}" ${(p.locales || []).includes(l) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}
+                </div>
+              </form>
+            `).join('') : '<p style="margin:0;font-size:12px;color:var(--muted);">등록된 제휴 플랫폼이 없습니다.</p>'}
+          </div>
+        </section>
+      `;
     } else if (activeAdminTab === 'analytics' && isSuperAdmin) {
       bodyHtml = `<div id="ga-charts-mount"></div>`;
     } else if (activeAdminTab === 'roles' && isSuperAdmin) {
@@ -1045,6 +1139,7 @@
               <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" name="perm" value="suggestions"> 🧪 추천 조합 관리</label>
               <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" name="perm" value="prompt_gen"> 🤖 Agent 프롬프트 생성</label>
               <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" name="perm" value="updates"> 📢 공지 작성</label>
+              <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" name="perm" value="affiliates"> 🤝 제휴 후원 관리</label>
             </div>
             <button type="submit" class="button coral" style="justify-self:start;min-height:36px;">운영자 권한 저장</button>
           </form>
@@ -1150,6 +1245,74 @@
     }
     $$('[data-admin-delete-role]', root).forEach(b => b.onclick = async () => {
       try { await adminApi(`/admin/roles/${encodeURIComponent(b.dataset.adminDeleteRole)}`, { method: 'DELETE' }); toast('권한 회수 완료'); await loadAdminData(); } catch (e) { toast(e.message); }
+    });
+    const affAddForm = $('#admin-affiliate-add-form', root);
+    if (affAddForm) {
+      affAddForm.onsubmit = async e => {
+        e.preventDefault();
+        const f = new FormData(affAddForm);
+        const locales = f.getAll('locales');
+        const payload = {
+          id: f.get('id').trim(),
+          icon: f.get('icon').trim() || '🛍️',
+          order: Number(f.get('order')) || 100,
+          url: f.get('url').trim(),
+          locales,
+          enabled: true,
+          name: { ko: f.get('name_ko')?.trim(), en: f.get('name_en')?.trim() },
+          badge: { ko: f.get('badge_ko')?.trim(), en: f.get('badge_en')?.trim() },
+          desc: { ko: f.get('desc_ko')?.trim(), en: f.get('desc_en')?.trim() },
+          disclosure: { ko: f.get('disclosure_ko')?.trim(), en: f.get('disclosure_en')?.trim() }
+        };
+        try {
+          await adminApi('/admin/affiliates', { method: 'POST', body: JSON.stringify(payload) });
+          toast('제휴 플랫폼 저장 완료');
+          await loadRemoteGameData();
+          await loadAdminData();
+        } catch (err) { toast(err.message); }
+      };
+    }
+    $$('.admin-aff-item', root).forEach(form => {
+      form.onsubmit = async e => {
+        e.preventDefault();
+        const id = form.dataset.affId;
+        const f = new FormData(form);
+        try {
+          await adminApi(`/admin/affiliates/${encodeURIComponent(id)}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              order: Number(f.get('order')) || 0,
+              icon: f.get('icon').trim() || '🛍️',
+              url: f.get('url').trim(),
+              locales: f.getAll('locales')
+            })
+          });
+          toast('제휴 설정 수정 완료');
+          await loadRemoteGameData();
+          await loadAdminData();
+        } catch (err) { toast(err.message); }
+      };
+    });
+    $$('[data-admin-aff-toggle]', root).forEach(b => b.onclick = async () => {
+      const id = b.dataset.adminAffToggle;
+      const nextEnabled = b.dataset.enabled !== '1';
+      try {
+        await adminApi(`/admin/affiliates/${encodeURIComponent(id)}`, {
+          method: 'PUT',
+          body: JSON.stringify({ enabled: nextEnabled })
+        });
+        toast(nextEnabled ? '제휴 노출 ON' : '제휴 노출 OFF');
+        await loadRemoteGameData();
+        await loadAdminData();
+      } catch (err) { toast(err.message); }
+    });
+    $$('[data-admin-aff-delete]', root).forEach(b => b.onclick = async () => {
+      try {
+        await adminApi(`/admin/affiliates/${encodeURIComponent(b.dataset.adminAffDelete)}`, { method: 'DELETE' });
+        toast('제휴 플랫폼 삭제 완료');
+        await loadRemoteGameData();
+        await loadAdminData();
+      } catch (err) { toast(err.message); }
     });
   }
   const AUTH_PROVIDERS = [
@@ -1479,7 +1642,7 @@
     });
   }
   function contentLangBarMarkup(items) {
-    const counts = { all: items.length, ko: 0, en: 0, ja: 0, 'zh-CN': 0, 'zh-TW': 0 };
+    const counts = { all: items.length, ko: 0, en: 0, ja: 0, 'zh-CN': 0, 'zh-TW': 0, fr: 0 };
     for (const it of items) {
       const l = SUPPORTED_LANGS.includes(it.lang) ? it.lang : 'ko';
       counts[l] = (counts[l] || 0) + 1;
@@ -1541,9 +1704,78 @@
     grid.innerHTML = spoilerBanner + (matchingSuggestions.map(suggestionCard).join('') || `<div class="empty-state"><span>✧</span><h3>${esc(pt('emptySearchTitle'))}</h3><p>${esc(pt('emptySearchDesc'))}</p></div>`);
     bindCardActions(grid);
   }
+  function pickAffText(map, fallback = '') {
+    if (!map || typeof map !== 'object') return fallback;
+    return map[portalLang] || map.en || map.ko || Object.values(map)[0] || fallback;
+  }
+  function renderAffiliatePartners() {
+    const sec = $('#affiliate-partners-section');
+    if (!sec) return;
+    if (activeTab === 'admin') {
+      sec.hidden = true;
+      return;
+    }
+    const visible = (affiliatePartners || [])
+      .filter(p => p && p.enabled === true && Array.isArray(p.locales) && p.locales.includes(portalLang))
+      .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+    if (!visible.length) {
+      sec.hidden = true;
+      sec.innerHTML = '';
+      return;
+    }
+    sec.hidden = false;
+    sec.innerHTML = `
+      <div class="neo-panel affiliate-shell">
+        <div class="neo-panel-head" style="margin-bottom:10px;">
+          <h3>${esc(pt('affiliateTitle'))}</h3>
+        </div>
+        <div class="affiliate-grid">
+          ${visible.map(p => {
+            const pName = pickAffText(p.name, p.id);
+            const pBadge = pickAffText(p.badge, '');
+            const pDesc = pickAffText(p.desc, '');
+            const pDisclosure = pickAffText(p.disclosure, '');
+            const safeUrl = safeHttpsUrl(p.url);
+            if (!safeUrl) return '';
+            return `
+              <div class="affiliate-item-wrap">
+                <a class="affiliate-card" href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer sponsored" data-affiliate-id="${esc(p.id)}" data-affiliate-name="${esc(pName)}">
+                  <div class="affiliate-card-top">
+                    <span class="affiliate-icon">${esc(p.icon || '🛍️')}</span>
+                    <div class="affiliate-meta">
+                      <strong>${esc(pName)}</strong>
+                      ${pBadge ? `<span class="affiliate-badge">${esc(pBadge)}</span>` : ''}
+                    </div>
+                    <span class="affiliate-cta">${esc(pt('affiliateVisit'))}</span>
+                  </div>
+                  ${pDesc ? `<p class="affiliate-desc">${esc(pDesc)}</p>` : ''}
+                </a>
+                ${pDisclosure ? `<p class="affiliate-disclosure">${esc(pDisclosure)}</p>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+    $$('[data-affiliate-id]', sec).forEach(link => {
+      link.addEventListener('click', () => {
+        try {
+          if (typeof window.gtag === 'function') {
+            window.gtag('event', 'select_content', {
+              content_type: 'affiliate_partner',
+              item_id: link.dataset.affiliateId,
+              item_name: link.dataset.affiliateName || link.dataset.affiliateId,
+              ad_type: 'affiliate_buy'
+            });
+          }
+        } catch (_) {}
+      });
+    });
+  }
   function render() {
     applyPortalLangUi();
     renderHeaderAuthButton();
+    renderAffiliatePartners();
     $$('[data-tab]').forEach(b => b.classList.toggle('selected', b.dataset.tab === activeTab));
     $$('[data-nav]').forEach(b => b.classList.toggle('nav-active', b.dataset.nav === activeTab));
     $('#saved-count').textContent = bookmarks.size;
