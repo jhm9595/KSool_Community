@@ -932,22 +932,22 @@
       version: 'v2.6',
       date: '2026-11-25',
       title: {
-        ko: '후원하기(제휴 상점) 기능 추가 안내',
-        en: 'New Support & Affiliate Store Feature',
-        ja: 'サポート（アフィリエイトショップ）機能追加のお知らせ',
-        'zh-CN': '新增赞助支持（联盟商店）功能公告',
-        'zh-TW': '新增贊助支持（聯盟商店）功能公告',
-        fr: 'Nouvelle fonctionnalité de soutien et boutique partenaire',
-        es: 'Nueva función de apoyo y tienda de afiliados'
+        ko: '후원하기 기능 추가 & 7개 국어 확장·커뮤니티/미니게임 개선',
+        en: 'Support Feature, 7-Language Expansion & Community/Mini-Game Upgrades',
+        ja: 'サポート機能追加＆7言語対応・コミュニティ/ミニゲーム改善',
+        'zh-CN': '新增赞助支持功能、扩展至7种语言及社区/小游戏优化',
+        'zh-TW': '新增贊助支持功能、擴展至7種語言及社群/小遊戲最佳化',
+        fr: 'Fonctionnalité de soutien, 7 langues & améliorations communauté/mini-jeux',
+        es: 'Función de apoyo, 7 idiomas y mejoras en comunidad y minijuegos'
       },
       body: {
-        ko: '• 후원하기 & 추천 홈술 아이템 기능 추가\n  - 게임과 공식 사이트에서 국가·언어별 추천 홈술 아이템 및 제휴 스토어를 통해 K-술 개발을 응원하고 후원하실 수 있습니다.\n  - 각 제휴 링크는 해당 스토어의 공식 제휴 안내 문구와 함께 제공되며, 더 나은 업데이트와 서비스 운영에 소중히 사용됩니다.',
-        en: '• Support K-Sool & Recommended Home-Drinking Items\n  - You can now support K-Sool development by visiting curated regional stores and recommended home-drinking items directly from the game and official site.\n  - Each link is displayed with its official affiliate disclosure and helps keep updates and servers running.',
-        ja: '• サポート＆おすすめ家飲みアイテム機能を追加\n  - ゲームおよび公式サイトから、地域・言語別のおすすめ家飲みアイテムや提携ショップを通じてK-Soolの開発を応援・サポートできるようになりました。\n  - 各リンクには公式のアフィリエイト表記を併記しており、今後のアップデートや運営に大切に活用いたします。',
-        'zh-CN': '• 新增赞助支持与推荐居家微醺好物功能\n  - 现在可以在游戏和官方网站中，通过按地区与语言精选的推荐好物及合作商店来支持 K-Sool 的开发。\n  - 每个链接均附带官方联盟披露说明，您的支持将用于持续优化更新与服务运营。',
-        'zh-TW': '• 新增贊助支持與推薦居家微醺好物功能\n  - 現在可以在遊戲與官方網站中，透過依地區與語言精選的推薦好物及合作商店來支持 K-Sool 的開發。\n  - 每個連結均附有官方聯盟揭露說明，您的支持將用於持續優化更新與服務營運。',
-        fr: '• Soutenir K-Sool & sélection d\'articles maison\n  - Vous pouvez désormais soutenir le développement de K-Sool via une sélection d\'articles et de boutiques partenaires adaptées à votre langue et région, depuis le jeu et le site officiel.\n  - Chaque lien affiche la mention d\'affiliation officielle correspondante et contribue aux futures mises à jour.',
-        es: '• Apoya a K-Sool y descubre artículos recomendados\n  - Ya puedes apoyar el desarrollo de K-Sool desde el juego y el sitio oficial explorando tiendas colaboradoras y artículos recomendados según tu idioma y región.\n  - Cada enlace incluye su aviso oficial de afiliación y ayuda a mantener las actualizaciones y el servicio.'
+        ko: '• 후원하기 & 추천 홈술 아이템 기능 추가\n  - 게임과 공식 사이트에서 국가·언어별 추천 홈술 아이템 및 제휴 스토어를 통해 K-술 개발을 응원하고 후원하실 수 있습니다.\n  - 각 제휴 링크는 해당 스토어의 공식 제휴 안내 문구와 함께 제공되며, 더 나은 업데이트와 서비스 운영에 소중히 사용됩니다.\n• 7개 국어 지원 확대 (프랑스어 · 스페인어 추가)\n  - 기존 5개 국어에 프랑스어(fr)·스페인어(es)가 추가되어 게임과 공식 사이트 모두 7개 국어로 이용할 수 있습니다.\n• 커뮤니티 · 추천 조합 언어별 필터링 & 번역 보기 지원\n  - 커뮤니티 글과 추천 조합을 작성 언어별로 나눠 볼 수 있으며, 다른 언어 게시글도 번역 기능으로 편하게 읽을 수 있습니다.\n• 술자리 미니게임 & 모바일 UI/사운드 개선\n  - 배스킨라빈스 31 순차 점등·효과음, 병뚜껑 게임 벌칙/조작 개선, 사운드 볼륨 통합 및 모바일 화면·아코디언 전환 애니메이션을 다듬었습니다.',
+        en: '• Support K-Sool & Recommended Home-Drinking Items\n  - Support K-Sool development by visiting curated regional stores and recommended home-drinking items directly from the game and official site.\n  - Each link is displayed with its official affiliate disclosure and helps keep updates and servers running.\n• Expanded to 7 Languages (French & Spanish Added)\n  - French (fr) and Spanish (es) are now supported alongside Korean, English, Japanese, and Chinese across both the game and portal.\n• Language Filtering & Translation for Community Posts\n  - Filter community tips and combo suggestions by language, and translate posts written in other languages with ease.\n• Party Mini-Games & Mobile UI/Audio Polish\n  - Sequential slot lighting and sound effects in Baskin-Robbins 31, refined bottle-cap game controls/penalties, unified audio volume, and smoother mobile modals/accordions.',
+        ja: '• サポート＆おすすめ家飲みアイテム機能を追加\n  - ゲームおよび公式サイトから、地域・言語別のおすすめ家飲みアイテムや提携ショップを通じてK-Soolの開発を応援・サポートできるようになりました。\n  - 各リンクには公式のアフィリエイト表記を併記しており、今後のアップデートや運営に大切に活用いたします。\n• 7言語対応へ拡大（フランス語・スペイン語を追加）\n  - 従来の5言語に加え、フランス語（fr）・スペイン語（es）に対応し、ゲームと公式サイトの両方で7言語を利用できます。\n• コミュニティ・おすすめ投稿の言語別フィルター＆翻訳表示\n  - コミュニティ投稿やおすすめレシピを言語ごとに絞り込めるようになり、他言語の投稿も翻訳して確認できます。\n• 飲み会ミニゲーム＆モバイルUI/サウンド改善\n  - サーティワン31の順次点灯・効果音、王冠ゲームの罰ゲーム/操作改善、サウンド音量統合、モバイル表示・アニメーションを最適化しました。',
+        'zh-CN': '• 新增赞助支持与推荐居家微醺好物功能\n  - 现在可以在游戏和官方网站中，通过按地区与语言精选的推荐好物及合作商店来支持 K-Sool 的开发。\n  - 每个链接均附带官方联盟披露说明，您的支持将用于持续优化更新与服务运营。\n• 扩展至 7 种语言（新增法语、西班牙语）\n  - 在原有5种语言基础上新增法语（fr）与西班牙语（es），游戏与官方网站同步支持。\n• 社区与推荐组合按语言筛选及翻译查看\n  - 支持按发布语言筛选社区攻略与推荐配方，并可便捷翻译其他语言的帖子。\n• 酒桌小游戏与移动端 UI/音效优化\n  - 新增 31 游戏顺序亮灯与音效、优化瓶盖游戏惩罚与操作体验、统一音频音量管理并打磨移动端弹窗与动画效果。',
+        'zh-TW': '• 新增贊助支持與推薦居家微醺好物功能\n  - 現在可以在遊戲與官方網站中，透過依地區與語言精選的推薦好物及合作商店來支持 K-Sool 的開發。\n  - 每個連結均附有官方聯盟揭露說明，您的支持將用於持續優化更新與服務營運。\n• 擴展至 7 種語言（新增法語、西班牙語）\n  - 在原有5種語言基礎上新增法語（fr）與西班牙語（es），遊戲與官方網站同步支援。\n• 社群與推薦組合依語言篩選及翻譯檢視\n  - 支援依發布語言篩選社群攻略與推薦配方，並可輕鬆翻譯其他語言的貼文。\n• 酒桌小遊戲與行動端 UI/音效最佳化\n  - 新增 31 遊戲依序亮燈與音效、最佳化瓶蓋遊戲懲罰與操作體驗、統一音訊音量管理並打磨行動端彈窗與動畫效果。',
+        fr: '• Soutenir K-Sool & sélection d\'articles maison\n  - Soutenez le développement de K-Sool via une sélection d\'articles et de boutiques partenaires adaptées à votre langue et région, depuis le jeu et le site officiel.\n  - Chaque lien affiche la mention d\'affiliation officielle correspondante et contribue aux futures mises à jour.\n• Extension à 7 langues (français et espagnol ajoutés)\n  - Le français (fr) et l\'espagnol (es) rejoignent les 5 langues existantes sur le jeu et le site officiel.\n• Filtrage par langue & traduction de la communauté\n  - Filtrez les astuces et suggestions par langue et traduisez facilement les publications rédigées dans d\'autres langues.\n• Mini-jeux de soirée & améliorations UI/audio sur mobile\n  - Animation séquentielle et effets sonores pour Baskin-Robbins 31, réglages des jeux de capsule, audio unifié et transitions plus fluides sur mobile.',
+        es: '• Apoya a K-Sool y descubre artículos recomendados\n  - Apoya el desarrollo de K-Sool desde el juego y el sitio oficial explorando tiendas colaboradoras y artículos recomendados según tu idioma y región.\n  - Cada enlace incluye su aviso oficial de afiliación y ayuda a mantener las actualizaciones y el servicio.\n• Ampliación a 7 idiomas (francés y español añadidos)\n  - El francés (fr) y el español (es) se suman a los 5 idiomas anteriores tanto en el juego como en el sitio oficial.\n• Filtro por idioma y traducción en la comunidad\n  - Filtra publicaciones y combos recomendados por idioma y traduce fácilmente entradas escritas en otros idiomas.\n• Mejoras en minijuegos de fiesta y UI/audio móvil\n  - Iluminación secuencial y efectos sonoros en Baskin-Robbins 31, mejoras de control y penalizaciones en juegos de chapas, volumen unificado y transiciones móviles más fluidas.'
       }
     },
     {
