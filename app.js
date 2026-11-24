@@ -85,20 +85,6 @@
     return `${m.flag} ${text}`;
   };
   const getLangBadgeCode = (langKey) => (LANG_META[langKey]?.code || String(langKey || 'ko').toUpperCase());
-  const translateCache = new Map();
-  async function translateTextViaGoogle(text, targetLang = portalLang) {
-    const clean = String(text || '').trim();
-    if (!clean) return '';
-    const cacheKey = `${targetLang}::${clean}`;
-    if (translateCache.has(cacheKey)) return translateCache.get(cacheKey);
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(clean)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('번역 요청 실패');
-    const json = await res.json();
-    const translated = Array.isArray(json?.[0]) ? json[0].map(part => part?.[0] || '').join('') : clean;
-    translateCache.set(cacheKey, translated);
-    return translated;
-  }
   const PORTAL_UI = {
     ko: {
       brandTitle:'조합소', gameBtn:'K-술', googleSync:'G Google 연동', loginBtn:'👤 로그인', loginModalTitle:'로그인 · 진행도 연동', loginModalDesc:'게임과 동일한 계정으로 로그인하면 해금 도감과 힌트 진행도가 자동 동기화됩니다.', googleBtn:'Google로 계속하기', moreProvidersNote:'추후 다른 로그인 수단이 추가되면 이곳에 함께 표시됩니다.', logout:'로그아웃', loggedOut:'로그아웃되었습니다.', resynced:'Google 계정과 진행도를 다시 동기화했어요.',
@@ -875,7 +861,7 @@
         ? `<div class="spoiler-shield"><span>🔒 미해금 재료가 포함된 실험 조합입니다.</span><button type="button" data-reveal-spoiler="${esc(p.id)}">스포일러 확인</button></div>`
         : `<div class="card-formula">${formula(p.items,true)}</div><p class="detail-note">실험 · 정답 미확인</p>`)
       : '';
-    return `<article class="tip-card" data-post-card="${esc(p.id)}"><div class="tip-card-top"><span class="tip-kind">${esc(p.kind === 'experiment' ? pt('kindExpFull') : pt('kindTip'))}</span><span class="lang-chip">${esc(getLangBadgeCode(p.lang || 'ko'))}</span><span>${p.example ? esc(pt('exampleTag')) : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span><button type="button" class="inline-translate-btn" data-translate-post="${esc(p.id)}">🌐 Google 번역</button></div><h3 data-post-title="${esc(p.id)}">${esc(p.title)}</h3><p data-post-body="${esc(p.id)}">${renderBodyWithSafeHelpLinks(p.body)}</p><div class="translated-box" data-post-translated="${esc(p.id)}" hidden></div>${formulaHtml}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':`${voteControls(p)}${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
+    return `<article class="tip-card" data-post-card="${esc(p.id)}"><div class="tip-card-top"><span class="tip-kind">${esc(p.kind === 'experiment' ? pt('kindExpFull') : pt('kindTip'))}</span><span class="lang-chip">${esc(getLangBadgeCode(p.lang || 'ko'))}</span><span>${p.example ? esc(pt('exampleTag')) : p === sharedPost ? '공유' : p.isMine?'내 글':'공유 글'}</span></div><h3 data-post-title="${esc(p.id)}">${esc(p.title)}</h3><p data-post-body="${esc(p.id)}">${renderBodyWithSafeHelpLinks(p.body)}</p>${formulaHtml}<div class="tip-footer"><span class="tip-author"><span class="tip-avatar">${esc(p.author.slice(0,1))}</span>${esc(p.author)}</span><div class="tip-card-actions">${p.example?'':`${voteControls(p)}${p.isMine ? `<button data-delete-post="${esc(p.id)}" aria-label="내 팁 삭제">${uiIcon('trash',17)}</button>` : ''}<button data-comments="${esc(p.id)}" aria-label="댓글">${uiIcon('comment',17)}<span>${p.commentCount||0}</span></button><button data-report="${esc(p.id)}" aria-label="글 신고">${uiIcon('flag',15)}</button>`}</div></div>${p.recipeId ? `<button class="text-link" data-recipe="${p.recipeId}">조합 ↗</button>` : ''}</article>`;
   }
   function applyPortalLangUi() {
     document.documentElement.lang = portalLang;
@@ -941,13 +927,13 @@
         es: 'Función de apoyo, 7 idiomas y mejoras en comunidad y minijuegos'
       },
       body: {
-        ko: '• 후원하기 & 추천 홈술 아이템 기능 추가\n  - 게임과 공식 사이트에서 국가·언어별 추천 홈술 아이템 및 제휴 스토어를 통해 K-술 개발을 응원하고 후원하실 수 있습니다.\n  - 각 제휴 링크는 해당 스토어의 공식 제휴 안내 문구와 함께 제공되며, 더 나은 업데이트와 서비스 운영에 소중히 사용됩니다.\n• 7개 국어 지원 확대 (프랑스어 · 스페인어 추가)\n  - 기존 5개 국어에 프랑스어(fr)·스페인어(es)가 추가되어 게임과 공식 사이트 모두 7개 국어로 이용할 수 있습니다.\n• 커뮤니티 · 추천 조합 언어별 필터링 & 번역 보기 지원\n  - 커뮤니티 글과 추천 조합을 작성 언어별로 나눠 볼 수 있으며, 다른 언어 게시글도 번역 기능으로 편하게 읽을 수 있습니다.\n• 술자리 미니게임 & 모바일 UI/사운드 개선\n  - 배스킨라빈스 31 순차 점등·효과음, 병뚜껑 게임 벌칙/조작 개선, 사운드 볼륨 통합 및 모바일 화면·아코디언 전환 애니메이션을 다듬었습니다.',
-        en: '• Support K-Sool & Recommended Home-Drinking Items\n  - Support K-Sool development by visiting curated regional stores and recommended home-drinking items directly from the game and official site.\n  - Each link is displayed with its official affiliate disclosure and helps keep updates and servers running.\n• Expanded to 7 Languages (French & Spanish Added)\n  - French (fr) and Spanish (es) are now supported alongside Korean, English, Japanese, and Chinese across both the game and portal.\n• Language Filtering & Translation for Community Posts\n  - Filter community tips and combo suggestions by language, and translate posts written in other languages with ease.\n• Party Mini-Games & Mobile UI/Audio Polish\n  - Sequential slot lighting and sound effects in Baskin-Robbins 31, refined bottle-cap game controls/penalties, unified audio volume, and smoother mobile modals/accordions.',
-        ja: '• サポート＆おすすめ家飲みアイテム機能を追加\n  - ゲームおよび公式サイトから、地域・言語別のおすすめ家飲みアイテムや提携ショップを通じてK-Soolの開発を応援・サポートできるようになりました。\n  - 各リンクには公式のアフィリエイト表記を併記しており、今後のアップデートや運営に大切に活用いたします。\n• 7言語対応へ拡大（フランス語・スペイン語を追加）\n  - 従来の5言語に加え、フランス語（fr）・スペイン語（es）に対応し、ゲームと公式サイトの両方で7言語を利用できます。\n• コミュニティ・おすすめ投稿の言語別フィルター＆翻訳表示\n  - コミュニティ投稿やおすすめレシピを言語ごとに絞り込めるようになり、他言語の投稿も翻訳して確認できます。\n• 飲み会ミニゲーム＆モバイルUI/サウンド改善\n  - サーティワン31の順次点灯・効果音、王冠ゲームの罰ゲーム/操作改善、サウンド音量統合、モバイル表示・アニメーションを最適化しました。',
-        'zh-CN': '• 新增赞助支持与推荐居家微醺好物功能\n  - 现在可以在游戏和官方网站中，通过按地区与语言精选的推荐好物及合作商店来支持 K-Sool 的开发。\n  - 每个链接均附带官方联盟披露说明，您的支持将用于持续优化更新与服务运营。\n• 扩展至 7 种语言（新增法语、西班牙语）\n  - 在原有5种语言基础上新增法语（fr）与西班牙语（es），游戏与官方网站同步支持。\n• 社区与推荐组合按语言筛选及翻译查看\n  - 支持按发布语言筛选社区攻略与推荐配方，并可便捷翻译其他语言的帖子。\n• 酒桌小游戏与移动端 UI/音效优化\n  - 新增 31 游戏顺序亮灯与音效、优化瓶盖游戏惩罚与操作体验、统一音频音量管理并打磨移动端弹窗与动画效果。',
-        'zh-TW': '• 新增贊助支持與推薦居家微醺好物功能\n  - 現在可以在遊戲與官方網站中，透過依地區與語言精選的推薦好物及合作商店來支持 K-Sool 的開發。\n  - 每個連結均附有官方聯盟揭露說明，您的支持將用於持續優化更新與服務營運。\n• 擴展至 7 種語言（新增法語、西班牙語）\n  - 在原有5種語言基礎上新增法語（fr）與西班牙語（es），遊戲與官方網站同步支援。\n• 社群與推薦組合依語言篩選及翻譯檢視\n  - 支援依發布語言篩選社群攻略與推薦配方，並可輕鬆翻譯其他語言的貼文。\n• 酒桌小遊戲與行動端 UI/音效最佳化\n  - 新增 31 遊戲依序亮燈與音效、最佳化瓶蓋遊戲懲罰與操作體驗、統一音訊音量管理並打磨行動端彈窗與動畫效果。',
-        fr: '• Soutenir K-Sool & sélection d\'articles maison\n  - Soutenez le développement de K-Sool via une sélection d\'articles et de boutiques partenaires adaptées à votre langue et région, depuis le jeu et le site officiel.\n  - Chaque lien affiche la mention d\'affiliation officielle correspondante et contribue aux futures mises à jour.\n• Extension à 7 langues (français et espagnol ajoutés)\n  - Le français (fr) et l\'espagnol (es) rejoignent les 5 langues existantes sur le jeu et le site officiel.\n• Filtrage par langue & traduction de la communauté\n  - Filtrez les astuces et suggestions par langue et traduisez facilement les publications rédigées dans d\'autres langues.\n• Mini-jeux de soirée & améliorations UI/audio sur mobile\n  - Animation séquentielle et effets sonores pour Baskin-Robbins 31, réglages des jeux de capsule, audio unifié et transitions plus fluides sur mobile.',
-        es: '• Apoya a K-Sool y descubre artículos recomendados\n  - Apoya el desarrollo de K-Sool desde el juego y el sitio oficial explorando tiendas colaboradoras y artículos recomendados según tu idioma y región.\n  - Cada enlace incluye su aviso oficial de afiliación y ayuda a mantener las actualizaciones y el servicio.\n• Ampliación a 7 idiomas (francés y español añadidos)\n  - El francés (fr) y el español (es) se suman a los 5 idiomas anteriores tanto en el juego como en el sitio oficial.\n• Filtro por idioma y traducción en la comunidad\n  - Filtra publicaciones y combos recomendados por idioma y traduce fácilmente entradas escritas en otros idiomas.\n• Mejoras en minijuegos de fiesta y UI/audio móvil\n  - Iluminación secuencial y efectos sonoros en Baskin-Robbins 31, mejoras de control y penalizaciones en juegos de chapas, volumen unificado y transiciones móviles más fluidas.'
+        ko: '• 후원하기 & 추천 홈술 아이템 기능 추가\n  - 게임과 공식 사이트에서 국가·언어별 추천 홈술 아이템 및 제휴 스토어를 통해 K-술 개발을 응원하고 후원하실 수 있습니다.\n  - 각 제휴 링크는 해당 스토어의 공식 제휴 안내 문구와 함께 제공되며, 더 나은 업데이트와 서비스 운영에 소중히 사용됩니다.\n• 7개 국어 지원 확대 (프랑스어 · 스페인어 추가)\n  - 기존 5개 국어에 프랑스어(fr)·스페인어(es)가 추가되어 게임과 공식 사이트 모두 7개 국어로 이용할 수 있습니다.\n• 커뮤니티 · 추천 조합 언어별 필터링 지원\n  - 커뮤니티 글과 추천 조합을 작성 언어별로 나눠 볼 수 있도록 개선되었습니다.\n• 술자리 미니게임 & 모바일 UI/사운드 개선\n  - 배스킨라빈스 31 순차 점등·효과음, 병뚜껑 게임 벌칙/조작 개선, 사운드 볼륨 통합 및 모바일 화면·아코디언 전환 애니메이션을 다듬었습니다.',
+        en: '• Support K-Sool & Recommended Home-Drinking Items\n  - Support K-Sool development by visiting curated regional stores and recommended home-drinking items directly from the game and official site.\n  - Each link is displayed with its official affiliate disclosure and helps keep updates and servers running.\n• Expanded to 7 Languages (French & Spanish Added)\n  - French (fr) and Spanish (es) are now supported alongside Korean, English, Japanese, and Chinese across both the game and portal.\n• Language Filtering for Community Posts & Combos\n  - Filter community tips and combo suggestions by post language.\n• Party Mini-Games & Mobile UI/Audio Polish\n  - Sequential slot lighting and sound effects in Baskin-Robbins 31, refined bottle-cap game controls/penalties, unified audio volume, and smoother mobile modals/accordions.',
+        ja: '• サポート＆おすすめ家飲みアイテム機能を追加\n  - ゲームおよび公式サイトから、地域・言語別のおすすめ家飲みアイテムや提携ショップを通じてK-Soolの開発を応援・サポートできるようになりました。\n  - 各リンクには公式のアフィリエイト表記を併記しており、今後のアップデートや運営に大切に活用いたします。\n• 7言語対応へ拡大（フランス語・スペイン語を追加）\n  - 従来の5言語に加え、フランス語（fr）・スペイン語（es）に対応し、ゲームと公式サイトの両方で7言語を利用できます。\n• コミュニティ・おすすめ投稿の言語別フィルター対応\n  - コミュニティ投稿やおすすめレシピを言語ごとに絞り込んで閲覧できるようになりました。\n• 飲み会ミニゲーム＆モバイルUI/サウンド改善\n  - サーティワン31の順次点灯・効果音、王冠ゲームの罰ゲーム/操作改善、サウンド音量統合、モバイル表示・アニメーションを最適化しました。',
+        'zh-CN': '• 新增赞助支持与推荐居家微醺好物功能\n  - 现在可以在游戏和官方网站中，通过按地区与语言精选的推荐好物及合作商店来支持 K-Sool 的开发。\n  - 每个链接均附带官方联盟披露说明，您的支持将用于持续优化更新与服务运营。\n• 扩展至 7 种语言（新增法语、西班牙语）\n  - 在原有5种语言基础上新增法语（fr）与西班牙语（es），游戏与官方网站同步支持。\n• 社区与推荐组合支持按语言筛选\n  - 支持按发布语言筛选查看社区攻略与推荐配方。\n• 酒桌小游戏与移动端 UI/音效优化\n  - 新增 31 游戏顺序亮灯与音效、优化瓶盖游戏惩罚与操作体验、统一音频音量管理并打磨移动端弹窗与动画效果。',
+        'zh-TW': '• 新增贊助支持與推薦居家微醺好物功能\n  - 現在可以在遊戲與官方網站中，透過依地區與語言精選的推薦好物及合作商店來支持 K-Sool 的開發。\n  - 每個連結均附有官方聯盟揭露說明，您的支持將用於持續優化更新與服務營運。\n• 擴展至 7 種語言（新增法語、西班牙語）\n  - 在原有5種語言基礎上新增法語（fr）與西班牙語（es），遊戲與官方網站同步支援。\n• 社群與推薦組合支援依語言篩選\n  - 支援依發布語言篩選檢視社群攻略與推薦配方。\n• 酒桌小遊戲與行動端 UI/音效最佳化\n  - 新增 31 遊戲依序亮燈與音效、最佳化瓶蓋遊戲懲罰與操作體驗、統一音訊音量管理並打磨行動端彈窗與動畫效果。',
+        fr: '• Soutenir K-Sool & sélection d\'articles maison\n  - Soutenez le développement de K-Sool via une sélection d\'articles et de boutiques partenaires adaptées à votre langue et région, depuis le jeu et le site officiel.\n  - Chaque lien affiche la mention d\'affiliation officielle correspondante et contribue aux futures mises à jour.\n• Extension à 7 langues (français et espagnol ajoutés)\n  - Le français (fr) et l\'espagnol (es) rejoignent les 5 langues existantes sur le jeu et le site officiel.\n• Filtrage par langue dans la communauté\n  - Filtrez les astuces et suggestions de combos par langue.\n• Mini-jeux de soirée & améliorations UI/audio sur mobile\n  - Animation séquentielle et effets sonores pour Baskin-Robbins 31, réglages des jeux de capsule, audio unifié et transitions plus fluides sur mobile.',
+        es: '• Apoya a K-Sool y descubre artículos recomendados\n  - Apoya el desarrollo de K-Sool desde el juego y el sitio oficial explorando tiendas colaboradoras y artículos recomendados según tu idioma y región.\n  - Cada enlace incluye su aviso oficial de afiliación y ayuda a mantener las actualizaciones y el servicio.\n• Ampliación a 7 idiomas (francés y español añadidos)\n  - El francés (fr) y el español (es) se suman a los 5 idiomas anteriores tanto en el juego como en el sitio oficial.\n• Filtro por idioma en la comunidad\n  - Filtra publicaciones y combos recomendados según el idioma de publicación.\n• Mejoras en minijuegos de fiesta y UI/audio móvil\n  - Iluminación secuencial y efectos sonoros en Baskin-Robbins 31, mejoras de control y penalizaciones en juegos de chapas, volumen unificado y transiciones móviles más fluidas.'
       }
     },
     {
@@ -2070,44 +2056,6 @@
       if (ok) toast(saved ? pt('unsavedToast') : pt('savedToast'));
     });
     $$('[data-share-post]',root).forEach(b => b.onclick = () => sharePost(b.dataset.sharePost));
-    $$('[data-translate-post]',root).forEach(b => b.onclick = async (e) => {
-      e.stopPropagation();
-      const postId = b.dataset.translatePost;
-      const post = allPosts().find(p => p.id === postId);
-      if (!post) return;
-      const card = b.closest('[data-post-card]') || root;
-      const box = $(`[data-post-translated="${CSS.escape(postId)}"]`, card);
-      if (!box) return;
-      if (!box.hidden) {
-        box.hidden = true;
-        b.textContent = '🌐 Google 번역';
-        return;
-      }
-      b.disabled = true;
-      b.textContent = '🌐 번역 중...';
-      try {
-        const targetLang = (post.lang || 'ko') === portalLang ? (portalLang === 'ko' ? 'en' : 'ko') : portalLang;
-        const [tTitle, tBody] = await Promise.all([
-          translateTextViaGoogle(post.title, targetLang),
-          translateTextViaGoogle(post.body, targetLang)
-        ]);
-        box.innerHTML = `<div class="translated-head">🌐 Google 번역 (${esc(getLangBadgeCode(targetLang))})</div><strong>${esc(tTitle)}</strong><p>${renderBodyWithSafeHelpLinks(tBody)}</p>`;
-        box.hidden = false;
-        b.textContent = '🌐 원문 접기';
-        const commentNodes = $$('[data-comment-body]', $('#recipe-detail'));
-        await Promise.all(commentNodes.map(async (cNode) => {
-          const orig = cNode.dataset.origText || cNode.textContent;
-          cNode.dataset.origText = orig;
-          const tr = await translateTextViaGoogle(orig, targetLang);
-          cNode.innerHTML = `${renderBodyWithSafeHelpLinks(orig)}<div class="translated-comment">🌐 ${esc(tr)}</div>`;
-        }));
-      } catch (err) {
-        toast(err?.message || '번역 실패');
-        b.textContent = '🌐 Google 번역';
-      } finally {
-        b.disabled = false;
-      }
-    });
   }
   function bindRemoteActions(root){
     $$('[data-vote-target]',root).forEach(b=>b.onclick=async()=>{b.disabled=true;try{const target=b.dataset.voteTarget;let body;if(target.startsWith('s:')){const key=target.slice(2);const sugObj=mergedSuggestions().find(s=>s.suggestion_key===key);body=sugObj&&!sugObj.fromCommunity?{suggestion_key:key,items:sugObj.items,lang:sugObj.lang||portalLang,type:b.dataset.voteType}:{suggestion_key:key,type:b.dataset.voteType};}else{body={post_id:target.slice(2),type:b.dataset.voteType};}await api('/votes',{method:'PUT',body:JSON.stringify(body)});await syncCommunity();$$('[data-vote-target]',document).filter(el=>el.dataset.voteTarget===target).forEach(el=>{const s=target.startsWith('s:')?mergedSuggestions().find(s=>s.suggestion_key===target.slice(2)):posts.find(p=>p.id===target.slice(2));if(s){el.setAttribute('aria-pressed',String(s.myVote===el.dataset.voteType));$('span',el).textContent=el.dataset.voteType==='UP'?s.upvotes:s.downvotes;}});}catch(e){toast(e.message);}finally{b.disabled=false;}});
@@ -2302,114 +2250,5 @@
       }
     };
   }
-  // Site-wide Google Translate integration
-  (() => {
-    const gtBtn = $('#gtranslate-toggle-btn');
-    const gtPop = $('#gtranslate-popover');
-    const gtReset = $('#gtranslate-reset-btn');
-    if (!gtBtn || !gtPop) return;
-    let gtScriptLoaded = false;
-    let activeGtLang = '';
-    const originalTexts = new Map();
-
-    function ensureGtWidget() {
-      if (gtScriptLoaded) return;
-      gtScriptLoaded = true;
-      window.googleTranslateElementInit = function () {
-        try {
-          if (window.google?.translate?.TranslateElement) {
-            new window.google.translate.TranslateElement({
-              pageLanguage: 'auto',
-              includedLanguages: 'ko,en,ja,zh-CN,zh-TW,es,fr,de,vi,th',
-              autoDisplay: false
-            }, 'google_translate_element');
-          }
-        } catch (_) {}
-      };
-      const s = document.createElement('script');
-      s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-      s.async = true;
-      document.head.appendChild(s);
-    }
-
-    async function translateVisibleDom(targetLang) {
-      const selectors = '.board-title, .tip-card h3, .tip-card p, .comments-list p, .neo-panel p, .admin-row-main strong, .admin-row-main p';
-      const nodes = $$(selectors);
-      await Promise.all(nodes.map(async (el) => {
-        for (const child of el.childNodes) {
-          if (child.nodeType === Node.TEXT_NODE && child.nodeValue.trim().length > 1) {
-            if (!originalTexts.has(child)) originalTexts.set(child, child.nodeValue);
-            const orig = originalTexts.get(child);
-            try {
-              const tr = await translateTextViaGoogle(orig, targetLang);
-              if (tr) child.nodeValue = ` ${tr} `;
-            } catch (_) {}
-          }
-        }
-      }));
-    }
-
-    function restoreOriginalDom() {
-      for (const [node, orig] of originalTexts.entries()) {
-        try { node.nodeValue = orig; } catch (_) {}
-      }
-      originalTexts.clear();
-    }
-
-    gtBtn.onclick = (e) => {
-      e.stopPropagation();
-      const willOpen = gtPop.hidden;
-      gtPop.hidden = !willOpen;
-      gtBtn.setAttribute('aria-expanded', String(willOpen));
-      if (willOpen) ensureGtWidget();
-    };
-    document.addEventListener('click', (e) => {
-      if (!gtPop.hidden && !e.target.closest('#gtranslate-wrap')) {
-        gtPop.hidden = true;
-        gtBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
-    $$('[data-gt-lang]', gtPop).forEach((b) => {
-      b.onclick = async () => {
-        const lang = b.dataset.gtLang;
-        activeGtLang = lang;
-        $$('[data-gt-lang]', gtPop).forEach(x => x.classList.toggle('is-active', x === b));
-        const labelEl = $('#gtranslate-btn-label');
-        if (labelEl) labelEl.textContent = lang.toUpperCase();
-        // 1) Switch built-in UI if one of our 5 supported languages
-        if (SUPPORTED_LANGS.includes(lang) && portalLang !== lang) {
-          portalLang = lang;
-          if (langSelect) langSelect.value = lang;
-          try { localStorage.setItem('ksool_lang_v1', lang); } catch (_) {}
-          render();
-        }
-        // 2) Drive official Google Translate widget combo if ready
-        const combo = $('.goog-te-combo');
-        if (combo) {
-          combo.value = lang;
-          combo.dispatchEvent(new Event('change'));
-        }
-        // 3) Also translate dynamic user posts/comments directly via Google Translate endpoint
-        toast(`🌐 Google 번역 적용 중 (${lang.toUpperCase()})...`);
-        await translateVisibleDom(lang);
-        gtPop.hidden = true;
-        gtBtn.setAttribute('aria-expanded', 'false');
-      };
-    });
-    if (gtReset) {
-      gtReset.onclick = () => {
-        activeGtLang = '';
-        $$('[data-gt-lang]', gtPop).forEach(x => x.classList.remove('is-active'));
-        const labelEl = $('#gtranslate-btn-label');
-        if (labelEl) labelEl.textContent = '번역';
-        restoreOriginalDom();
-        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        render();
-        gtPop.hidden = true;
-        gtBtn.setAttribute('aria-expanded', 'false');
-        toast('원문으로 복원되었습니다.');
-      };
-    }
-  })();
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&['tips','suggestions'].includes(activeTab)&&!$('dialog[open]'))syncCommunity();});
 })();
