@@ -929,6 +929,28 @@
   }
   const UPDATE_LOGS = [
     {
+      version: 'v2.6',
+      date: '2026-11-25',
+      title: {
+        ko: '후원하기(제휴 상점) 기능 추가 안내',
+        en: 'New Support & Affiliate Store Feature',
+        ja: 'サポート（アフィリエイトショップ）機能追加のお知らせ',
+        'zh-CN': '新增赞助支持（联盟商店）功能公告',
+        'zh-TW': '新增贊助支持（聯盟商店）功能公告',
+        fr: 'Nouvelle fonctionnalité de soutien et boutique partenaire',
+        es: 'Nueva función de apoyo y tienda de afiliados'
+      },
+      body: {
+        ko: '• 후원하기 & 추천 홈술 아이템 기능 추가\n  - 게임과 공식 사이트에서 국가·언어별 추천 홈술 아이템 및 제휴 스토어를 통해 K-술 개발을 응원하고 후원하실 수 있습니다.\n  - 각 제휴 링크는 해당 스토어의 공식 제휴 안내 문구와 함께 제공되며, 더 나은 업데이트와 서비스 운영에 소중히 사용됩니다.',
+        en: '• Support K-Sool & Recommended Home-Drinking Items\n  - You can now support K-Sool development by visiting curated regional stores and recommended home-drinking items directly from the game and official site.\n  - Each link is displayed with its official affiliate disclosure and helps keep updates and servers running.',
+        ja: '• サポート＆おすすめ家飲みアイテム機能を追加\n  - ゲームおよび公式サイトから、地域・言語別のおすすめ家飲みアイテムや提携ショップを通じてK-Soolの開発を応援・サポートできるようになりました。\n  - 各リンクには公式のアフィリエイト表記を併記しており、今後のアップデートや運営に大切に活用いたします。',
+        'zh-CN': '• 新增赞助支持与推荐居家微醺好物功能\n  - 现在可以在游戏和官方网站中，通过按地区与语言精选的推荐好物及合作商店来支持 K-Sool 的开发。\n  - 每个链接均附带官方联盟披露说明，您的支持将用于持续优化更新与服务运营。',
+        'zh-TW': '• 新增贊助支持與推薦居家微醺好物功能\n  - 現在可以在遊戲與官方網站中，透過依地區與語言精選的推薦好物及合作商店來支持 K-Sool 的開發。\n  - 每個連結均附有官方聯盟揭露說明，您的支持將用於持續優化更新與服務營運。',
+        fr: '• Soutenir K-Sool & sélection d\'articles maison\n  - Vous pouvez désormais soutenir le développement de K-Sool via une sélection d\'articles et de boutiques partenaires adaptées à votre langue et région, depuis le jeu et le site officiel.\n  - Chaque lien affiche la mention d\'affiliation officielle correspondante et contribue aux futures mises à jour.',
+        es: '• Apoya a K-Sool y descubre artículos recomendados\n  - Ya puedes apoyar el desarrollo de K-Sool desde el juego y el sitio oficial explorando tiendas colaboradoras y artículos recomendados según tu idioma y región.\n  - Cada enlace incluye su aviso oficial de afiliación y ayuda a mantener las actualizaciones y el servicio.'
+      }
+    },
+    {
       version: 'v2.5',
       date: '2026-11-21',
       title: {
