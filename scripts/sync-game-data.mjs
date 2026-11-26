@@ -22,6 +22,10 @@ for (const name of ['recipes', 'recipe_ingredients', 'ingredients_base', 'ingred
     (await readFile(resolve(source, 'data', `${name}.json`), 'utf8')).replace(/^\uFEFF/, '')
   );
 }
+const stagesPath = resolve(source, 'data', 'stages.json');
+if (existsSync(stagesPath)) {
+  bundle.stages = JSON.parse((await readFile(stagesPath, 'utf8')).replace(/^\uFEFF/, ''));
+}
 
 const context = { window: { KSool: {} } };
 vm.createContext(context);
@@ -33,6 +37,8 @@ const book = new context.window.KSool.RecipeBook();
 book.load(bundle);
 bundle.recipes = book.getAllRecipes();
 bundle.free_starter_ids = book.progression?.freeStarterLeafIds || [202, 206, 205, 701, 301];
+bundle.stages = book.progression?.getAllSteps?.() || [];
+bundle.tycoon_stages = book.progression?.getTycoonStages?.() || [];
 
 await writeFile(resolve(target, 'assets/game-data.js'), `window.GAME_DATA = ${JSON.stringify(bundle)};`, 'utf8');
 await writeFile(

@@ -115,7 +115,8 @@
       savedToast:'저장 완료', unsavedToast:'저장 취소', copiedToast:'링크 복사 완료',
       cats:{ '전체':'전체', '기초 재료':'기초 재료', '과일·편의점':'과일·편의점', '소맥·폭탄주':'소맥·폭탄주', '막걸리':'막걸리', '특산 명주':'특산 명주', '플레이 팁':'플레이 팁', '새 조합 제안':'새 조합 제안', '기초합성':'기초합성' },
       stagesTycoon:{ 1:'길거리 무알콜 노점', 2:'이모네 포장마차', 3:'골목 전통 주점', 4:'크래프트 비어 펍', 5:'스카이라인 라운지 바', 6:'사이버펑크 미래도시 바' },
-      stagesQuiz:{ 1:'기초 조합 (No.01~18)', 2:'소주·맥주 조합 (No.19~37)', 3:'전통주 조합 (No.38~55)', 4:'비율 조합 (No.56~67)', 5:'황금비율 조합 (No.68~77)', 6:'브랜드·특산 조합 (No.78~90)' }
+      stagesQuiz:{ 1:'기초 조합 (No.01~18)', 2:'소주·맥주 조합 (No.19~37)', 3:'전통주 조합 (No.38~55)', 4:'비율 조합 (No.56~67)', 5:'황금비율 조합 (No.68~77)', 6:'브랜드·특산 조합 (No.78~90)' },
+      affiliateTitle:'🛍️ 추천 홈술 아이템 · 제휴 후원', affiliateVisit:'보러가기 ↗'
     },
     en: {
       brandTitle:'Mix Club', gameBtn:'K-Sool', googleSync:'G Google Sync', loginBtn:'👤 Sign in', loginModalTitle:'Sign In & Sync', loginModalDesc:'Sign in with your game account to sync unlocked recipes and hint progress.', googleBtn:'Continue with Google', moreProvidersNote:'Additional sign-in providers will appear here when added.', logout:'Log out', loggedOut:'Signed out.', resynced:'Synced progress with Google.',
@@ -146,7 +147,8 @@
       savedToast:'Saved', unsavedToast:'Removed', copiedToast:'Link copied',
       cats:{ '전체':'All', '기초 재료':'Base', '과일·편의점':'Fruit & Store', '소맥·폭탄주':'Somaek & Bomb', '막걸리':'Makgeolli', '특산 명주':'Specialty', '플레이 팁':'Play Tips', '새 조합 제안':'New Combos', '기초합성':'Base Mix' },
       stagesTycoon:{ 1:'Street Mocktail Stall', 2:'Auntie Pojangmacha', 3:'Alley Traditional Tavern', 4:'Craft Beer Pub', 5:'Skyline Lounge Bar', 6:'Cyberpunk Future Bar' },
-      stagesQuiz:{ 1:'Base Mixes (No.01~18)', 2:'Soju & Beer (No.19~37)', 3:'Traditional Brews (No.38~55)', 4:'Ratio Mixes (No.56~67)', 5:'Golden Ratios (No.68~77)', 6:'Brands & Specialties (No.78~90)' }
+      stagesQuiz:{ 1:'Base Mixes (No.01~18)', 2:'Soju & Beer (No.19~37)', 3:'Traditional Brews (No.38~55)', 4:'Ratio Mixes (No.56~67)', 5:'Golden Ratios (No.68~77)', 6:'Brands & Specialties (No.78~90)' },
+      affiliateTitle:'🛍️ Recommended Home-Bar Items & Partners', affiliateVisit:'Visit ↗'
     },
     ja: {
       brandTitle:'調合所', gameBtn:'K-酒', googleSync:'G Google連携', loginBtn:'👤 ログイン', loginModalTitle:'ログイン・進捗連携', loginModalDesc:'ゲームと同じアカウントでログインすると図鑑とヒントの進捗が自動同期されます。', googleBtn:'Googleで続ける', moreProvidersNote:'今後ほかのログイン方法が追加されるとここに表示されます。', logout:'ログアウト', loggedOut:'ログアウトしました。', resynced:'Googleアカウントと進行度を同期しました。',
@@ -177,7 +179,8 @@
       savedToast:'保存しました', unsavedToast:'保存を解除しました', copiedToast:'リンクをコピーしました',
       cats:{ '전체':'すべて', '기초 재료':'基礎材料', '과일·편의점':'フルーツ・コンビニ', '소맥·폭탄주':'爆弾酒', '막걸리':'マッコリ', '특산 명주':'特産銘酒', '플레이 팁':'攻略ヒント', '새 조합 제안':'新調合提案', '기초합성':'基礎調合' },
       stagesTycoon:{ 1:'路上のノンアル屋台', 2:'おばちゃんの屋台', 3:'路地裏の伝統居酒屋', 4:'クラフトビアパブ', 5:'スカイラインラウンジバー', 6:'サイバーパンク未来バー' },
-      stagesQuiz:{ 1:'基礎調合 (No.01~18)', 2:'焼酎・ビール (No.19~37)', 3:'伝統酒 (No.38~55)', 4:'比率調合 (No.56~67)', 5:'黄金比率 (No.68~77)', 6:'ブランド・特産 (No.78~90)' }
+      stagesQuiz:{ 1:'基礎調合 (No.01~18)', 2:'焼酎・ビール (No.19~37)', 3:'伝統酒 (No.38~55)', 4:'比率調合 (No.56~67)', 5:'黄金比率 (No.68~77)', 6:'ブランド・特産 (No.78~90)' },
+      affiliateTitle:'🛍️ おすすめ家飲みアイテム・提携ショップ', affiliateVisit:'ショップを見る ↗'
     },
     'zh-CN': {
       brandTitle:'调酒所', gameBtn:'K-酒', googleSync:'G 绑定Google', loginBtn:'👤 登录', loginModalTitle:'登录与进度同步', loginModalDesc:'使用与游戏相同的账号登录，即可自动同步图鉴与提示进度。', googleBtn:'使用 Google 继续', moreProvidersNote:'后续新增的其他登录方式也将在此展示。', logout:'退出', loggedOut:'已退出登录。', resynced:'已重新同步 Google 进度。',
@@ -208,7 +211,8 @@
       savedToast:'已收藏', unsavedToast:'已取消收藏', copiedToast:'已复制链接',
       cats:{ '전체':'全部', '기초 재료':'基础材料', '과일·편의점':'水果·便利店', '소맥·폭탄주':'烧啤·炸弹酒', '막걸리':'马格利', '특산 명주':'特产名酒', '플레이 팁':'玩法技巧', '새 조합 제안':'新组合推荐', '기초합성':'基础合成' },
       stagesTycoon:{ 1:'街头无醇小摊', 2:'姨母布帐马车', 3:'胡同传统酒馆', 4:'精酿啤酒屋', 5:'天际线酒廊', 6:'赛博朋克未来酒吧' },
-      stagesQuiz:{ 1:'基础组合 (No.01~18)', 2:'烧酒·啤酒 (No.19~37)', 3:'传统酒 (No.38~55)', 4:'比例调酒 (No.56~67)', 5:'黄金比例 (No.68~77)', 6:'品牌·特产 (No.78~90)' }
+      stagesQuiz:{ 1:'基础组合 (No.01~18)', 2:'烧酒·啤酒 (No.19~37)', 3:'传统酒 (No.38~55)', 4:'比例调酒 (No.56~67)', 5:'黄金比例 (No.68~77)', 6:'品牌·特产 (No.78~90)' },
+      affiliateTitle:'🛍️ 推荐居家微醺好物 · 合作赞助', affiliateVisit:'去看看 ↗'
     },
     'zh-TW': {
       brandTitle:'調酒所', gameBtn:'K-酒', googleSync:'G 綁定Google', loginBtn:'👤 登入', loginModalTitle:'登入與進度同步', loginModalDesc:'使用與遊戲相同的帳號登入，即可自動同步圖鑑與提示進度。', googleBtn:'使用 Google 繼續', moreProvidersNote:'後續新增的其他登入方式也將在此顯示。', logout:'登出', loggedOut:'已登出。', resynced:'已重新同步 Google 進度。',
@@ -240,7 +244,7 @@
       cats:{ '전체':'全部', '기초 재료':'基礎材料', '과일·편의점':'水果·便利店', '소맥·폭탄주':'燒啤·炸彈酒', '막걸리':'馬格利', '특산 명주':'特產名酒', '玩法技巧':'玩法技巧', '플레이 팁':'玩法技巧', '새 조합 제안':'新組合推薦', '기초합성':'基礎合成' },
       stagesTycoon:{ 1:'街頭無醇小攤', 2:'姨母布帳馬車', 3:'巷弄傳統酒館', 4:'精釀啤酒屋', 5:'天際線酒廊', 6:'賽博龐克未來酒吧' },
       stagesQuiz:{ 1:'基礎組合 (No.01~18)', 2:'燒酒·啤酒 (No.19~37)', 3:'傳統酒 (No.38~55)', 4:'比例調酒 (No.56~67)', 5:'黃金比例 (No.68~77)', 6:'品牌·特產 (No.78~90)' },
-      affiliateTitle:'🛍️ 추천 홈술 아이템 · 제휴 후원', affiliateVisit:'보러가기 ↗'
+      affiliateTitle:'🛍️ 推薦居家微醺好物 · 合作贊助', affiliateVisit:'去看看 ↗'
     },
     fr: {
       brandTitle:'Mix Club', gameBtn:'K-Sool', googleSync:'G Synchro Google', loginBtn:'👤 Connexion', loginModalTitle:'Connexion & Synchro', loginModalDesc:'Connectez-vous avec votre compte de jeu pour synchroniser vos recettes et indices.', googleBtn:'Continuer avec Google', moreProvidersNote:'Les autres modes de connexion apparaîtront ici.', logout:'Déconnexion', loggedOut:'Déconnecté.', resynced:'Progression synchronisée avec Google.',
@@ -309,11 +313,16 @@
   };
   const pt = k => (PORTAL_UI[portalLang] && PORTAL_UI[portalLang][k]) || PORTAL_UI.en[k] || k;
   const catLabel = c => (PORTAL_UI[portalLang]?.cats?.[c]) || (PORTAL_UI.en?.cats?.[c]) || c;
+  const isDefaultKSoolStages = Array.isArray(data.stages) && data.stages.some(s => s.title === '길거리 무알콜 노점');
   const stageTitle = (step) => {
     const isTycoon = syncedProgress.mode === 'tycoon';
     const dict = PORTAL_UI[portalLang] || PORTAL_UI.en;
     const map = isTycoon ? dict.stagesTycoon : dict.stagesQuiz;
-    const raw = (map && map[step]) || `Stage ${step}`;
+    const dataStage = Array.isArray(data.stages) ? data.stages.find(s => Number(s.step_id) === Number(step)) : null;
+    const dataTycoon = Array.isArray(data.tycoon_stages) ? data.tycoon_stages.find(s => Number(s.stageNum) === Number(step)) : null;
+    const raw = (isDefaultKSoolStages || !dataStage)
+      ? ((map && map[step]) || (isTycoon ? dataTycoon?.name : dataStage?.title) || `Stage ${step}`)
+      : ((isTycoon ? (dataTycoon?.titles?.[portalLang] || dataTycoon?.name) : (dataStage?.titles?.[portalLang] || dataStage?.title)) || `Stage ${step}`);
     if (isTycoon) return raw;
     const base = raw.replace(/\s*\(No\.[^)]+\)/, '');
     const nums = data.recipes.filter(r => (Number(r.step_id) || 1) === step).map(r => Number(r.recipe_number)).filter(n => n > 0);

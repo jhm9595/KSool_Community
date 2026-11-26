@@ -1,17 +1,17 @@
 /**
  * PixelIconRegistry - K-SOOL Custom Handcrafted Pixel & HD Art System
  * 
- * Supports 3 switchable visualization styles:
- * 1. 'hd'    : 💎 고급형태 (32x32 High-Detail Custom Vector/Pixel Art with Depth & Shading)
- * 2. 'dot'   : 👾 도트형태 (16x16 Retro Classic Pixel Art with Crisp Edges)
- * 3. 'emoji' : ✨ 기본이모지 (Universal Unicode Emojis)
+ * [역할 분리 안내]
+ * 1. 'hd'    (SPRITE_DATA_HD, 32x32)  : 일반 게임 UI(연구실·상점·도감·타이쿤·SOS) 기본 아이콘 (currentTheme='hd' 고정)
+ * 2. 'dot'   (SPRITE_DATA_DOT, 16x16) : 힌트 미니게임 전용 픽셀 데이터(getDotSprite() -> 네모로직·벽돌깨기·땅따먹기) 및 HD 미보유 폴백
+ * 3. 'emoji' (EMOJI_MAP)              : 유니코드 이모지 폴백
  * 
- * Preserves full backwards compatibility and real-time live re-rendering across all views.
+ * 주의: scripts/build_pixel_registry.js 는 SPRITE_DATA_HD 를 보존하고 SPRITE_DATA_DOT 만 병합합니다.
  */
 (function() {
   window.KSool = window.KSool || {};
 
-  // 1. [👾 16x16 레트로 클래식 도트 스프라이트 (117종 전 아이템 순수 도트 통일)]
+  // 1. [👾 힌트 미니게임 전용 16x16 도트 스프라이트 (getDotSprite 용도 + HD 미보유 폴백)]
   const SPRITE_DATA_DOT = {
   "soju": {
     "key": "soju",
@@ -30,7 +30,7 @@
   },
   "maesilju": {
     "key": "maesilju",
-    "name": "매화수",
+    "name": "매실주",
     "innerSvg": "<rect x=\"6\" y=\"2\" width=\"4\" height=\"1\" fill=\"#f59e0b\"/><rect x=\"7\" y=\"3\" width=\"1\" height=\"3\" fill=\"#ffffff\"/><rect x=\"8\" y=\"3\" width=\"2\" height=\"3\" fill=\"#fef08a\"/><rect x=\"5\" y=\"6\" width=\"2\" height=\"1\" fill=\"#ffffff\"/><rect x=\"7\" y=\"6\" width=\"4\" height=\"1\" fill=\"#fde047\"/><rect x=\"4\" y=\"7\" width=\"1\" height=\"7\" fill=\"#cbd5e1\"/><rect x=\"5\" y=\"7\" width=\"1\" height=\"7\" fill=\"#ffffff\"/><rect x=\"6\" y=\"7\" width=\"4\" height=\"7\" fill=\"#fde047\"/><rect x=\"10\" y=\"7\" width=\"1\" height=\"7\" fill=\"#ca8a04\"/><rect x=\"5\" y=\"8\" width=\"5\" height=\"4\" fill=\"#fffbeb\"/><rect x=\"7\" y=\"9\" width=\"1\" height=\"2\" fill=\"#78350f\"/><rect x=\"6\" y=\"9\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"8\" y=\"9\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"7\" y=\"8\" width=\"1\" height=\"1\" fill=\"#ec4899\"/><rect x=\"7\" y=\"10\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"7\" y=\"9\" width=\"1\" height=\"1\" fill=\"#fde047\"/><rect x=\"5\" y=\"14\" width=\"6\" height=\"1\" fill=\"#a16207\"/>"
   },
   "bokbunjaju": {
@@ -310,7 +310,7 @@
   },
   "rec_kahlua_milk": {
     "key": "rec_kahlua_milk",
-    "name": "조선 깔루아 밀크",
+    "name": "조선 까망 밀크",
     "innerSvg": "<rect x=\"4\" y=\"4\" width=\"1\" height=\"11\" fill=\"#e2e8f0\"/><rect x=\"11\" y=\"4\" width=\"1\" height=\"11\" fill=\"#cbd5e1\"/><rect x=\"5\" y=\"14\" width=\"6\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"5\" y=\"4\" width=\"6\" height=\"5\" fill=\"#ffffff\"/><rect x=\"5\" y=\"9\" width=\"6\" height=\"5\" fill=\"#451a03\"/><rect x=\"9\" y=\"1\" width=\"1\" height=\"6\" fill=\"#dc2626\"/><rect x=\"9\" y=\"0\" width=\"2\" height=\"2\" fill=\"#ffffff\"/>"
   },
   "rec_choco_soju": {
@@ -642,139 +642,82 @@
     "key": "pomegranate_concentrate",
     "name": "석류농축액",
     "innerSvg": "<rect x=\"7\" y=\"1\" width=\"2\" height=\"3\" fill=\"#1e293b\"/><rect x=\"6\" y=\"3\" width=\"4\" height=\"1\" fill=\"#475569\"/><rect x=\"4\" y=\"4\" width=\"8\" height=\"11\" fill=\"#881337\"/><rect x=\"4\" y=\"4\" width=\"1\" height=\"11\" fill=\"#be123c\"/><rect x=\"6\" y=\"7\" width=\"4\" height=\"4\" fill=\"#f43f5e\"/><rect x=\"5\" y=\"15\" width=\"6\" height=\"1\" fill=\"#4c0519\"/>"
+  },
+  "roasted_coffee": {
+    "key": "roasted_coffee",
+    "name": "원두",
+    "innerSvg": "<rect x=\"4\" y=\"1\" width=\"4\" height=\"1\" fill=\"#78350f\"/><rect x=\"2\" y=\"2\" width=\"2\" height=\"1\" fill=\"#78350f\"/><rect x=\"4\" y=\"2\" width=\"1\" height=\"1\" fill=\"#b45309\"/><rect x=\"5\" y=\"2\" width=\"2\" height=\"1\" fill=\"#78350f\"/><rect x=\"7\" y=\"2\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"8\" y=\"2\" width=\"2\" height=\"1\" fill=\"#78350f\"/><rect x=\"1\" y=\"3\" width=\"2\" height=\"1\" fill=\"#78350f\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#b45309\"/><rect x=\"4\" y=\"3\" width=\"3\" height=\"1\" fill=\"#451a03\"/><rect x=\"7\" y=\"3\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"8\" y=\"3\" width=\"3\" height=\"1\" fill=\"#78350f\"/><rect x=\"1\" y=\"4\" width=\"3\" height=\"1\" fill=\"#78350f\"/><rect x=\"4\" y=\"4\" width=\"3\" height=\"1\" fill=\"#451a03\"/><rect x=\"7\" y=\"4\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"8\" y=\"4\" width=\"3\" height=\"1\" fill=\"#78350f\"/><rect x=\"1\" y=\"5\" width=\"3\" height=\"1\" fill=\"#78350f\"/><rect x=\"4\" y=\"5\" width=\"2\" height=\"1\" fill=\"#451a03\"/><rect x=\"6\" y=\"5\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"7\" y=\"5\" width=\"4\" height=\"1\" fill=\"#451a03\"/><rect x=\"1\" y=\"6\" width=\"2\" height=\"1\" fill=\"#78350f\"/><rect x=\"3\" y=\"6\" width=\"2\" height=\"1\" fill=\"#451a03\"/><rect x=\"5\" y=\"6\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"6\" y=\"6\" width=\"5\" height=\"1\" fill=\"#451a03\"/><rect x=\"1\" y=\"7\" width=\"2\" height=\"1\" fill=\"#78350f\"/><rect x=\"3\" y=\"7\" width=\"2\" height=\"1\" fill=\"#451a03\"/><rect x=\"5\" y=\"7\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"6\" y=\"7\" width=\"5\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#78350f\"/><rect x=\"3\" y=\"8\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"4\" y=\"8\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"5\" y=\"8\" width=\"6\" height=\"1\" fill=\"#451a03\"/><rect x=\"3\" y=\"9\" width=\"7\" height=\"1\" fill=\"#451a03\"/><rect x=\"4\" y=\"10\" width=\"5\" height=\"1\" fill=\"#1c1917\"/>"
+  },
+  "powerful_blue_aid": {
+    "key": "powerful_blue_aid",
+    "name": "파워풀에이드",
+    "innerSvg": "<rect x=\"4\" y=\"0\" width=\"4\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"4\" y=\"1\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"7\" y=\"1\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"3\" y=\"2\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"4\" y=\"2\" width=\"4\" height=\"1\" fill=\"#60a5fa\"/><rect x=\"8\" y=\"2\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#60a5fa\"/><rect x=\"4\" y=\"3\" width=\"5\" height=\"1\" fill=\"#2563eb\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#1e3a8a\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"3\" y=\"4\" width=\"1\" height=\"1\" fill=\"#60a5fa\"/><rect x=\"4\" y=\"4\" width=\"5\" height=\"1\" fill=\"#2563eb\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#1e3a8a\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"3\" y=\"5\" width=\"2\" height=\"1\" fill=\"#ffffff\"/><rect x=\"5\" y=\"5\" width=\"2\" height=\"1\" fill=\"#2563eb\"/><rect x=\"7\" y=\"5\" width=\"2\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#1e3a8a\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"3\" y=\"6\" width=\"1\" height=\"1\" fill=\"#60a5fa\"/><rect x=\"4\" y=\"6\" width=\"5\" height=\"1\" fill=\"#2563eb\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#1e3a8a\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"3\" y=\"7\" width=\"1\" height=\"1\" fill=\"#60a5fa\"/><rect x=\"4\" y=\"7\" width=\"5\" height=\"1\" fill=\"#2563eb\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#1e3a8a\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"3\" y=\"8\" width=\"1\" height=\"1\" fill=\"#60a5fa\"/><rect x=\"4\" y=\"8\" width=\"5\" height=\"1\" fill=\"#2563eb\"/><rect x=\"9\" y=\"8\" width=\"1\" height=\"1\" fill=\"#1e3a8a\"/><rect x=\"2\" y=\"9\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"3\" y=\"9\" width=\"5\" height=\"1\" fill=\"#2563eb\"/><rect x=\"8\" y=\"9\" width=\"2\" height=\"1\" fill=\"#1e3a8a\"/><rect x=\"3\" y=\"10\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"4\" y=\"10\" width=\"4\" height=\"1\" fill=\"#1e3a8a\"/><rect x=\"8\" y=\"10\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"4\" y=\"11\" width=\"4\" height=\"1\" fill=\"#1e3a8a\"/>"
+  },
+  "blue_pouch_lemonade": {
+    "key": "blue_pouch_lemonade",
+    "name": "블루레모네이드",
+    "innerSvg": "<rect x=\"4\" y=\"0\" width=\"4\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"1\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"5\" y=\"1\" width=\"2\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"8\" y=\"1\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"2\" y=\"2\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"2\" width=\"6\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"9\" y=\"2\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#7dd3fc\"/><rect x=\"4\" y=\"3\" width=\"5\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"4\" width=\"1\" height=\"1\" fill=\"#7dd3fc\"/><rect x=\"4\" y=\"4\" width=\"2\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"6\" y=\"4\" width=\"2\" height=\"1\" fill=\"#facc15\"/><rect x=\"8\" y=\"4\" width=\"1\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"5\" width=\"1\" height=\"1\" fill=\"#7dd3fc\"/><rect x=\"4\" y=\"5\" width=\"1\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"5\" y=\"5\" width=\"1\" height=\"1\" fill=\"#facc15\"/><rect x=\"6\" y=\"5\" width=\"1\" height=\"1\" fill=\"#7dd3fc\"/><rect x=\"7\" y=\"5\" width=\"1\" height=\"1\" fill=\"#facc15\"/><rect x=\"8\" y=\"5\" width=\"1\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"6\" width=\"1\" height=\"1\" fill=\"#7dd3fc\"/><rect x=\"4\" y=\"6\" width=\"2\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"6\" y=\"6\" width=\"2\" height=\"1\" fill=\"#facc15\"/><rect x=\"8\" y=\"6\" width=\"1\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"7\" width=\"1\" height=\"1\" fill=\"#7dd3fc\"/><rect x=\"4\" y=\"7\" width=\"5\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"8\" width=\"6\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"9\" y=\"8\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"2\" y=\"9\" width=\"1\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"3\" y=\"9\" width=\"4\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"7\" y=\"9\" width=\"3\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"10\" width=\"4\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"7\" y=\"10\" width=\"2\" height=\"1\" fill=\"#0369a1\"/><rect x=\"4\" y=\"11\" width=\"4\" height=\"1\" fill=\"#0369a1\"/>"
+  },
+  "espresso_shot": {
+    "key": "espresso_shot",
+    "name": "에스프레소",
+    "innerSvg": "<rect x=\"4\" y=\"1\" width=\"1\" height=\"1\" fill=\"#d97706\"/><rect x=\"7\" y=\"1\" width=\"1\" height=\"1\" fill=\"#d97706\"/><rect x=\"2\" y=\"3\" width=\"8\" height=\"1\" fill=\"#ffffff\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"3\" y=\"4\" width=\"3\" height=\"1\" fill=\"#b45309\"/><rect x=\"6\" y=\"4\" width=\"1\" height=\"1\" fill=\"#d97706\"/><rect x=\"7\" y=\"4\" width=\"2\" height=\"1\" fill=\"#b45309\"/><rect x=\"9\" y=\"4\" width=\"2\" height=\"1\" fill=\"#ffffff\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"3\" y=\"5\" width=\"6\" height=\"1\" fill=\"#451a03\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"11\" y=\"5\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"3\" y=\"6\" width=\"6\" height=\"1\" fill=\"#451a03\"/><rect x=\"9\" y=\"6\" width=\"2\" height=\"1\" fill=\"#ffffff\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"3\" y=\"7\" width=\"6\" height=\"1\" fill=\"#451a03\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"8\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"8\" width=\"4\" height=\"1\" fill=\"#451a03\"/><rect x=\"8\" y=\"8\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"4\" y=\"9\" width=\"4\" height=\"1\" fill=\"#ffffff\"/><rect x=\"2\" y=\"10\" width=\"8\" height=\"1\" fill=\"#cbd5e1\"/>"
+  },
+  "rec_coffee_milk": {
+    "key": "rec_coffee_milk",
+    "name": "조선 까망 밀크",
+    "innerSvg": "<rect x=\"3\" y=\"0\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"2\" y=\"1\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"1\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"8\" y=\"1\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"1\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"2\" y=\"2\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"2\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"2\" width=\"4\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"8\" y=\"2\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"2\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"3\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"10\" y=\"3\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"4\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"10\" y=\"4\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"5\" width=\"2\" height=\"1\" fill=\"#ffffff\"/><rect x=\"5\" y=\"5\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"6\" y=\"5\" width=\"3\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"10\" y=\"5\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"6\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"6\" width=\"4\" height=\"1\" fill=\"#451a03\"/><rect x=\"8\" y=\"6\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"10\" y=\"6\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"7\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"7\" width=\"4\" height=\"1\" fill=\"#451a03\"/><rect x=\"8\" y=\"7\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"10\" y=\"7\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"8\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"8\" width=\"4\" height=\"1\" fill=\"#451a03\"/><rect x=\"8\" y=\"8\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"8\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"10\" y=\"8\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"2\" y=\"9\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"9\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"9\" width=\"4\" height=\"1\" fill=\"#451a03\"/><rect x=\"8\" y=\"9\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"9\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"10\" y=\"9\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"3\" y=\"10\" width=\"6\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"9\" y=\"10\" width=\"1\" height=\"1\" fill=\"#1c1917\"/><rect x=\"4\" y=\"11\" width=\"4\" height=\"1\" fill=\"#1c1917\"/>"
+  },
+  "rec_cheorwon_mak": {
+    "key": "rec_cheorwon_mak",
+    "name": "철원 현무암 오대 막걸리",
+    "innerSvg": "<rect x=\"4\" y=\"0\" width=\"4\" height=\"1\" fill=\"#334155\"/><rect x=\"4\" y=\"1\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"7\" y=\"1\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"3\" y=\"2\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"4\" y=\"2\" width=\"4\" height=\"1\" fill=\"#f8fafc\"/><rect x=\"8\" y=\"2\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#f8fafc\"/><rect x=\"4\" y=\"3\" width=\"1\" height=\"1\" fill=\"#e2e8f0\"/><rect x=\"5\" y=\"3\" width=\"3\" height=\"1\" fill=\"#f8fafc\"/><rect x=\"8\" y=\"3\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#0f172a\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"3\" y=\"4\" width=\"5\" height=\"1\" fill=\"#f8fafc\"/><rect x=\"8\" y=\"4\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#0f172a\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"3\" y=\"5\" width=\"5\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"8\" y=\"5\" width=\"2\" height=\"1\" fill=\"#0f172a\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"3\" y=\"6\" width=\"5\" height=\"1\" fill=\"#f8fafc\"/><rect x=\"8\" y=\"6\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#0f172a\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"3\" y=\"7\" width=\"5\" height=\"1\" fill=\"#f8fafc\"/><rect x=\"8\" y=\"7\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#0f172a\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"3\" y=\"8\" width=\"4\" height=\"1\" fill=\"#f8fafc\"/><rect x=\"7\" y=\"8\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"8\" y=\"8\" width=\"2\" height=\"1\" fill=\"#0f172a\"/><rect x=\"2\" y=\"9\" width=\"1\" height=\"1\" fill=\"#334155\"/><rect x=\"3\" y=\"9\" width=\"7\" height=\"1\" fill=\"#0f172a\"/><rect x=\"3\" y=\"10\" width=\"6\" height=\"1\" fill=\"#0f172a\"/>"
+  },
+  "rec_gimje_mak": {
+    "key": "rec_gimje_mak",
+    "name": "김제 호남평야 생막걸리",
+    "innerSvg": "<rect x=\"4\" y=\"0\" width=\"4\" height=\"1\" fill=\"#eab308\"/><rect x=\"4\" y=\"1\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"7\" y=\"1\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"3\" y=\"2\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"4\" y=\"2\" width=\"4\" height=\"1\" fill=\"#fefce8\"/><rect x=\"8\" y=\"2\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#fefce8\"/><rect x=\"4\" y=\"3\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"5\" y=\"3\" width=\"3\" height=\"1\" fill=\"#fefce8\"/><rect x=\"8\" y=\"3\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"3\" y=\"4\" width=\"5\" height=\"1\" fill=\"#fefce8\"/><rect x=\"8\" y=\"4\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"3\" y=\"5\" width=\"5\" height=\"1\" fill=\"#ca8a04\"/><rect x=\"8\" y=\"5\" width=\"2\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"3\" y=\"6\" width=\"5\" height=\"1\" fill=\"#fefce8\"/><rect x=\"8\" y=\"6\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"3\" y=\"7\" width=\"5\" height=\"1\" fill=\"#fefce8\"/><rect x=\"8\" y=\"7\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"3\" y=\"8\" width=\"4\" height=\"1\" fill=\"#fefce8\"/><rect x=\"7\" y=\"8\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"8\" y=\"8\" width=\"2\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"9\" width=\"1\" height=\"1\" fill=\"#eab308\"/><rect x=\"3\" y=\"9\" width=\"7\" height=\"1\" fill=\"#713f12\"/><rect x=\"3\" y=\"10\" width=\"6\" height=\"1\" fill=\"#713f12\"/>"
+  },
+  "rec_haenam_mak": {
+    "key": "rec_haenam_mak",
+    "name": "해남 해풍 고도수 막걸리",
+    "innerSvg": "<rect x=\"4\" y=\"0\" width=\"4\" height=\"1\" fill=\"#0284c7\"/><rect x=\"4\" y=\"1\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"7\" y=\"1\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"2\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"4\" y=\"2\" width=\"4\" height=\"1\" fill=\"#f0f9ff\"/><rect x=\"8\" y=\"2\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#f0f9ff\"/><rect x=\"4\" y=\"3\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"5\" y=\"3\" width=\"3\" height=\"1\" fill=\"#f0f9ff\"/><rect x=\"8\" y=\"3\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#0c4a6e\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"4\" width=\"5\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"8\" y=\"4\" width=\"2\" height=\"1\" fill=\"#0c4a6e\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"5\" width=\"5\" height=\"1\" fill=\"#f0f9ff\"/><rect x=\"8\" y=\"5\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#0c4a6e\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"6\" width=\"5\" height=\"1\" fill=\"#f0f9ff\"/><rect x=\"8\" y=\"6\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#0c4a6e\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"7\" width=\"5\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"8\" y=\"7\" width=\"2\" height=\"1\" fill=\"#0c4a6e\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"8\" width=\"4\" height=\"1\" fill=\"#f0f9ff\"/><rect x=\"7\" y=\"8\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"8\" y=\"8\" width=\"2\" height=\"1\" fill=\"#0c4a6e\"/><rect x=\"2\" y=\"9\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"3\" y=\"9\" width=\"7\" height=\"1\" fill=\"#0c4a6e\"/><rect x=\"3\" y=\"10\" width=\"6\" height=\"1\" fill=\"#0c4a6e\"/>"
+  },
+  "rec_sangju_takju": {
+    "key": "rec_sangju_takju",
+    "name": "상주 낙동강 생탁주",
+    "innerSvg": "<rect x=\"2\" y=\"2\" width=\"8\" height=\"1\" fill=\"#a16207\"/><rect x=\"1\" y=\"3\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#fef3c7\"/><rect x=\"3\" y=\"3\" width=\"2\" height=\"1\" fill=\"#fffbeb\"/><rect x=\"5\" y=\"3\" width=\"4\" height=\"1\" fill=\"#fef3c7\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"10\" y=\"3\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"1\" y=\"4\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"2\" y=\"4\" width=\"7\" height=\"1\" fill=\"#fef3c7\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"10\" y=\"4\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"1\" y=\"5\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"2\" y=\"5\" width=\"7\" height=\"1\" fill=\"#78350f\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"10\" y=\"5\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"3\" y=\"6\" width=\"5\" height=\"1\" fill=\"#fef3c7\"/><rect x=\"8\" y=\"6\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"3\" y=\"7\" width=\"4\" height=\"1\" fill=\"#fef3c7\"/><rect x=\"7\" y=\"7\" width=\"1\" height=\"1\" fill=\"#a16207\"/><rect x=\"8\" y=\"7\" width=\"2\" height=\"1\" fill=\"#451a03\"/><rect x=\"3\" y=\"8\" width=\"4\" height=\"1\" fill=\"#a16207\"/><rect x=\"7\" y=\"8\" width=\"2\" height=\"1\" fill=\"#451a03\"/><rect x=\"4\" y=\"9\" width=\"4\" height=\"1\" fill=\"#451a03\"/>"
+  },
+  "rec_iced_cafe_latte": {
+    "key": "rec_iced_cafe_latte",
+    "name": "아이스 카페라떼",
+    "innerSvg": "<rect x=\"6\" y=\"0\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"5\" y=\"1\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"2\" width=\"8\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"3\" width=\"2\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"5\" y=\"3\" width=\"2\" height=\"1\" fill=\"#78350f\"/><rect x=\"7\" y=\"3\" width=\"2\" height=\"1\" fill=\"#e0f2fe\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"4\" width=\"6\" height=\"1\" fill=\"#78350f\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"5\" width=\"6\" height=\"1\" fill=\"#d6a87c\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"6\" width=\"2\" height=\"1\" fill=\"#d6a87c\"/><rect x=\"5\" y=\"6\" width=\"2\" height=\"1\" fill=\"#ffffff\"/><rect x=\"7\" y=\"6\" width=\"2\" height=\"1\" fill=\"#d6a87c\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"7\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"8\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"8\" width=\"1\" height=\"1\" fill=\"#451a03\"/><rect x=\"2\" y=\"9\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"9\" width=\"5\" height=\"1\" fill=\"#ffffff\"/><rect x=\"8\" y=\"9\" width=\"2\" height=\"1\" fill=\"#451a03\"/><rect x=\"3\" y=\"10\" width=\"6\" height=\"1\" fill=\"#cbd5e1\"/>"
+  },
+  "rec_banana_coffee_latte": {
+    "key": "rec_banana_coffee_latte",
+    "name": "뚱바 커피라떼",
+    "innerSvg": "<rect x=\"6\" y=\"0\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"5\" y=\"1\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"2\" width=\"8\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"3\" width=\"6\" height=\"1\" fill=\"#451a03\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"4\" width=\"6\" height=\"1\" fill=\"#451a03\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"5\" width=\"2\" height=\"1\" fill=\"#ca8a04\"/><rect x=\"5\" y=\"5\" width=\"2\" height=\"1\" fill=\"#fde047\"/><rect x=\"7\" y=\"5\" width=\"2\" height=\"1\" fill=\"#ca8a04\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"6\" width=\"1\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"4\" y=\"6\" width=\"5\" height=\"1\" fill=\"#fde047\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"7\" width=\"1\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"4\" y=\"7\" width=\"5\" height=\"1\" fill=\"#fde047\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"8\" width=\"1\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"4\" y=\"8\" width=\"5\" height=\"1\" fill=\"#fde047\"/><rect x=\"9\" y=\"8\" width=\"1\" height=\"1\" fill=\"#713f12\"/><rect x=\"2\" y=\"9\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"9\" width=\"5\" height=\"1\" fill=\"#fde047\"/><rect x=\"8\" y=\"9\" width=\"2\" height=\"1\" fill=\"#713f12\"/><rect x=\"3\" y=\"10\" width=\"6\" height=\"1\" fill=\"#cbd5e1\"/>"
+  },
+  "rec_banana_coffee_soju": {
+    "key": "rec_banana_coffee_soju",
+    "name": "뚱바 커피주",
+    "innerSvg": "<rect x=\"4\" y=\"0\" width=\"4\" height=\"1\" fill=\"#22c55e\"/><rect x=\"2\" y=\"1\" width=\"8\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"2\" y=\"2\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"2\" width=\"1\" height=\"1\" fill=\"#fef08a\"/><rect x=\"4\" y=\"2\" width=\"5\" height=\"1\" fill=\"#451a03\"/><rect x=\"9\" y=\"2\" width=\"1\" height=\"1\" fill=\"#1e293b\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"3\" width=\"6\" height=\"1\" fill=\"#451a03\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#1e293b\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"4\" width=\"6\" height=\"1\" fill=\"#facc15\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#1e293b\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"5\" width=\"1\" height=\"1\" fill=\"#fef08a\"/><rect x=\"4\" y=\"5\" width=\"5\" height=\"1\" fill=\"#facc15\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#1e293b\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"6\" width=\"1\" height=\"1\" fill=\"#fef08a\"/><rect x=\"4\" y=\"6\" width=\"5\" height=\"1\" fill=\"#facc15\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#1e293b\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"7\" width=\"1\" height=\"1\" fill=\"#fef08a\"/><rect x=\"4\" y=\"7\" width=\"5\" height=\"1\" fill=\"#facc15\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#1e293b\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"3\" y=\"8\" width=\"5\" height=\"1\" fill=\"#facc15\"/><rect x=\"8\" y=\"8\" width=\"2\" height=\"1\" fill=\"#1e293b\"/><rect x=\"3\" y=\"9\" width=\"5\" height=\"1\" fill=\"#94a3b8\"/><rect x=\"8\" y=\"9\" width=\"1\" height=\"1\" fill=\"#1e293b\"/><rect x=\"4\" y=\"10\" width=\"4\" height=\"1\" fill=\"#1e293b\"/>"
+  },
+  "rec_blue_cream_soda_soju": {
+    "key": "rec_blue_cream_soda_soju",
+    "name": "블루 크림소다주",
+    "innerSvg": "<rect x=\"3\" y=\"0\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"2\" y=\"1\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"1\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"1\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"2\" y=\"2\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"2\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"2\" width=\"1\" height=\"1\" fill=\"#0369a1\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#bae6fd\"/><rect x=\"4\" y=\"3\" width=\"4\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"8\" y=\"3\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#0369a1\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"4\" width=\"1\" height=\"1\" fill=\"#bae6fd\"/><rect x=\"4\" y=\"4\" width=\"4\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"8\" y=\"4\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#0369a1\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"5\" width=\"1\" height=\"1\" fill=\"#bae6fd\"/><rect x=\"4\" y=\"5\" width=\"4\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"8\" y=\"5\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#0369a1\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"6\" width=\"1\" height=\"1\" fill=\"#bae6fd\"/><rect x=\"4\" y=\"6\" width=\"4\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"8\" y=\"6\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#0369a1\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"7\" width=\"5\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"8\" y=\"7\" width=\"1\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#0369a1\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"8\" width=\"4\" height=\"1\" fill=\"#38bdf8\"/><rect x=\"7\" y=\"8\" width=\"2\" height=\"1\" fill=\"#0284c7\"/><rect x=\"9\" y=\"8\" width=\"1\" height=\"1\" fill=\"#0369a1\"/><rect x=\"3\" y=\"9\" width=\"5\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"8\" y=\"9\" width=\"1\" height=\"1\" fill=\"#0369a1\"/><rect x=\"4\" y=\"10\" width=\"4\" height=\"1\" fill=\"#0369a1\"/>"
+  },
+  "rec_peach_jelly_soju": {
+    "key": "rec_peach_jelly_soju",
+    "name": "알갱이 젤리 소주",
+    "innerSvg": "<rect x=\"2\" y=\"1\" width=\"8\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"2\" y=\"2\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"2\" width=\"6\" height=\"1\" fill=\"#ffffff\"/><rect x=\"9\" y=\"2\" width=\"1\" height=\"1\" fill=\"#9d174d\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#fce7f3\"/><rect x=\"4\" y=\"3\" width=\"1\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"5\" y=\"3\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"6\" y=\"3\" width=\"3\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#9d174d\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"4\" width=\"1\" height=\"1\" fill=\"#fce7f3\"/><rect x=\"4\" y=\"4\" width=\"2\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"6\" y=\"4\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"7\" y=\"4\" width=\"2\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#9d174d\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"5\" width=\"1\" height=\"1\" fill=\"#fce7f3\"/><rect x=\"4\" y=\"5\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"5\" y=\"5\" width=\"3\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"8\" y=\"5\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#9d174d\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"6\" width=\"1\" height=\"1\" fill=\"#fce7f3\"/><rect x=\"4\" y=\"6\" width=\"2\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"6\" y=\"6\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"7\" y=\"6\" width=\"2\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#9d174d\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"7\" width=\"2\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"5\" y=\"7\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"6\" y=\"7\" width=\"3\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#9d174d\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"8\" width=\"1\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"4\" y=\"8\" width=\"1\" height=\"1\" fill=\"#f472b6\"/><rect x=\"5\" y=\"8\" width=\"3\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"8\" y=\"8\" width=\"2\" height=\"1\" fill=\"#9d174d\"/><rect x=\"3\" y=\"9\" width=\"5\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"8\" y=\"9\" width=\"1\" height=\"1\" fill=\"#9d174d\"/><rect x=\"4\" y=\"10\" width=\"4\" height=\"1\" fill=\"#9d174d\"/>"
+  },
+  "rec_pear_yuzu_soju": {
+    "key": "rec_pear_yuzu_soju",
+    "name": "배유자 소주",
+    "innerSvg": "<rect x=\"2\" y=\"1\" width=\"8\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"2\" y=\"2\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"2\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"2\" width=\"5\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"9\" y=\"2\" width=\"1\" height=\"1\" fill=\"#854d0e\"/><rect x=\"2\" y=\"3\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"3\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"3\" width=\"5\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"9\" y=\"3\" width=\"1\" height=\"1\" fill=\"#854d0e\"/><rect x=\"2\" y=\"4\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"4\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"4\" width=\"1\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"5\" y=\"4\" width=\"1\" height=\"1\" fill=\"#facc15\"/><rect x=\"6\" y=\"4\" width=\"3\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"9\" y=\"4\" width=\"1\" height=\"1\" fill=\"#854d0e\"/><rect x=\"2\" y=\"5\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"5\" width=\"1\" height=\"1\" fill=\"#ffffff\"/><rect x=\"4\" y=\"5\" width=\"1\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"5\" y=\"5\" width=\"2\" height=\"1\" fill=\"#facc15\"/><rect x=\"7\" y=\"5\" width=\"2\" height=\"1\" fill=\"#fef9c3\"/><rect x=\"9\" y=\"5\" width=\"1\" height=\"1\" fill=\"#854d0e\"/><rect x=\"2\" y=\"6\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"6\" width=\"6\" height=\"1\" fill=\"#facc15\"/><rect x=\"9\" y=\"6\" width=\"1\" height=\"1\" fill=\"#854d0e\"/><rect x=\"2\" y=\"7\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"7\" width=\"1\" height=\"1\" fill=\"#facc15\"/><rect x=\"4\" y=\"7\" width=\"1\" height=\"1\" fill=\"#f59e0b\"/><rect x=\"5\" y=\"7\" width=\"2\" height=\"1\" fill=\"#facc15\"/><rect x=\"7\" y=\"7\" width=\"1\" height=\"1\" fill=\"#f59e0b\"/><rect x=\"8\" y=\"7\" width=\"1\" height=\"1\" fill=\"#facc15\"/><rect x=\"9\" y=\"7\" width=\"1\" height=\"1\" fill=\"#854d0e\"/><rect x=\"2\" y=\"8\" width=\"1\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"3\" y=\"8\" width=\"4\" height=\"1\" fill=\"#facc15\"/><rect x=\"7\" y=\"8\" width=\"1\" height=\"1\" fill=\"#f59e0b\"/><rect x=\"8\" y=\"8\" width=\"2\" height=\"1\" fill=\"#854d0e\"/><rect x=\"3\" y=\"9\" width=\"5\" height=\"1\" fill=\"#cbd5e1\"/><rect x=\"8\" y=\"9\" width=\"1\" height=\"1\" fill=\"#854d0e\"/><rect x=\"4\" y=\"10\" width=\"4\" height=\"1\" fill=\"#854d0e\"/>"
   }
-};
-
-  // 2. [💎 32x32 고화질 디테일 아트 스프라이트 (사용자 피드백 맞춤형 19종+ 정밀 디자인)]
-  const EMOJI_MAP = {
-  "soju": "🍶",
-  "beer": "🍺",
-  "bokbunjaju": "🍷",
-  "maesilju": "🟢",
-  "makgeolli": "🍶",
-  "ice": "🧊",
-  "water": "💧",
-  "fire": "🔥",
-  "sparkling_water": "🫧",
-  "air": "🌬️",
-  "snow": "❄️",
-  "lemon": "🍋",
-  "melon": "🍈",
-  "mango": "🥭",
-  "maesil": "🍏",
-  "tomato": "🍅",
-  "apple": "🍎",
-  "strawberry": "🍓",
-  "cacao": "🫘",
-  "pear": "🍐",
-  "banana": "🍌",
-  "yuzu": "🍊",
-  "calamansi": "🍈",
-  "bokbunja": "🫐",
-  "pomegranate": "🍎",
-  "orange": "🍊",
-  "milk": "🥛",
-  "barley": "🌾",
-  "rice": "🏞️",
-  "misutgaru": "🥣",
-  "coffee_beans": "🫘",
-  "red_bean": "🫘",
-  "roasted_beans": "☕",
-  "red_bean_porridge": "🥣",
-  "black_tea": "🫖",
-  "energy_drink": "⚡",
-  "ion_drink": "🎽",
-  "milksoda": "🫧",
-  "blue_lemonade": "🍋",
-  "lemonade": "🍋",
-  "cider": "🥤",
-  "cola": "🥤",
-  "tomato_juice": "🍅",
-  "choco_milk": "🍫",
-  "strawberry_milk": "🍓",
-  "banana_milk": "🍌",
-  "sikhye": "🌾",
-  "peach_drink": "🍑",
-  "pear_drink": "🍐",
-  "pineapple_juice": "🍍",
-  "yakult": "🍼",
-  "pomegranate_juice": "🌺",
-  "tonic_water": "🍸",
-  "calamansi_pouch": "🍋",
-  "iced_americano": "☕",
-  "hongcho": "🧪",
-  "sugar": "🍬",
-  "nuruk": "🍞",
-  "yuzu_cheong": "🍯",
-  "maesil_cheong": "🫙",
-  "honey": "🍯",
-  "vinegar": "🍶",
-  "pomegranate_concentrate": "🍷",
-  "screwbar": "🍭",
-  "chocolate": "🍫",
-  "tankboy": "🍧",
-  "melona": "🍈",
-  "jawsbar": "🦈",
-  "bibibig": "🪵",
-  "rec_somaek": "🍺",
-  "rec_kkulju": "🍯",
-  "rec_hongchaju": "🫖",
-  "rec_kibum_tea": "🗝️",
-  "rec_energy_soju": "⚡",
-  "rec_blue_lemon_soju": "🍋",
-  "rec_lemon_soju": "🍋",
-  "rec_boksosa": "🍷",
-  "rec_icetea": "🍹",
-  "rec_mango_ringo": "🥭",
-  "rec_mango_ringoju": "🍹",
-  "rec_soju_cola": "🥤",
-  "rec_ringelju": "💉",
-  "rec_maeksato": "🍅",
-  "rec_screwbarju": "🍭",
-  "rec_maksa": "🍶",
-  "rec_choco_soju": "🍫",
-  "rec_golden_somaek": "👑",
-  "rec_tankboyju": "🍧",
-  "rec_strawberry_makgeolli": "🍓",
-  "rec_honey_makgeolli": "🍯",
-  "rec_yuzu_makgeolli": "🍊",
-  "rec_maesil_makgeolli": "🍏",
-  "rec_sikhye_makgeolli": "🌾",
-  "rec_misutgaru_makgeolli": "🥣",
-  "rec_banana_milk_makgeolli": "🍌",
-  "rec_peach_makgeolli": "🍑",
-  "rec_pear_makgeolli": "🍐",
-  "rec_pineapple_makgeolli": "🍍",
-  "rec_yakult_makgeolli": "🍼",
-  "rec_honey_misutgaru_makgeolli": "🍯",
-  "rec_pomegranate_makgeolli": "🌺",
-  "rec_sotonic": "🍸",
-  "rec_calamansiju": "🍋",
-  "rec_icheon_makgeolli": "👑",
-  "rec_hallasan_sotonic": "🌋",
-  "rec_cheorwon_makgeolli": "🦢",
-  "rec_gimje_makgeolli": "🌾",
-  "rec_haenam_makgeolli": "🌊",
-  "rec_sangju_makgeolli": "🏞️",
-  "rec_ihwaju": "🥄",
-  "rec_gwahaju": "🏺",
-  "rec_tesla": "⚡",
-  "rec_tejina": "🎤",
-  "rec_casscheorom": "🌊",
-  "rec_kelly_is_back": "🌴",
-  "rec_castella": "🍞",
-  "rec_milkisju": "🥛",
-  "rec_gojingamlae": "🎢",
-  "rec_pocariju": "💧",
-  "rec_energizerju": "🔋",
-  "rec_taegeukju": "🇰🇷",
-  "rec_sowonju": "☕",
-  "rec_dutch_lager": "🍺",
-  "rec_melonaju": "🍈",
-  "rec_jawsbarju": "🦈",
-  "rec_bibibig_makgeolli": "🍧",
-  "rec_kahlua_milk": "☕",
-  "mango_ringo": "🥭"
 };
 
 const SPRITE_DATA_HD = {
@@ -798,7 +741,7 @@ const SPRITE_DATA_HD = {
   },
   "maesilju": {
     "key": "maesilju",
-    "name": "매화수",
+    "name": "매실주",
     "viewBox": "0 0 32 32",
     "innerSvg": "<rect x=\"13\" y=\"2\" width=\"6\" height=\"2\" fill=\"#ca8a04\"/><rect x=\"14\" y=\"2\" width=\"4\" height=\"1\" fill=\"#fde047\"/><rect x=\"13\" y=\"4\" width=\"6\" height=\"1\" fill=\"#a16207\"/><rect x=\"14\" y=\"5\" width=\"1\" height=\"3\" fill=\"#fdba74\"/><rect x=\"15\" y=\"5\" width=\"2\" height=\"3\" fill=\"#fb923c\"/><rect x=\"17\" y=\"5\" width=\"1\" height=\"3\" fill=\"#c2410c\"/><rect x=\"13\" y=\"8\" width=\"2\" height=\"1\" fill=\"#fdba74\"/><rect x=\"15\" y=\"8\" width=\"2\" height=\"1\" fill=\"#fb923c\"/><rect x=\"17\" y=\"8\" width=\"2\" height=\"1\" fill=\"#ea580c\"/><rect x=\"12\" y=\"9\" width=\"2\" height=\"1\" fill=\"#fed7aa\"/><rect x=\"14\" y=\"9\" width=\"4\" height=\"1\" fill=\"#fb923c\"/><rect x=\"18\" y=\"9\" width=\"2\" height=\"1\" fill=\"#ea580c\"/><rect x=\"11\" y=\"10\" width=\"2\" height=\"1\" fill=\"#fed7aa\"/><rect x=\"13\" y=\"10\" width=\"6\" height=\"1\" fill=\"#f97316\"/><rect x=\"19\" y=\"10\" width=\"2\" height=\"1\" fill=\"#c2410c\"/><rect x=\"10\" y=\"11\" width=\"2\" height=\"1\" fill=\"#fed7aa\"/><rect x=\"12\" y=\"11\" width=\"8\" height=\"1\" fill=\"#f97316\"/><rect x=\"20\" y=\"11\" width=\"2\" height=\"1\" fill=\"#c2410c\"/><rect x=\"9\" y=\"12\" width=\"1\" height=\"17\" fill=\"#cbd5e1\" opacity=\"0.8\"/><rect x=\"10\" y=\"12\" width=\"2\" height=\"17\" fill=\"#fed7aa\"/><rect x=\"12\" y=\"12\" width=\"7\" height=\"17\" fill=\"#fb923c\"/><rect x=\"19\" y=\"12\" width=\"2\" height=\"17\" fill=\"#ea580c\"/><rect x=\"21\" y=\"12\" width=\"1\" height=\"17\" fill=\"#c2410c\"/><rect x=\"22\" y=\"12\" width=\"1\" height=\"17\" fill=\"#94a3b8\" opacity=\"0.7\"/><rect x=\"10\" y=\"29\" width=\"12\" height=\"1\" fill=\"#c2410c\"/><rect x=\"11\" y=\"30\" width=\"10\" height=\"1\" fill=\"#7c2d12\"/><rect x=\"11\" y=\"15\" width=\"10\" height=\"10\" fill=\"#ffffff\" opacity=\"0.96\"/><rect x=\"11\" y=\"15\" width=\"10\" height=\"1\" fill=\"#fce7f3\"/><rect x=\"11\" y=\"24\" width=\"10\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"12\" y=\"21\" width=\"4\" height=\"1\" fill=\"#15803d\"/><rect x=\"15\" y=\"20\" width=\"3\" height=\"1\" fill=\"#15803d\"/><rect x=\"17\" y=\"19\" width=\"2\" height=\"1\" fill=\"#15803d\"/><rect x=\"15\" y=\"18\" width=\"2\" height=\"2\" fill=\"#f43f5e\"/><rect x=\"14\" y=\"18\" width=\"1\" height=\"2\" fill=\"#fb7185\"/><rect x=\"17\" y=\"18\" width=\"1\" height=\"2\" fill=\"#fb7185\"/><rect x=\"15\" y=\"17\" width=\"2\" height=\"1\" fill=\"#fb7185\"/><rect x=\"15\" y=\"20\" width=\"2\" height=\"1\" fill=\"#fb7185\"/><rect x=\"15\" y=\"19\" width=\"1\" height=\"1\" fill=\"#fef08a\"/><rect x=\"18\" y=\"16\" width=\"2\" height=\"2\" fill=\"#f43f5e\"/><rect x=\"18\" y=\"16\" width=\"1\" height=\"1\" fill=\"#fbcfe8\"/><rect x=\"13\" y=\"22\" width=\"2\" height=\"1\" fill=\"#fb7185\"/>"
   },
@@ -1284,7 +1227,7 @@ const SPRITE_DATA_HD = {
   },
   "rec_kahlua_milk": {
     "key": "rec_kahlua_milk",
-    "name": "조선 깔루아 밀크",
+    "name": "조선 까망 밀크",
     "viewBox": "0 0 32 32",
     "innerSvg": "<rect x=\"8\" y=\"8\" width=\"16\" height=\"21\" rx=\"2\" fill=\"#e2e8f0\" opacity=\"0.35\"/><rect x=\"9\" y=\"18\" width=\"14\" height=\"10\" rx=\"1\" fill=\"#451a03\"/><rect x=\"9\" y=\"10\" width=\"14\" height=\"8\" fill=\"#fef3c7\"/><rect x=\"9\" y=\"16\" width=\"14\" height=\"3\" fill=\"#92400e\" opacity=\"0.65\"/><rect x=\"12\" y=\"12\" width=\"4\" height=\"4\" rx=\"0.8\" fill=\"#ffffff\" opacity=\"0.75\"/><rect x=\"18\" y=\"2\" width=\"2\" height=\"11\" fill=\"#dc2626\" transform=\"rotate(12 19 7)\"/><rect x=\"8\" y=\"8\" width=\"1.5\" height=\"21\" fill=\"#ffffff\" opacity=\"0.6\"/><rect x=\"9\" y=\"28\" width=\"14\" height=\"1.5\" fill=\"#94a3b8\"/>"
   },
@@ -1531,56 +1474,43 @@ const SPRITE_DATA_HD = {
 };
 
   const ALIAS_MAP = {
+  "1": "rec_somaek",
+  "2": "rec_kkulju",
   "3": "melona",
   "4": "beer",
   "5": "soju",
-  "11": "ice",
-  "12": "sparkling_water",
-  "14": "blue_lemonade",
-  "15": "milksoda",
-  "20": "maesilju",
-  "22": "tomato_juice",
-  "23": "screwbar",
-  "25": "nuruk",
-  "26": "makgeolli",
-  "28": "chocolate",
-  "29": "choco_milk",
-  "32": "tankboy",
-  "34": "strawberry_milk",
-  "35": "banana_milk",
-  "36": "yuzu_cheong",
-  "37": "maesil_cheong",
-  "52": "tonic_water",
-  "53": "calamansi_pouch",
-  "57": "bokbunjaju",
-  "58": "cider",
-  "59": "pear_drink",
-  "60": "sikhye",
-  "61": "misutgaru",
-  "62": "vinegar",
-  "63": "pomegranate_concentrate",
-  "64": "hongcho",
-  "65": "iced_americano",
-  "66": "jawsbar",
-  "67": "bibibig",
-  "1": "rec_somaek",
-  "2": "rec_kkulju",
   "6": "rec_hongchaju",
   "7": "rec_kibum_tea",
   "8": "rec_energy_soju",
   "9": "rec_blue_lemon_soju",
   "10": "rec_boksosa",
+  "11": "ice",
+  "12": "sparkling_water",
   "13": "rec_icetea",
+  "14": "blue_lemonade",
+  "15": "milksoda",
   "16": "rec_mango_ringo",
   "17": "rec_mango_ringoju",
   "18": "rec_soju_cola",
   "19": "rec_ringelju",
+  "20": "maesilju",
   "21": "rec_maeksato",
+  "22": "tomato_juice",
+  "23": "screwbar",
   "24": "rec_screwbarju",
+  "25": "nuruk",
+  "26": "makgeolli",
   "27": "rec_maksa",
+  "28": "chocolate",
+  "29": "choco_milk",
   "30": "rec_choco_soju",
   "31": "rec_golden_somaek",
+  "32": "tankboy",
   "33": "rec_tankboyju",
+  "34": "strawberry_milk",
+  "35": "banana_milk",
+  "36": "yuzu_cheong",
+  "37": "maesil_cheong",
   "38": "rec_strawberry_makgeolli",
   "39": "rec_honey_makgeolli",
   "40": "rec_yuzu_makgeolli",
@@ -1595,9 +1525,22 @@ const SPRITE_DATA_HD = {
   "49": "rec_honey_misutgaru_makgeolli",
   "50": "rec_pomegranate_makgeolli",
   "51": "rec_sotonic",
+  "52": "tonic_water",
+  "53": "calamansi_pouch",
   "54": "rec_calamansiju",
   "55": "rec_icheon_makgeolli",
   "56": "rec_hallasan_sotonic",
+  "57": "bokbunjaju",
+  "58": "cider",
+  "59": "pear_drink",
+  "60": "sikhye",
+  "61": "misutgaru",
+  "62": "vinegar",
+  "63": "pomegranate_concentrate",
+  "64": "hongcho",
+  "65": "iced_americano",
+  "66": "jawsbar",
+  "67": "bibibig",
   "68": "rec_tesla",
   "69": "rec_tejina",
   "70": "rec_casscheorom",
@@ -1614,12 +1557,22 @@ const SPRITE_DATA_HD = {
   "81": "rec_jawsbarju",
   "82": "rec_bibibig_makgeolli",
   "83": "rec_kahlua_milk",
+  "84": "roasted_beans",
+  "85": "red_bean_porridge",
   "86": "rec_cheorwon_makgeolli",
   "87": "rec_gimje_makgeolli",
   "88": "rec_haenam_makgeolli",
   "89": "rec_sangju_makgeolli",
   "90": "rec_ihwaju",
   "91": "rec_gwahaju",
+  "92": "espresso_shot",
+  "93": "blue_pouch_lemonade",
+  "94": "rec_iced_cafe_latte",
+  "95": "rec_banana_coffee_latte",
+  "96": "rec_banana_coffee_soju",
+  "97": "rec_blue_cream_soda_soju",
+  "98": "rec_peach_jelly_soju",
+  "99": "rec_pear_yuzu_soju",
   "101": "soju",
   "102": "beer",
   "103": "bokbunjaju",
@@ -1653,9 +1606,6 @@ const SPRITE_DATA_HD = {
   "504": "coffee_beans",
   "505": "red_bean",
   "506": "roasted_beans",
-  "807": "red_bean_porridge",
-  "84": "roasted_beans",
-  "85": "red_bean_porridge",
   "601": "black_tea",
   "602": "energy_drink",
   "603": "ion_drink",
@@ -1677,6 +1627,9 @@ const SPRITE_DATA_HD = {
   "619": "calamansi_pouch",
   "620": "iced_americano",
   "621": "hongcho",
+  "622": "powerful_blue_aid",
+  "623": "blue_pouch_lemonade",
+  "624": "espresso_shot",
   "701": "sugar",
   "702": "nuruk",
   "703": "yuzu_cheong",
@@ -1690,6 +1643,7 @@ const SPRITE_DATA_HD = {
   "804": "melona",
   "805": "jawsbar",
   "806": "bibibig",
+  "807": "red_bean_porridge",
   "soju": "soju",
   "소주": "soju",
   "ing_101": "soju",
@@ -1805,43 +1759,35 @@ const SPRITE_DATA_HD = {
   "커피원두": "roasted_beans",
   "ing_506": "roasted_beans",
   "rec_84": "roasted_beans",
-  "84": "roasted_beans",
   "red_bean_porridge": "red_bean_porridge",
   "단팥죽": "red_bean_porridge",
   "팥죽": "red_bean_porridge",
   "ing_807": "red_bean_porridge",
   "rec_85": "red_bean_porridge",
-  "85": "red_bean_porridge",
   "rec_cheorwon_makgeolli": "rec_cheorwon_makgeolli",
   "철원 현무암 오대 막걸리": "rec_cheorwon_makgeolli",
   "철원 오대쌀 막걸리 (두루미양조장)": "rec_cheorwon_makgeolli",
   "rec_86": "rec_cheorwon_makgeolli",
-  "86": "rec_cheorwon_makgeolli",
   "rec_gimje_makgeolli": "rec_gimje_makgeolli",
   "김제 호남평야 생막걸리": "rec_gimje_makgeolli",
   "김제 지평선 생막걸리": "rec_gimje_makgeolli",
   "rec_87": "rec_gimje_makgeolli",
-  "87": "rec_gimje_makgeolli",
   "rec_haenam_makgeolli": "rec_haenam_makgeolli",
   "해남 해풍 고도수 막걸리": "rec_haenam_makgeolli",
   "해남 해창 막걸리 (12도/18도)": "rec_haenam_makgeolli",
   "rec_88": "rec_haenam_makgeolli",
-  "88": "rec_haenam_makgeolli",
   "rec_sangju_makgeolli": "rec_sangju_makgeolli",
   "상주 낙동강 생탁주": "rec_sangju_makgeolli",
   "상주 은자골 생탁배기 (5도)": "rec_sangju_makgeolli",
   "rec_89": "rec_sangju_makgeolli",
-  "89": "rec_sangju_makgeolli",
   "rec_ihwaju": "rec_ihwaju",
   "떠먹는 이화주": "rec_ihwaju",
   "고려 이화주": "rec_ihwaju",
   "rec_90": "rec_ihwaju",
-  "90": "rec_ihwaju",
   "rec_gwahaju": "rec_gwahaju",
   "조선 과하주": "rec_gwahaju",
   "전통 과하주": "rec_gwahaju",
   "rec_91": "rec_gwahaju",
-  "91": "rec_gwahaju",
   "black_tea": "black_tea",
   "홍차": "black_tea",
   "ing_601": "black_tea",
@@ -2167,7 +2113,6 @@ const SPRITE_DATA_HD = {
   "조선 깔루아 밀크": "rec_kahlua_milk",
   "rec_83": "rec_kahlua_milk",
   "깔루아밀크": "rec_kahlua_milk",
-  // [상세 재료 13종 도트 스프라이트 매핑]
   "이천 임금님쌀": "rice",
   "철원 두루미쌀": "rice",
   "김제 황금지평선쌀": "rice",
@@ -2180,7 +2125,43 @@ const SPRITE_DATA_HD = {
   "제주 화산암반 21": "soju",
   "카아스 프레시": "beer",
   "청정라거 테라피": "beer",
-  "더블숙성 켈리포니아": "beer"
+  "더블숙성 켈리포니아": "beer",
+  "roasted_coffee": "roasted_coffee",
+  "powerful_blue_aid": "powerful_blue_aid",
+  "파워풀에이드": "powerful_blue_aid",
+  "ing_622": "powerful_blue_aid",
+  "blue_pouch_lemonade": "blue_pouch_lemonade",
+  "블루레모네이드": "blue_pouch_lemonade",
+  "ing_623": "blue_pouch_lemonade",
+  "rec_93": "blue_pouch_lemonade",
+  "espresso_shot": "espresso_shot",
+  "에스프레소": "espresso_shot",
+  "ing_624": "espresso_shot",
+  "rec_92": "espresso_shot",
+  "조선 까망 밀크": "rec_kahlua_milk",
+  "rec_coffee_milk": "rec_kahlua_milk",
+  "rec_cheorwon_mak": "rec_cheorwon_mak",
+  "rec_gimje_mak": "rec_gimje_mak",
+  "rec_haenam_mak": "rec_haenam_mak",
+  "rec_sangju_takju": "rec_sangju_takju",
+  "rec_iced_cafe_latte": "rec_iced_cafe_latte",
+  "아이스 카페라떼": "rec_iced_cafe_latte",
+  "rec_94": "rec_iced_cafe_latte",
+  "rec_banana_coffee_latte": "rec_banana_coffee_latte",
+  "뚱바 커피라떼": "rec_banana_coffee_latte",
+  "rec_95": "rec_banana_coffee_latte",
+  "rec_banana_coffee_soju": "rec_banana_coffee_soju",
+  "뚱바 커피주": "rec_banana_coffee_soju",
+  "rec_96": "rec_banana_coffee_soju",
+  "rec_blue_cream_soda_soju": "rec_blue_cream_soda_soju",
+  "블루 크림소다주": "rec_blue_cream_soda_soju",
+  "rec_97": "rec_blue_cream_soda_soju",
+  "rec_peach_jelly_soju": "rec_peach_jelly_soju",
+  "알갱이 젤리 소주": "rec_peach_jelly_soju",
+  "rec_98": "rec_peach_jelly_soju",
+  "rec_pear_yuzu_soju": "rec_pear_yuzu_soju",
+  "배유자 소주": "rec_pear_yuzu_soju",
+  "rec_99": "rec_pear_yuzu_soju"
 };
 
   const THEME_STORAGE_KEY = 'ksool_icon_theme';
@@ -2261,24 +2242,41 @@ const SPRITE_DATA_HD = {
         return null;
       }
       
-      // Object inspection
-      const candidates = [
-        item.key,
+      // Object inspection: prioritize explicit key and name matches so custom datasets with overlapping numeric IDs don't get wrong K-Sool sprites
+      const nameValues = [item.display_name, item.real_name, item.name]
+        .filter(v => v !== undefined && v !== null)
+        .map(v => String(v).trim())
+        .filter(Boolean);
+
+      if (item.key !== undefined && item.key !== null) {
+        const keyStr = String(item.key).trim();
+        if (SPRITE_DATA_DOT[keyStr] || SPRITE_DATA_HD[keyStr]) return keyStr;
+        if (ALIAS_MAP[keyStr]) return ALIAS_MAP[keyStr];
+      }
+
+      for (let i = 0; i < nameValues.length; i++) {
+        if (ALIAS_MAP[nameValues[i]]) return ALIAS_MAP[nameValues[i]];
+      }
+
+      const idCandidates = [
         item.recipe_id,
         item.ingredient_id,
         item.unlocks_ingredient_id,
-        item.id,
-        item.display_name,
-        item.real_name,
-        item.name
+        item.id
       ];
 
-      for (let i = 0; i < candidates.length; i++) {
-        const val = candidates[i];
+      for (let i = 0; i < idCandidates.length; i++) {
+        const val = idCandidates[i];
         if (val !== undefined && val !== null) {
-          if (ALIAS_MAP[val]) return ALIAS_MAP[val];
-          const str = String(val).trim();
-          if (ALIAS_MAP[str]) return ALIAS_MAP[str];
+          const resolvedKey = ALIAS_MAP[val] || ALIAS_MAP[String(val).trim()];
+          if (resolvedKey) {
+            if (nameValues.length === 0) return resolvedKey;
+            const sprite = SPRITE_DATA_HD[resolvedKey] || SPRITE_DATA_DOT[resolvedKey];
+            const spriteName = sprite && sprite.name ? String(sprite.name).trim() : '';
+            if (!spriteName || nameValues.includes(spriteName)) {
+              return resolvedKey;
+            }
+          }
         }
       }
 
@@ -2311,7 +2309,9 @@ const SPRITE_DATA_HD = {
 
       const key = this.resolveKey(item);
       const getAriaLabel = (sprite) => {
-        const base = sprite.name || key || '';
+        const base = (item && typeof item === 'object' && item.display_name)
+          ? item.display_name
+          : (sprite.name || key || '');
         const i18n = window.KSool?.i18n;
         const localized = (item && typeof item === 'object' && i18n?.resolveEntityName)
           ? i18n.resolveEntityName(item, base)
@@ -2466,5 +2466,5 @@ const SPRITE_DATA_HD = {
     return PixelIconRegistry.render(item, opts);
   };
 
-  console.log('[PixelIconRegistry] Initialized with 3 styles: 117 Dot sprites + ' + Object.keys(SPRITE_DATA_HD).length + ' HD sprites.');
+  console.log('[PixelIconRegistry] Initialized with 3 styles: 141 Dot sprites + ' + Object.keys(SPRITE_DATA_HD).length + ' HD sprites.');
 })();
