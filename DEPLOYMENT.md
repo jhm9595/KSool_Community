@@ -11,10 +11,10 @@
 ```sh
 npm test
 npm run build
-gcloud run deploy ksool-community --source . --project ksool-web-game --region us-central1 --quiet
+gcloud run deploy ksool-community --source . --project ksool-web-game --region us-central1 --set-env-vars "ADMIN_EMAILS=jhm9595@gmail.com" --allow-unauthenticated --quiet
 ```
 
-GitHub Release만으로 운영 배포가 실행되지는 않습니다. 현재 자동 배포 workflow가 없으므로 Cloud Run 배포 및 운영 URL의 산출물 확인이 별도로 필요합니다. `.gcloudignore`는 로컬 DB·환경 파일·Git 정보를 업로드에서 제외합니다.
+`main` 브랜치에 푸시하면 GitHub Actions([deploy.yml](.github/workflows/deploy.yml))가 `npm test` 실행 후 Workload Identity Federation으로 Cloud Run(`ksool-community`)에 자동 배포합니다. `.gcloudignore`는 로컬 DB·환경 파일·Git 정보를 업로드에서 제외합니다.
 
 현재 Dockerfile의 SQLite 위치는 `/tmp`이며 Cloud Run 인스턴스 로컬 임시 저장소입니다. 재배포·재시작·다중 인스턴스 간 게시글 영속성을 보장하지 않습니다. 이번 변경은 저장소를 이전하지 않습니다. 장기 운영에는 외부 영구 DB로 이전이 필요합니다.
 
